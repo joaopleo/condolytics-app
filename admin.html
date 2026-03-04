@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Condolytics — Administrador</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root {
+    --bg:        #0A0C0F;
+    --surface:   #111318;
+    --surface2:  #1A1D24;
+    --amber:     #B8872A;
+    --amber-l:   #D4A44C;
+    --amber-p:   rgba(184,135,42,0.08);
+    --off-white: #E8E6E0;
+    --gray:      #6B7280;
+    --gray-l:    #9CA3AF;
+    --red:       #E05C3A;
+    --green:     #4CAF82;
+    --sidebar:   220px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg);
+    color: var(--off-white);
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: var(--sidebar);
+    background: var(--surface);
+    border-right: 1px solid rgba(184,135,42,0.1);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 50;
+  }
+
+  .sidebar-logo {
+    padding: 28px 24px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .sidebar-logo-name {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    color: var(--amber-l);
+    display: block;
+    margin-bottom: 3px;
+  }
+
+  .sidebar-logo-role {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    color: var(--gray);
+    text-transform: uppercase;
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .nav-section {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    color: var(--gray);
+    text-transform: uppercase;
+    padding: 12px 12px 6px;
+    margin-top: 8px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--gray-l);
+    transition: all 0.15s;
+    text-decoration: none;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+  }
+
+  .nav-item:hover {
+    background: rgba(255,255,255,0.04);
+    color: var(--off-white);
+  }
+
+  .nav-item.active {
+    background: var(--amber-p);
+    color: var(--amber-l);
+    border: 1px solid rgba(184,135,42,0.15);
+  }
+
+  .nav-item svg {
+    width: 15px; height: 15px;
+    flex-shrink: 0;
+    opacity: 0.7;
+  }
+
+  .nav-item.active svg { opacity: 1; }
+
+  .sidebar-footer {
+    padding: 16px 12px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--surface2);
+  }
+
+  .user-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--amber), var(--amber-l));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--bg);
+    flex-shrink: 0;
+  }
+
+  .user-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--off-white);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .user-role {
+    font-size: 10px;
+    color: var(--gray);
+  }
+
+  .btn-logout {
+    width: 100%;
+    margin-top: 8px;
+    padding: 8px;
+    background: none;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 6px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 11px;
+    color: var(--gray);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.05em;
+  }
+
+  .btn-logout:hover {
+    border-color: var(--red);
+    color: var(--red);
+    background: rgba(224,92,58,0.05);
+  }
+
+  /* ── MAIN ── */
+  .main {
+    margin-left: var(--sidebar);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    padding: 20px 36px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 40;
+  }
+
+  .page-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 300;
+    color: var(--off-white);
+  }
+
+  .page-title span {
+    color: var(--amber-l);
+    font-style: italic;
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(76,175,130,0.08);
+    border: 1px solid rgba(76,175,130,0.2);
+    border-radius: 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--green);
+    letter-spacing: 0.1em;
+  }
+
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity:1; box-shadow: 0 0 6px var(--green); }
+    50%      { opacity:0.4; box-shadow: none; }
+  }
+
+  /* ── CONTENT ── */
+  .content {
+    padding: 32px 36px;
+    flex: 1;
+  }
+
+  /* ── SECTION ── */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ── KPI GRID ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .kpi-card:hover {
+    border-color: rgba(184,135,42,0.2);
+  }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--amber), transparent);
+  }
+
+  .kpi-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-bottom: 12px;
+  }
+
+  .kpi-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px;
+    font-weight: 600;
+    color: var(--amber-l);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .kpi-value.red  { color: var(--red); }
+  .kpi-value.green { color: var(--green); }
+
+  .kpi-sub {
+    font-size: 11px;
+    color: var(--gray);
+    line-height: 1.4;
+  }
+
+  /* ── GRID 2 COL ── */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .grid-wide {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  /* ── PANEL ── */
+  .panel {
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 18px 22px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .panel-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--off-white);
+    text-transform: uppercase;
+  }
+
+  .panel-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    color: var(--amber);
+    padding: 4px 10px;
+    background: var(--amber-p);
+    border-radius: 20px;
+  }
+
+  .panel-body { padding: 22px; }
+
+  /* ── ALERT LIST ── */
+  .alert-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .alert-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    background: var(--surface2);
+    border-radius: 8px;
+    border-left: 3px solid var(--gray);
+  }
+
+  .alert-item.critico  { border-color: var(--red); }
+  .alert-item.atencao  { border-color: var(--amber); }
+  .alert-item.info     { border-color: var(--gray); }
+
+  .alert-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 4px;
+    background: var(--gray);
+  }
+
+  .alert-item.critico .alert-dot { background: var(--red); }
+  .alert-item.atencao .alert-dot { background: var(--amber); }
+
+  .alert-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--off-white);
+    margin-bottom: 3px;
+    line-height: 1.3;
+  }
+
+  .alert-desc {
+    font-size: 11px;
+    color: var(--gray-l);
+    line-height: 1.5;
+  }
+
+  /* ── TABLE ── */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .data-table th {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gray);
+    padding: 10px 16px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .data-table td {
+    padding: 13px 16px;
+    font-size: 12.5px;
+    color: var(--gray-l);
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+
+  .data-table tr:last-child td { border-bottom: none; }
+
+  .data-table tr:hover td {
+    background: rgba(255,255,255,0.02);
+    color: var(--off-white);
+  }
+
+  /* ── BADGES ── */
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+  }
+
+  .badge-green  { background: rgba(76,175,130,0.12); color: var(--green); }
+  .badge-amber  { background: var(--amber-p); color: var(--amber-l); }
+  .badge-red    { background: rgba(224,92,58,0.1); color: var(--red); }
+  .badge-gray   { background: rgba(255,255,255,0.06); color: var(--gray-l); }
+
+  /* ── LOADING ── */
+  .loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    color: var(--gray);
+    font-size: 13px;
+    gap: 10px;
+  }
+
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(184,135,42,0.2);
+    border-top-color: var(--amber);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── EMPTY ── */
+  .empty {
+    text-align: center;
+    padding: 40px;
+    color: var(--gray);
+    font-size: 13px;
+  }
+
+  /* ── FORM INLINE ── */
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .form-group { margin-bottom: 16px; }
+
+  .form-label {
+    display: block;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gray-l);
+    margin-bottom: 8px;
+  }
+
+  .form-input, .form-select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+    padding: 11px 14px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    color: var(--off-white);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .form-input:focus, .form-select:focus {
+    border-color: rgba(184,135,42,0.4);
+  }
+
+  .form-select option { background: var(--surface2); }
+
+  .btn-primary {
+    padding: 11px 24px;
+    background: linear-gradient(135deg, var(--amber), var(--amber-l));
+    border: none;
+    border-radius: 8px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--bg);
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    transition: opacity 0.2s;
+  }
+
+  .btn-primary:hover { opacity: 0.88; }
+
+  .btn-secondary {
+    padding: 11px 20px;
+    background: var(--surface2);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px;
+    color: var(--gray-l);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-secondary:hover {
+    border-color: rgba(184,135,42,0.3);
+    color: var(--amber-l);
+  }
+
+  .success-msg {
+    display: none;
+    padding: 12px 16px;
+    background: rgba(76,175,130,0.08);
+    border: 1px solid rgba(76,175,130,0.2);
+    border-radius: 8px;
+    font-size: 12.5px;
+    color: var(--green);
+    margin-top: 12px;
+  }
+
+  .success-msg.show { display: block; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span class="sidebar-logo-name">CONDOLYTICS</span>
+    <span class="sidebar-logo-role">Painel Administrador</span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section">Principal</div>
+
+    <button class="nav-item active" onclick="mostrarSecao('dashboard')">
+      <svg viewBox="0 0 16 16" fill="none">
+        <rect x="1" y="1" width="6" height="6" rx="1.5" 
+              stroke="currentColor" stroke-width="1.3"/>
+        <rect x="9" y="1" width="6" height="6" rx="1.5" 
+              stroke="currentColor" stroke-width="1.3"/>
+        <rect x="1" y="9" width="6" height="6" rx="1.5" 
+              stroke="currentColor" stroke-width="1.3"/>
+        <rect x="9" y="9" width="6" height="6" rx="1.5" 
+              stroke="currentColor" stroke-width="1.3"/>
+      </svg>
+      Dashboard
+    </button>
+
+    <button class="nav-item" onclick="mostrarSecao('condominios')">
+      <svg viewBox="0 0 16 16" fill="none">
+        <path d="M2 14V6l6-4 6 4v8" stroke="currentColor" 
+              stroke-width="1.3" stroke-linejoin="round"/>
+        <rect x="6" y="9" width="4" height="5" rx="0.5" 
+              stroke="currentColor" stroke-width="1.3"/>
+      </svg>
+      Condomínios
+    </button>
+
+    <button class="nav-item" onclick="mostrarSecao('usuarios')">
+      <svg viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.3"/>
+        <path d="M2 14c0-3 2.7-5 6-5s6 2 6 5" 
+              stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      Usuários
+    </button>
+
+    <div class="nav-section">Análises</div>
+
+    <button class="nav-item" onclick="mostrarSecao('alertas')">
+      <svg viewBox="0 0 16 16" fill="none">
+        <path d="M8 2L2 12h12L8 2z" stroke="currentColor" 
+              stroke-width="1.3" stroke-linejoin="round"/>
+        <path d="M8 7v3M8 11.5v.5" stroke="currentColor" 
+              stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      Alertas
+    </button>
+
+    <button class="nav-item" onclick="mostrarSecao('relatorios')">
+      <svg viewBox="0 0 16 16" fill="none">
+        <rect x="3" y="1" width="10" height="14" rx="1.5" 
+              stroke="currentColor" stroke-width="1.3"/>
+        <path d="M6 5h4M6 8h4M6 11h2" stroke="currentColor" 
+              stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      Relatórios
+    </button>
+
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="user-avatar" id="userAvatar">A</div>
+      <div>
+        <div class="user-name" id="userName">Carregando...</div>
+        <div class="user-role">Administrador</div>
+      </div>
+    </div>
+    <button class="btn-logout" onclick="logout()">Sair da conta</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <h1 class="page-title" id="pageTitle">
+      Visão <span>Geral</span>
+    </h1>
+    <div class="topbar-right">
+      <div class="status-badge">
+        <div class="status-dot"></div>
+        Agentes Ativos
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ── DASHBOARD ── -->
+    <section class="section active" id="sec-dashboard">
+
+      <div class="kpi-grid" id="kpiGrid">
+        <div class="loading"><div class="spinner"></div> Carregando...</div>
+      </div>
+
+      <div class="grid-wide">
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Receitas vs Despesas — 2025</span>
+            <span class="panel-tag">12 meses</span>
+          </div>
+          <div class="panel-body">
+            <canvas id="chartFinanceiro" height="200"></canvas>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Alertas Ativos</span>
+            <span class="panel-tag" id="alertaCount">—</span>
+          </div>
+          <div class="panel-body">
+            <div class="alert-list" id="alertaList">
+              <div class="loading">
+                <div class="spinner"></div> Carregando...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Achados Recentes</span>
+          <span class="panel-tag">Auditoria 2025</span>
+        </div>
+        <div class="panel-body" style="padding:0;">
+          <table class="data-table" id="achadosTable">
+            <thead>
+              <tr>
+                <th>Achado</th>
+                <th>Categoria</th>
+                <th>Impacto</th>
+                <th>Severidade</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="achadosBody">
+              <tr><td colspan="5">
+                <div class="loading">
+                  <div class="spinner"></div> Carregando...
+                </div>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ── CONDOMÍNIOS ── -->
+    <section class="section" id="sec-condominios">
+      <div class="panel" style="margin-bottom:20px;">
+        <div class="panel-header">
+          <span class="panel-title">Novo Condomínio</span>
+        </div>
+        <div class="panel-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Nome</label>
+              <input class="form-input" id="c_nome" 
+                     placeholder="Nome do condomínio"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">CNPJ</label>
+              <input class="form-input" id="c_cnpj" 
+                     placeholder="00.000.000/0001-00"/>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Cidade</label>
+              <input class="form-input" id="c_cidade" placeholder="São Paulo"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Total de Unidades</label>
+              <input class="form-input" id="c_unidades" 
+                     type="number" placeholder="80"/>
+            </div>
+          </div>
+          <button class="btn-primary" onclick="criarCondominio()">
+            Cadastrar Condomínio
+          </button>
+          <div class="success-msg" id="condMsg">
+            Condomínio cadastrado com sucesso.
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Condomínios Cadastrados</span>
+        </div>
+        <div class="panel-body" style="padding:0;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Cidade</th>
+                <th>Unidades</th>
+                <th>Status</th>
+                <th>Desde</th>
+              </tr>
+            </thead>
+            <tbody id="condominiosBody">
+              <tr><td colspan="5">
+                <div class="loading">
+                  <div class="spinner"></div> Carregando...
+                </div>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── USUÁRIOS ── -->
+    <section class="section" id="sec-usuarios">
+      <div class="panel" style="margin-bottom:20px;">
+        <div class="panel-header">
+          <span class="panel-title">Novo Usuário</span>
+        </div>
+        <div class="panel-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Nome Completo</label>
+              <input class="form-input" id="u_nome" 
+                     placeholder="Nome completo"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">E-mail</label>
+              <input class="form-input" id="u_email" 
+                     type="email" placeholder="email@exemplo.com"/>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Perfil</label>
+              <select class="form-select" id="u_perfil">
+                <option value="condomino">Condômino</option>
+                <option value="sindico">Síndico</option>
+                <option value="conselho">Conselho Fiscal</option>
+                <option value="admin">Administrador</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Condomínio</label>
+              <select class="form-select" id="u_condominio">
+                <option value="">Selecione...</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Senha Inicial</label>
+            <input class="form-input" id="u_senha" 
+                   type="password" placeholder="Mínimo 8 caracteres"/>
+          </div>
+          <button class="btn-primary" onclick="criarUsuario()">
+            Criar Usuário
+          </button>
+          <div class="success-msg" id="userMsg">
+            Usuário criado. E-mail de confirmação enviado.
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Usuários Cadastrados</span>
+        </div>
+        <div class="panel-body" style="padding:0;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Perfil</th>
+                <th>Condomínio</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="usuariosBody">
+              <tr><td colspan="5">
+                <div class="loading">
+                  <div class="spinner"></div> Carregando...
+                </div>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── ALERTAS ── -->
+    <section class="section" id="sec-alertas">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Todos os Alertas</span>
+        </div>
+        <div class="panel-body" style="padding:0;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Alerta</th>
+                <th>Tipo</th>
+                <th>Severidade</th>
+                <th>Condomínio</th>
+                <th>Data</th>
+              </tr>
+            </thead>
+            <tbody id="alertasBody">
+              <tr><td colspan="5">
+                <div class="loading">
+                  <div class="spinner"></div> Carregando...
+                </div>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── RELATÓRIOS ── -->
+    <section class="section" id="sec-relatorios">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Relatórios Publicados</span>
+        </div>
+        <div class="panel-body" style="padding:0;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Título</th>
+                <th>Tipo</th>
+                <th>Período</th>
+                <th>Condomínio</th>
+                <th>Visibilidade</th>
+                <th>Publicado</th>
+              </tr>
+            </thead>
+            <tbody id="relatoriosBody">
+              <tr><td colspan="6">
+                <div class="loading">
+                  <div class="spinner"></div> Carregando...
+                </div>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<script src="js/supabase.js"></script>
+<script>
+let usuarioAtual = null;
+let chartFinanceiro = null;
+
+// ── INIT ──
+window.addEventListener('load', async () => {
+  usuarioAtual = await protegerPagina(['admin']);
+  if (!usuarioAtual) return;
+
+  // Preenche dados do usuário na sidebar
+  document.getElementById('userName').textContent =
+    usuarioAtual.nome_completo || 'Admin';
+  document.getElementById('userAvatar').textContent =
+    (usuarioAtual.nome_completo || 'A')[0].toUpperCase();
+
+  // Carrega dados iniciais
+  await Promise.all([
+    carregarKPIs(),
+    carregarGrafico(),
+    carregarAlertas(),
+    carregarAchados(),
+    carregarCondominios(),
+    carregarUsuarios(),
+    carregarAlertasTabela(),
+    carregarRelatorios()
+  ]);
+});
+
+// ── NAVEGAÇÃO ──
+function mostrarSecao(nome) {
+  document.querySelectorAll('.section').forEach(s =>
+    s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n =>
+    n.classList.remove('active'));
+
+  document.getElementById('sec-' + nome).classList.add('active');
+  event.currentTarget.classList.add('active');
+
+  const titulos = {
+    dashboard:   'Visão <span>Geral</span>',
+    condominios: 'Condomínios <span>Cadastrados</span>',
+    usuarios:    'Gestão de <span>Usuários</span>',
+    alertas:     'Central de <span>Alertas</span>',
+    relatorios:  'Relatórios <span>Publicados</span>'
+  };
+  document.getElementById('pageTitle').innerHTML =
+    titulos[nome] || nome;
+}
+
+// ── KPIs ──
+async function carregarKPIs() {
+  const { data: condominios } = await db
+    .from('condominios').select('id', { count: 'exact' });
+
+  const { count: totalConds } = await db
+    .from('condominios').select('*', { count: 'exact', head: true });
+
+  const { count: totalUsers } = await db
+    .from('usuarios').select('*', { count: 'exact', head: true });
+
+  const { count: totalAlertas } = await db
+    .from('alertas')
+    .select('*', { count: 'exact', head: true })
+    .eq('lido', false);
+
+  const { data: achados } = await db
+    .from('achados')
+    .select('valor_impacto')
+    .eq('status', 'aberto');
+
+  const totalImpacto = achados
+    ? achados.reduce((s, a) => s + (a.valor_impacto || 0), 0)
+    : 0;
+
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi-card">
+      <div class="kpi-label">Condomínios Ativos</div>
+      <div class="kpi-value">${totalConds || 0}</div>
+      <div class="kpi-sub">condomínios na plataforma</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Usuários Cadastrados</div>
+      <div class="kpi-value">${totalUsers || 0}</div>
+      <div class="kpi-sub">em todos os perfis</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Alertas Não Lidos</div>
+      <div class="kpi-value ${totalAlertas > 0 ? 'red' : 'green'}">
+        ${totalAlertas || 0}
+      </div>
+      <div class="kpi-sub">requerem atenção</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Impacto Identificado</div>
+      <div class="kpi-value amber">
+        R$${(totalImpacto/1000).toFixed(1)}k
+      </div>
+      <div class="kpi-sub">em achados abertos</div>
+    </div>
+  `;
+}
+
+// ── GRÁFICO ──
+async function carregarGrafico() {
+  const { data } = await db
+    .from('indicadores_financeiros')
+    .select('periodo, receita_realizada, despesa_realizada')
+    .order('periodo');
+
+  if (!data || data.length === 0) return;
+
+  const meses = ['Jan','Fev','Mar','Abr','Mai','Jun',
+                  'Jul','Ago','Set','Out','Nov','Dez'];
+  const labels  = data.map(d =>
+    meses[new Date(d.periodo).getMonth()]);
+  const receitas = data.map(d => d.receita_realizada);
+  const despesas = data.map(d => d.despesa_realizada);
+
+  const ctx = document.getElementById('chartFinanceiro');
+  if (!ctx) return;
+
+  if (chartFinanceiro) chartFinanceiro.destroy();
+
+  chartFinanceiro = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Receitas',
+          data: receitas,
+          borderColor: '#B8872A',
+          backgroundColor: 'rgba(184,135,42,0.08)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: '#B8872A',
+          pointRadius: 3
+        },
+        {
+          label: 'Despesas',
+          data: despesas,
+          borderColor: '#E05C3A',
+          backgroundColor: 'rgba(224,92,58,0.05)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: '#E05C3A',
+          pointRadius: 3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: {
+          labels: {
+            color: '#9CA3AF',
+            font: { family: 'Outfit', size: 11 },
+            boxWidth: 12
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { color: '#6B7280', font: { size: 11 } }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: {
+            color: '#6B7280',
+            font: { size: 11 },
+            callback: v => 'R$' + (v/1000).toFixed(0) + 'k'
+          }
+        }
+      }
+    }
+  });
+}
+
+// ── ALERTAS (dashboard) ──
+async function carregarAlertas() {
+  const { data } = await db
+    .from('alertas')
+    .select('*')
+    .eq('lido', false)
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  const el = document.getElementById('alertaList');
+  const ct = document.getElementById('alertaCount');
+
+  if (!data || data.length === 0) {
+    el.innerHTML = '<div class="empty">Nenhum alerta ativo.</div>';
+    ct.textContent = '0';
+    return;
+  }
+
+  ct.textContent = data.length + ' ativos';
+  el.innerHTML = data.map(a => `
+    <div class="alert-item ${a.severidade}">
+      <div class="alert-dot"></div>
+      <div>
+        <div class="alert-title">${a.titulo}</div>
+        <div class="alert-desc">${a.descricao.substring(0,90)}...</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── ACHADOS ──
+async function carregarAchados() {
+  const { data } = await db
+    .from('achados')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  const tbody = document.getElementById('achadosBody');
+  if (!data || data.length === 0) {
+    tbody.innerHTML =
+      '<tr><td colspan="5"><div class="empty">Nenhum achado.</div></td></tr>';
+    return;
+  }
+
+  const sevBadge = {
+    critico:    'badge-red',
+    atencao:    'badge-amber',
+    informativo:'badge-gray'
+  };
+  const statusBadge = {
+    aberto:       'badge-red',
+    em_tratativa: 'badge-amber',
+    resolvido:    'badge-green'
+  };
+
+  tbody.innerHTML = data.map(a => `
+    <tr>
+      <td style="color:var(--off-white);max-width:280px;">
+        ${a.titulo}
+      </td>
+      <td>${a.categoria}</td>
+      <td style="color:var(--amber-l);">
+        R$ ${Number(a.valor_impacto).toLocaleString('pt-BR')}
+      </td>
+      <td>
+        <span class="badge ${sevBadge[a.severidade] || 'badge-gray'}">
+          ${a.severidade}
+        </span>
+      </td>
+      <td>
+        <span class="badge ${statusBadge[a.status] || 'badge-gray'}">
+          ${a.status.replace('_',' ')}
+        </span>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ── CONDOMÍNIOS ──
+async function carregarCondominios() {
+  const { data } = await db
+    .from('condominios')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  // Preenche select de usuários
+  const sel = document.getElementById('u_condominio');
+  if (data) {
+    data.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = c.nome;
+      sel.appendChild(opt);
+    });
+  }
+
+  const tbody = document.getElementById('condominiosBody');
+  if (!data || data.length === 0) {
+    tbody.innerHTML =
+      '<tr><td colspan="5"><div class="empty">Nenhum condomínio.</div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = data.map(c => `
+    <tr>
+      <td style="color:var(--off-white);">${c.nome}</td>
+      <td>${c.cidade || '—'}</td>
+      <td>${c.total_unidades || '—'}</td>
+      <td>
+        <span class="badge ${c.status === 'ativo' ? 'badge-green' : 'badge-gray'}">
+          ${c.status}
+        </span>
+      </td>
+      <td>${c.data_inicio
+        ? new Date(c.data_inicio).toLocaleDateString('pt-BR')
+        : '—'}</td>
+    </tr>
+  `).join('');
+}
+
+// ── USUÁRIOS ──
+async function carregarUsuarios() {
+  const { data } = await db
+    .from('usuarios')
+    .select('*, condominios(nome)')
+    .order('created_at', { ascending: false });
+
+  const tbody = document.getElementById('usuariosBody');
+  if (!data || data.length === 0) {
+    tbody.innerHTML =
+      '<tr><td colspan="5"><div class="empty">Nenhum usuário.</div></td></tr>';
+    return;
+  }
+
+  const perfilBadge = {
+    admin:     'badge-amber',
+    sindico:   'badge-green',
+    conselho:  'badge-gray',
+    condomino: 'badge-gray'
+  };
+
+  tbody.innerHTML = data.map(u => `
+    <tr>
+      <td style="color:var(--off-white);">${u.nome_completo}</td>
+      <td>${u.email}</td>
+      <td>
+        <span class="badge ${perfilBadge[u.perfil] || 'badge-gray'}">
+          ${u.perfil}
+        </span>
+      </td>
+      <td>${u.condominios?.nome || '—'}</td>
+      <td>
+        <span class="badge ${u.ativo ? 'badge-green' : 'badge-red'}">
+          ${u.ativo ? 'ativo' : 'inativo'}
+        </span>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ── ALERTAS TABELA ──
+async function carregarAlertasTabela() {
+  const { data } = await db
+    .from('alertas')
+    .select('*, condominios(nome)')
+    .order('created_at', { ascending: false });
+
+  const tbody = document.getElementById('alertasBody');
+  if (!data || data.length === 0) {
+    tbody.innerHTML =
+      '<tr><td colspan="5"><div class="empty">Nenhum alerta.</div></td></tr>';
+    return;
+  }
+
+  const sevBadge = {
+    critico: 'badge-red',
+    atencao: 'badge-amber',
+    informativo: 'badge-gray'
+  };
+
+  tbody.innerHTML = data.map(a => `
+    <tr>
+      <td style="color:var(--off-white);max-width:300px;">
+        ${a.titulo}
+      </td>
+      <td>${a.tipo}</td>
+      <td>
+        <span class="badge ${sevBadge[a.severidade] || 'badge-gray'}">
+          ${a.severidade}
+        </span>
+      </td>
+      <td>${a.condominios?.nome || '—'}</td>
+      <td style="font-size:11px;color:var(--gray);">
+        ${new Date(a.created_at).toLocaleDateString('pt-BR')}
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ── RELATÓRIOS ──
+async function carregarRelatorios() {
+  const { data } = await db
+    .from('relatorios')
+    .select('*, condominios(nome)')
+    .order('created_at', { ascending: false });
+
+  const tbody = document.getElementById('relatoriosBody');
+  if (!data || data.length === 0) {
+    tbody.innerHTML =
+      '<tr><td colspan="6"><div class="empty">Nenhum relatório.</div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = data.map(r => `
+    <tr>
+      <td style="color:var(--off-white);">${r.titulo}</td>
+      <td>${r.tipo}</td>
+      <td>${r.periodo || '—'}</td>
+      <td>${r.condominios?.nome || '—'}</td>
+      <td>
+        <span class="badge badge-gray">${r.visibilidade}</span>
+      </td>
+      <td style="font-size:11px;color:var(--gray);">
+        ${r.publicado
+          ? new Date(r.publicado_em).toLocaleDateString('pt-BR')
+          : '—'}
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ── CRIAR CONDOMÍNIO ──
+async function criarCondominio() {
+  const nome     = document.getElementById('c_nome').value.trim();
+  const cnpj     = document.getElementById('c_cnpj').value.trim();
+  const cidade   = document.getElementById('c_cidade').value.trim();
+  const unidades = document.getElementById('c_unidades').value;
+
+  if (!nome) { alert('Informe o nome do condomínio.'); return; }
+
+  const { error } = await db.from('condominios').insert({
+    nome, cnpj, cidade,
+    total_unidades: unidades ? parseInt(unidades) : null,
+    status: 'ativo',
+    data_inicio: new Date().toISOString().split('T')[0]
+  });
+
+  if (error) { alert('Erro: ' + error.message); return; }
+
+  document.getElementById('condMsg').classList.add('show');
+  setTimeout(() =>
+    document.getElementById('condMsg').classList.remove('show'), 3000);
+
+  // Limpa e recarrega
+  ['c_nome','c_cnpj','c_cidade','c_unidades']
+    .forEach(id => document.getElementById(id).value = '');
+  await carregarCondominios();
+}
+
+// ── CRIAR USUÁRIO ──
+async function criarUsuario() {
+  const nome       = document.getElementById('u_nome').value.trim();
+  const email      = document.getElementById('u_email').value.trim();
+  const perfil     = document.getElementById('u_perfil').value;
+  const condId     = document.getElementById('u_condominio').value;
+  const senha      = document.getElementById('u_senha').value;
+
+  if (!nome || !email || !senha) {
+    alert('Preencha nome, e-mail e senha.'); return;
+  }
+
+  // Cria no auth
+  const { data, error } = await db.auth.admin
+    ? db.auth.signUp({ email, password: senha,
+        options: { data: {
+          nome_completo: nome,
+          perfil: perfil,
+          condominio_id: condId || null
+        }}})
+    : await db.auth.signUp({ email, password: senha,
+        options: { data: {
+          nome_completo: nome,
+          perfil: perfil,
+          condominio_id: condId || null
+        }}});
+
+  if (error) { alert('Erro: ' + error.message); return; }
+
+  document.getElementById('userMsg').classList.add('show');
+  setTimeout(() =>
+    document.getElementById('userMsg').classList.remove('show'), 3000);
+
+  ['u_nome','u_email','u_senha'].forEach(id =>
+    document.getElementById(id).value = '');
+  await carregarUsuarios();
+}
+</script>
+</body>
+</html>
