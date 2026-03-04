@@ -13,11 +13,29 @@
     --bg:#0A0C0F;--surface:#111318;--surface2:#1A1D24;
     --amber:#B8872A;--amber-l:#D4A44C;--amber-p:rgba(184,135,42,0.08);
     --off-white:#E8E6E0;--gray:#6B7280;--gray-l:#9CA3AF;
-    --red:#E05C3A;--green:#4CAF82;--sidebar:220px;
+    --red:#E05C3A;--green:#4CAF82;
+    --sidebar:220px;
+    --topbar-h:64px;
+    --bottomnav-h:64px;
   }
   *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--off-white);min-height:100vh;display:flex;}
-  .sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid rgba(184,135,42,0.1);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:50;}
+  body{
+    font-family:'Outfit',sans-serif;
+    background:var(--bg);
+    color:var(--off-white);
+    min-height:100vh;
+    display:flex;
+  }
+
+  /* ── SIDEBAR (desktop) ── */
+  .sidebar{
+    width:var(--sidebar);
+    background:var(--surface);
+    border-right:1px solid rgba(184,135,42,0.1);
+    display:flex;flex-direction:column;
+    position:fixed;top:0;left:0;bottom:0;z-index:50;
+    transition:transform 0.3s ease;
+  }
   .sidebar-logo{padding:28px 24px 24px;border-bottom:1px solid rgba(255,255,255,0.05);}
   .sidebar-logo-name{font-size:13px;font-weight:600;letter-spacing:0.15em;color:var(--amber-l);display:block;margin-bottom:3px;}
   .sidebar-logo-role{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.12em;color:var(--gray);text-transform:uppercase;}
@@ -38,16 +56,40 @@
   .user-role{font-size:10px;color:var(--gray);}
   .btn-logout{width:100%;margin-top:8px;padding:8px;background:none;border:1px solid rgba(255,255,255,0.06);border-radius:6px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--gray);cursor:pointer;transition:all 0.15s;}
   .btn-logout:hover{border-color:var(--red);color:var(--red);background:rgba(224,92,58,0.05);}
-  .main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;}
-  .topbar{padding:20px 36px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;background:var(--surface);position:sticky;top:0;z-index:40;}
+
+  /* ── MAIN ── */
+  .main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh;}
+
+  /* ── TOPBAR ── */
+  .topbar{
+    height:var(--topbar-h);
+    padding:0 36px;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--surface);position:sticky;top:0;z-index:40;
+  }
+  .topbar-left{display:flex;align-items:center;gap:12px;}
+  .btn-menu{display:none;background:none;border:none;color:var(--gray-l);cursor:pointer;padding:8px;}
+  .btn-menu svg{width:20px;height:20px;}
   .page-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:var(--off-white);}
   .page-title span{color:var(--amber-l);font-style:italic;}
   .status-badge{display:flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(76,175,130,0.08);border:1px solid rgba(76,175,130,0.2);border-radius:20px;font-family:'DM Mono',monospace;font-size:10px;color:var(--green);letter-spacing:0.1em;}
   .status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
   @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 6px var(--green);}50%{opacity:0.4;box-shadow:none;}}
+
+  /* ── CONTENT ── */
   .content{padding:32px 36px;flex:1;}
   .section{display:none;}
   .section.active{display:block;}
+
+  /* ── BOTTOM NAV (mobile) ── */
+  .bottom-nav{display:none;}
+
+  /* ── OVERLAY (mobile sidebar) ── */
+  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:45;backdrop-filter:blur(2px);}
+  .overlay.show{display:block;}
+
+  /* ── KPI GRID ── */
   .kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;}
   .kpi-card{background:var(--surface);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px;position:relative;overflow:hidden;transition:border-color 0.2s;}
   .kpi-card:hover{border-color:rgba(184,135,42,0.2);}
@@ -57,27 +99,46 @@
   .kpi-value.red{color:var(--red);}
   .kpi-value.green{color:var(--green);}
   .kpi-sub{font-size:11px;color:var(--gray);line-height:1.4;}
+
+  /* ── PANEL ── */
   .panel{background:var(--surface);border:1px solid rgba(255,255,255,0.06);border-radius:12px;overflow:hidden;margin-bottom:20px;}
   .panel-header{padding:18px 22px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;}
   .panel-title{font-size:12px;font-weight:600;letter-spacing:0.08em;color:var(--off-white);text-transform:uppercase;}
-  .panel-tag{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.12em;color:var(--amber);padding:4px 10px;background:var(--amber-p);border-radius:20px;}
+  .panel-tag{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.12em;color:var(--amber);padding:4px 10px;background:var(--amber-p);border-radius:20px;white-space:nowrap;}
   .panel-body{padding:22px;}
-  .data-table{width:100%;border-collapse:collapse;}
+
+  /* ── TABLE ── */
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .data-table{width:100%;border-collapse:collapse;min-width:500px;}
   .data-table th{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray);padding:10px 16px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.05);}
   .data-table td{padding:13px 16px;font-size:12.5px;color:var(--gray-l);border-bottom:1px solid rgba(255,255,255,0.03);}
   .data-table tr:last-child td{border-bottom:none;}
   .data-table tr:hover td{background:rgba(255,255,255,0.02);color:var(--off-white);}
+
+  /* ── BADGES ── */
   .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:500;letter-spacing:0.05em;}
   .badge-green{background:rgba(76,175,130,0.12);color:var(--green);}
   .badge-amber{background:var(--amber-p);color:var(--amber-l);}
   .badge-red{background:rgba(224,92,58,0.1);color:var(--red);}
   .badge-gray{background:rgba(255,255,255,0.06);color:var(--gray-l);}
+
+  /* ── LOADING / EMPTY ── */
   .loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--gray);font-size:13px;gap:10px;}
   .spinner{width:16px;height:16px;border:2px solid rgba(184,135,42,0.2);border-top-color:var(--amber);border-radius:50%;animation:spin 0.7s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
   .empty{text-align:center;padding:40px;color:var(--gray);font-size:13px;}
 
-  /* Saúde financeira */
+  /* ── HERO ── */
+  .hero{background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%);border:1px solid rgba(184,135,42,0.12);border-radius:16px;padding:36px 40px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden;}
+  .hero::before{content:'';position:absolute;right:-40px;top:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(184,135,42,0.06) 0%,transparent 70%);}
+  .hero-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;color:var(--off-white);margin-bottom:8px;line-height:1.2;}
+  .hero-title em{font-style:italic;color:var(--amber-l);}
+  .hero-sub{font-size:13px;color:var(--gray);font-weight:300;line-height:1.6;max-width:500px;}
+  .hero-badge{flex-shrink:0;padding:16px 24px;background:var(--amber-p);border:1px solid rgba(184,135,42,0.2);border-radius:12px;text-align:center;margin-left:24px;}
+  .hero-badge-val{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:600;color:var(--amber-l);line-height:1;margin-bottom:4px;}
+  .hero-badge-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.15em;color:var(--amber);text-transform:uppercase;}
+
+  /* ── SAÚDE GRID ── */
   .saude-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:20px;}
   .saude-item{background:var(--surface2);border-radius:10px;padding:20px;}
   .saude-titulo{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--gray-l);margin-bottom:12px;}
@@ -86,43 +147,111 @@
   .progress-bar{height:6px;background:rgba(255,255,255,0.06);border-radius:3px;margin-top:12px;overflow:hidden;}
   .progress-fill{height:100%;border-radius:3px;transition:width 1s ease;}
 
-  /* Boas-vindas hero */
-  .hero{
-    background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%);
-    border:1px solid rgba(184,135,42,0.12);border-radius:16px;
-    padding:36px 40px;margin-bottom:28px;
-    display:flex;align-items:center;justify-content:space-between;
-    position:relative;overflow:hidden;
+  /* ── MOBILE CARD LIST (alternative to table on mobile) ── */
+  .card-list{display:none;flex-direction:column;gap:10px;padding:16px;}
+  .card-row{background:var(--surface2);border-radius:10px;padding:16px;}
+  .card-row-title{font-size:13px;font-weight:500;color:var(--off-white);margin-bottom:10px;line-height:1.3;}
+  .card-row-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  .card-row-field{font-size:11px;color:var(--gray);}
+  .card-row-field strong{color:var(--gray-l);font-weight:500;}
+
+  /* ══════════════════════════════════
+     RESPONSIVE — TABLET (≤900px)
+  ══════════════════════════════════ */
+  @media (max-width: 900px) {
+    .kpi-grid{grid-template-columns:repeat(2,1fr);}
+    .saude-grid{grid-template-columns:1fr;}
+    .hero{flex-direction:column;align-items:flex-start;padding:28px;}
+    .hero-badge{margin-left:0;margin-top:20px;width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;}
+    .hero-title{font-size:22px;}
   }
-  .hero::before{
-    content:'';position:absolute;right:-40px;top:-40px;
-    width:200px;height:200px;
-    background:radial-gradient(circle,rgba(184,135,42,0.06) 0%,transparent 70%);
-  }
-  .hero-title{
-    font-family:'Cormorant Garamond',serif;font-size:28px;
-    font-weight:300;color:var(--off-white);margin-bottom:8px;line-height:1.2;
-  }
-  .hero-title em{font-style:italic;color:var(--amber-l);}
-  .hero-sub{font-size:13px;color:var(--gray);font-weight:300;line-height:1.6;max-width:500px;}
-  .hero-badge{
-    flex-shrink:0;padding:16px 24px;
-    background:var(--amber-p);border:1px solid rgba(184,135,42,0.2);
-    border-radius:12px;text-align:center;
-  }
-  .hero-badge-val{
-    font-family:'Cormorant Garamond',serif;font-size:36px;
-    font-weight:600;color:var(--amber-l);line-height:1;margin-bottom:4px;
-  }
-  .hero-badge-label{
-    font-family:'DM Mono',monospace;font-size:9px;
-    letter-spacing:0.15em;color:var(--amber);text-transform:uppercase;
+
+  /* ══════════════════════════════════
+     RESPONSIVE — MOBILE (≤640px)
+  ══════════════════════════════════ */
+  @media (max-width: 640px) {
+    /* Sidebar vira drawer */
+    .sidebar{
+      transform:translateX(-100%);
+      width:280px;
+      box-shadow:4px 0 24px rgba(0,0,0,0.4);
+    }
+    .sidebar.open{transform:translateX(0);}
+
+    /* Main ocupa tela toda */
+    .main{margin-left:0;}
+
+    /* Topbar mobile */
+    .topbar{padding:0 16px;height:56px;}
+    .btn-menu{display:flex;}
+    .page-title{font-size:16px;}
+    .status-badge{display:none;}
+
+    /* Content mobile */
+    .content{padding:16px;padding-bottom:calc(var(--bottomnav-h) + 16px);}
+
+    /* KPIs: 1 coluna */
+    .kpi-grid{grid-template-columns:1fr;gap:12px;margin-bottom:20px;}
+    .kpi-card{padding:16px;display:flex;align-items:center;gap:16px;}
+    .kpi-card::before{width:3px;height:100%;top:0;left:0;right:auto;background:var(--amber);}
+    .kpi-label{margin-bottom:4px;font-size:8px;}
+    .kpi-value{font-size:28px;margin-bottom:0;}
+    .kpi-sub{font-size:10px;display:none;}
+    .kpi-card-text{flex:1;}
+
+    /* Hero mobile */
+    .hero{padding:20px;border-radius:12px;margin-bottom:16px;}
+    .hero-title{font-size:18px;margin-bottom:6px;}
+    .hero-sub{font-size:12px;}
+    .hero-badge{flex-direction:row;gap:12px;align-items:center;}
+    .hero-badge-val{font-size:28px;}
+
+    /* Saúde */
+    .saude-grid{gap:12px;margin-bottom:16px;}
+    .saude-item{padding:14px;}
+    .saude-valor{font-size:26px;}
+
+    /* Panel */
+    .panel{border-radius:10px;}
+    .panel-header{padding:14px 16px;}
+    .panel-title{font-size:11px;}
+    .panel-body{padding:16px;}
+
+    /* Tabelas: esconde e mostra card list */
+    .table-wrap{display:none;}
+    .card-list{display:flex;}
+
+    /* Bottom nav aparece */
+    .bottom-nav{
+      display:flex;
+      position:fixed;bottom:0;left:0;right:0;
+      height:var(--bottomnav-h);
+      background:var(--surface);
+      border-top:1px solid rgba(255,255,255,0.08);
+      z-index:50;
+    }
+    .bottom-nav-item{
+      flex:1;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;gap:4px;
+      background:none;border:none;cursor:pointer;
+      color:var(--gray);transition:color 0.15s;
+      font-family:'Outfit',sans-serif;font-size:10px;
+      padding:8px 4px;
+    }
+    .bottom-nav-item svg{width:20px;height:20px;opacity:0.6;}
+    .bottom-nav-item.active{color:var(--amber-l);}
+    .bottom-nav-item.active svg{opacity:1;}
+    .bottom-nav-item span{font-size:9px;letter-spacing:0.04em;}
   }
 </style>
 </head>
 <body>
 
-<aside class="sidebar">
+<!-- OVERLAY mobile -->
+<div class="overlay" id="overlay" onclick="fecharMenu()"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
   <div class="sidebar-logo">
     <span class="sidebar-logo-name">CONDOLYTICS</span>
     <span class="sidebar-logo-role">Portal do Condômino</span>
@@ -176,23 +305,38 @@
   </div>
 </aside>
 
+<!-- MAIN -->
 <main class="main">
+
+  <!-- TOPBAR -->
   <div class="topbar">
-    <h1 class="page-title" id="pageTitle">Visão <span>Geral</span></h1>
-    <div class="status-badge"><div class="status-dot"></div>Condomínio Monitorado</div>
+    <div class="topbar-left">
+      <button class="btn-menu" onclick="abrirMenu()">
+        <svg viewBox="0 0 20 20" fill="none">
+          <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <h1 class="page-title" id="pageTitle">Visão <span>Geral</span></h1>
+    </div>
+    <div class="status-badge">
+      <div class="status-dot"></div>
+      Monitorado
+    </div>
   </div>
+
+  <!-- CONTENT -->
   <div class="content">
 
     <!-- DASHBOARD -->
     <section class="section active" id="sec-dashboard">
+
       <div class="hero">
         <div>
           <div class="hero-title">
             Seu condomínio está sendo<br><em>monitorado com inteligência.</em>
           </div>
           <div class="hero-sub">
-            A Condolytics analisa continuamente os dados financeiros e contratuais
-            do seu condomínio. Acompanhe abaixo a saúde fiscal em tempo real.
+            A Condolytics analisa continuamente os dados financeiros e contratuais do seu condomínio.
           </div>
         </div>
         <div class="hero-badge">
@@ -205,9 +349,7 @@
         <div class="loading"><div class="spinner"></div>Carregando...</div>
       </div>
 
-      <div class="saude-grid" id="saudeGrid">
-        <div class="loading"><div class="spinner"></div>Carregando...</div>
-      </div>
+      <div class="saude-grid" id="saudeGrid"></div>
 
       <div class="panel">
         <div class="panel-header">
@@ -218,6 +360,7 @@
           <canvas id="chartFinanceiro" height="160"></canvas>
         </div>
       </div>
+
     </section>
 
     <!-- FINANCEIRO -->
@@ -227,25 +370,22 @@
           <span class="panel-title">Extrato Financeiro Mensal</span>
           <span class="panel-tag">2025</span>
         </div>
-        <div class="panel-body" style="padding:0;">
+        <!-- Tabela desktop -->
+        <div class="table-wrap">
           <table class="data-table">
             <thead>
               <tr>
-                <th>Mês</th>
-                <th>Receita</th>
-                <th>Despesa</th>
-                <th>Saldo</th>
-                <th>Inadimplência</th>
-                <th>Fundo Reserva</th>
+                <th>Mês</th><th>Receita</th><th>Despesa</th>
+                <th>Saldo</th><th>Inadimpl.</th><th>Fundo Reserva</th>
               </tr>
             </thead>
             <tbody id="financeiroBody">
-              <tr><td colspan="6">
-                <div class="loading"><div class="spinner"></div>Carregando...</div>
-              </td></tr>
+              <tr><td colspan="6"><div class="loading"><div class="spinner"></div>Carregando...</div></td></tr>
             </tbody>
           </table>
         </div>
+        <!-- Cards mobile -->
+        <div class="card-list" id="financeiroCards"></div>
       </div>
     </section>
 
@@ -256,21 +396,17 @@
           <span class="panel-title">Documentos Públicos</span>
           <span class="panel-tag" id="docCount">—</span>
         </div>
-        <div class="panel-body" style="padding:0;">
+        <div class="table-wrap">
           <table class="data-table">
             <thead>
-              <tr>
-                <th>Nome</th><th>Tipo</th>
-                <th>Período</th><th>Data</th>
-              </tr>
+              <tr><th>Nome</th><th>Tipo</th><th>Período</th><th>Data</th></tr>
             </thead>
             <tbody id="documentosBody">
-              <tr><td colspan="4">
-                <div class="loading"><div class="spinner"></div>Carregando...</div>
-              </td></tr>
+              <tr><td colspan="4"><div class="loading"><div class="spinner"></div>Carregando...</div></td></tr>
             </tbody>
           </table>
         </div>
+        <div class="card-list" id="documentosCards"></div>
       </div>
     </section>
 
@@ -280,26 +416,57 @@
         <div class="panel-header">
           <span class="panel-title">Relatórios Condolytics</span>
         </div>
-        <div class="panel-body" style="padding:0;">
+        <div class="table-wrap">
           <table class="data-table">
             <thead>
-              <tr>
-                <th>Título</th><th>Tipo</th>
-                <th>Período</th><th>Publicado em</th><th>Ação</th>
-              </tr>
+              <tr><th>Título</th><th>Tipo</th><th>Período</th><th>Publicado</th><th>Ação</th></tr>
             </thead>
             <tbody id="relatoriosBody">
-              <tr><td colspan="5">
-                <div class="loading"><div class="spinner"></div>Carregando...</div>
-              </td></tr>
+              <tr><td colspan="5"><div class="loading"><div class="spinner"></div>Carregando...</div></td></tr>
             </tbody>
           </table>
         </div>
+        <div class="card-list" id="relatoriosCards"></div>
       </div>
     </section>
 
-  </div>
+  </div><!-- /content -->
+
 </main>
+
+<!-- BOTTOM NAV (mobile only) -->
+<nav class="bottom-nav">
+  <button class="bottom-nav-item active" id="bn-dashboard" onclick="mostrarSecaoMobile('dashboard')">
+    <svg viewBox="0 0 20 20" fill="none">
+      <rect x="2" y="2" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+      <rect x="11" y="2" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+      <rect x="2" y="11" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+      <rect x="11" y="11" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+    </svg>
+    <span>Geral</span>
+  </button>
+  <button class="bottom-nav-item" id="bn-financeiro" onclick="mostrarSecaoMobile('financeiro')">
+    <svg viewBox="0 0 20 20" fill="none">
+      <path d="M3 15L7 10l4 2.5 4-6.5 3 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M3 18h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    <span>Finanças</span>
+  </button>
+  <button class="bottom-nav-item" id="bn-documentos" onclick="mostrarSecaoMobile('documentos')">
+    <svg viewBox="0 0 20 20" fill="none">
+      <rect x="4" y="2" width="12" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    <span>Docs</span>
+  </button>
+  <button class="bottom-nav-item" id="bn-relatorios" onclick="mostrarSecaoMobile('relatorios')">
+    <svg viewBox="0 0 20 20" fill="none">
+      <path d="M5 5h10M5 9h10M5 13h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <rect x="3" y="2" width="14" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
+    </svg>
+    <span>Relatórios</span>
+  </button>
+</nav>
 
 <script src="js/supabase.js"></script>
 <script>
@@ -323,11 +490,46 @@ window.addEventListener('load', async () => {
   ]);
 });
 
+// ── Menu mobile ──
+function abrirMenu() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function fecharMenu() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+// ── Navegação desktop ──
 function mostrarSecao(nome, el) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('sec-'+nome).classList.add('active');
   el.classList.add('active');
+  sincronizarBottomNav(nome);
+  atualizarTitulo(nome);
+  fecharMenu();
+}
+
+// ── Navegação mobile (bottom nav) ──
+function mostrarSecaoMobile(nome) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.bottom-nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('sec-'+nome).classList.add('active');
+  document.getElementById('bn-'+nome).classList.add('active');
+  atualizarTitulo(nome);
+}
+
+function sincronizarBottomNav(nome) {
+  document.querySelectorAll('.bottom-nav-item').forEach(n => n.classList.remove('active'));
+  const bn = document.getElementById('bn-'+nome);
+  if (bn) bn.classList.add('active');
+}
+
+function atualizarTitulo(nome) {
   const titulos = {
     dashboard:  'Visão <span>Geral</span>',
     financeiro: 'Extrato <span>Financeiro</span>',
@@ -337,64 +539,66 @@ function mostrarSecao(nome, el) {
   document.getElementById('pageTitle').innerHTML = titulos[nome] || nome;
 }
 
+// ── KPIs ──
 async function carregarKPIs() {
   const { data } = await db.from('indicadores_financeiros')
     .select('*').order('periodo',{ascending:false}).limit(1);
   const d = data?.[0];
-  if (!d) { document.getElementById('kpiGrid').innerHTML = '<div class="empty">Sem dados.</div>'; return; }
-
+  if (!d) { document.getElementById('kpiGrid').innerHTML='<div class="empty">Sem dados.</div>'; return; }
   const saldo = d.receita_realizada - d.despesa_realizada;
   document.getElementById('heroInad').textContent = d.inadimplencia_pct.toFixed(1)+'%';
   document.getElementById('kpiGrid').innerHTML = `
     <div class="kpi-card">
-      <div class="kpi-label">Receita do Mês</div>
-      <div class="kpi-value green">R$${(d.receita_realizada/1000).toFixed(1)}k</div>
-      <div class="kpi-sub">arrecadação realizada</div>
+      <div class="kpi-card-text">
+        <div class="kpi-label">Receita do Mês</div>
+        <div class="kpi-value green">R$${(d.receita_realizada/1000).toFixed(1)}k</div>
+        <div class="kpi-sub">arrecadação realizada</div>
+      </div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-label">Despesa do Mês</div>
-      <div class="kpi-value red">R$${(d.despesa_realizada/1000).toFixed(1)}k</div>
-      <div class="kpi-sub">gastos realizados</div>
+      <div class="kpi-card-text">
+        <div class="kpi-label">Despesa do Mês</div>
+        <div class="kpi-value red">R$${(d.despesa_realizada/1000).toFixed(1)}k</div>
+        <div class="kpi-sub">gastos realizados</div>
+      </div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-label">Fundo de Reserva</div>
-      <div class="kpi-value">R$${(d.fundo_reserva/1000).toFixed(0)}k</div>
-      <div class="kpi-sub">patrimônio acumulado</div>
+      <div class="kpi-card-text">
+        <div class="kpi-label">Fundo de Reserva</div>
+        <div class="kpi-value">R$${(d.fundo_reserva/1000).toFixed(0)}k</div>
+        <div class="kpi-sub">patrimônio acumulado</div>
+      </div>
     </div>
   `;
 }
 
+// ── Saúde ──
 async function carregarSaude() {
   const { data } = await db.from('indicadores_financeiros')
-    .select('*').order('periodo',{ascending:false}).limit(3);
-  if (!data?.length) { document.getElementById('saudeGrid').innerHTML=''; return; }
-
+    .select('*').order('periodo',{ascending:false}).limit(1);
+  if (!data?.length) return;
   const d = data[0];
   const execBudget = ((d.despesa_realizada/d.despesa_prevista)*100).toFixed(1);
   const recEfic    = ((d.receita_realizada/d.receita_prevista)*100).toFixed(1);
-  const inadCor    = d.inadimplencia_pct < 3 ? 'var(--green)' : d.inadimplencia_pct < 5 ? 'var(--amber-l)' : 'var(--red)';
-  const budgetCor  = execBudget <= 100 ? 'var(--green)' : 'var(--red)';
-
+  const inadCor    = d.inadimplencia_pct<3?'var(--green)':d.inadimplencia_pct<5?'var(--amber-l)':'var(--red)';
+  const budgetCor  = execBudget<=100?'var(--green)':'var(--red)';
   document.getElementById('saudeGrid').innerHTML = `
     <div class="saude-item">
       <div class="saude-titulo">Execução Orçamentária</div>
       <div class="saude-valor" style="color:${budgetCor};">${execBudget}%</div>
-      <div class="saude-desc">das despesas previstas foram realizadas no último mês. ${execBudget<=100?'Dentro do orçamento.':'Acima do previsto.'}</div>
-      <div class="progress-bar">
-        <div class="progress-fill" style="width:${Math.min(execBudget,100)}%;background:${budgetCor};"></div>
-      </div>
+      <div class="saude-desc">${execBudget<=100?'Dentro do orçamento.':'Acima do previsto.'}</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(execBudget,100)}%;background:${budgetCor};"></div></div>
     </div>
     <div class="saude-item">
       <div class="saude-titulo">Eficiência de Arrecadação</div>
       <div class="saude-valor" style="color:var(--amber-l);">${recEfic}%</div>
-      <div class="saude-desc">da receita prevista foi arrecadada. Inadimplência atual: <strong style="color:${inadCor};">${d.inadimplencia_pct}%</strong>.</div>
-      <div class="progress-bar">
-        <div class="progress-fill" style="width:${Math.min(recEfic,100)}%;background:var(--amber);"></div>
-      </div>
+      <div class="saude-desc">Inadimplência: <strong style="color:${inadCor};">${d.inadimplencia_pct}%</strong></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(recEfic,100)}%;background:var(--amber);"></div></div>
     </div>
   `;
 }
 
+// ── Gráfico ──
 async function carregarGrafico() {
   const { data } = await db.from('indicadores_financeiros')
     .select('periodo,receita_realizada,despesa_realizada').order('periodo');
@@ -417,50 +621,56 @@ async function carregarGrafico() {
       responsive:true,maintainAspectRatio:true,
       plugins:{legend:{labels:{color:'#9CA3AF',font:{family:'Outfit',size:11},boxWidth:12}}},
       scales:{
-        x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6B7280',font:{size:11}}},
-        y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6B7280',font:{size:11},
-           callback:v=>'R$'+(v/1000).toFixed(0)+'k'}}
+        x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6B7280',font:{size:10},maxRotation:0}},
+        y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6B7280',font:{size:10},callback:v=>'R$'+(v/1000).toFixed(0)+'k'}}
       }
     }
   });
 }
 
+// ── Financeiro ──
 async function carregarFinanceiro() {
   const { data } = await db.from('indicadores_financeiros')
     .select('*').order('periodo',{ascending:false});
   const tbody = document.getElementById('financeiroBody');
+  const cards  = document.getElementById('financeiroCards');
   if (!data?.length) {
-    tbody.innerHTML='<tr><td colspan="6"><div class="empty">Sem dados financeiros.</div></td></tr>';
+    tbody.innerHTML='<tr><td colspan="6"><div class="empty">Sem dados.</div></td></tr>';
+    cards.innerHTML='<div class="empty">Sem dados.</div>';
     return;
   }
   tbody.innerHTML = data.map(d=>`
     <tr>
-      <td style="color:var(--off-white);">
-        ${meses[new Date(d.periodo).getMonth()]}/${new Date(d.periodo).getFullYear()}
-      </td>
+      <td style="color:var(--off-white);">${meses[new Date(d.periodo).getMonth()]}/${new Date(d.periodo).getFullYear()}</td>
       <td style="color:var(--green);">R$ ${Number(d.receita_realizada).toLocaleString('pt-BR')}</td>
       <td style="color:var(--red);">R$ ${Number(d.despesa_realizada).toLocaleString('pt-BR')}</td>
-      <td style="color:${d.saldo_conta>=0?'var(--green)':'var(--red)'};">
-        R$ ${Number(d.saldo_conta).toLocaleString('pt-BR')}
-      </td>
-      <td>
-        <span class="badge ${d.inadimplencia_pct<3?'badge-green':d.inadimplencia_pct<5?'badge-amber':'badge-red'}">
-          ${d.inadimplencia_pct}%
-        </span>
-      </td>
+      <td style="color:${d.saldo_conta>=0?'var(--green)':'var(--red)'};">R$ ${Number(d.saldo_conta).toLocaleString('pt-BR')}</td>
+      <td><span class="badge ${d.inadimplencia_pct<3?'badge-green':d.inadimplencia_pct<5?'badge-amber':'badge-red'}">${d.inadimplencia_pct}%</span></td>
       <td>R$ ${Number(d.fundo_reserva).toLocaleString('pt-BR')}</td>
     </tr>`).join('');
+  cards.innerHTML = data.map(d=>`
+    <div class="card-row">
+      <div class="card-row-title">${meses[new Date(d.periodo).getMonth()]} / ${new Date(d.periodo).getFullYear()}</div>
+      <div class="card-row-meta">
+        <div class="card-row-field"><strong style="color:var(--green);">R$ ${Number(d.receita_realizada).toLocaleString('pt-BR')}</strong> receita</div>
+        <div class="card-row-field"><strong style="color:var(--red);">R$ ${Number(d.despesa_realizada).toLocaleString('pt-BR')}</strong> despesa</div>
+        <div class="card-row-field">Saldo <strong style="color:${d.saldo_conta>=0?'var(--green)':'var(--red)'};">R$ ${Number(d.saldo_conta).toLocaleString('pt-BR')}</strong></div>
+        <span class="badge ${d.inadimplencia_pct<3?'badge-green':d.inadimplencia_pct<5?'badge-amber':'badge-red'}">${d.inadimplencia_pct}% inadimp.</span>
+      </div>
+    </div>`).join('');
 }
 
+// ── Documentos ──
 async function carregarDocumentos() {
   const { data, count } = await db.from('documentos')
-    .select('*',{count:'exact'})
-    .eq('visibilidade','publico')
+    .select('*',{count:'exact'}).eq('visibilidade','publico')
     .order('created_at',{ascending:false});
   document.getElementById('docCount').textContent = (count||0)+' arquivos';
   const tbody = document.getElementById('documentosBody');
+  const cards  = document.getElementById('documentosCards');
   if (!data?.length) {
-    tbody.innerHTML='<tr><td colspan="4"><div class="empty">Nenhum documento público disponível.</div></td></tr>';
+    tbody.innerHTML='<tr><td colspan="4"><div class="empty">Nenhum documento público.</div></td></tr>';
+    cards.innerHTML='<div class="empty">Nenhum documento público.</div>';
     return;
   }
   tbody.innerHTML = data.map(d=>`
@@ -468,21 +678,28 @@ async function carregarDocumentos() {
       <td style="color:var(--off-white);">${d.nome}</td>
       <td>${d.tipo}</td>
       <td>${d.periodo_referencia?new Date(d.periodo_referencia).toLocaleDateString('pt-BR'):'—'}</td>
-      <td style="font-size:11px;color:var(--gray);">
-        ${new Date(d.created_at).toLocaleDateString('pt-BR')}
-      </td>
+      <td style="font-size:11px;color:var(--gray);">${new Date(d.created_at).toLocaleDateString('pt-BR')}</td>
     </tr>`).join('');
+  cards.innerHTML = data.map(d=>`
+    <div class="card-row">
+      <div class="card-row-title">${d.nome}</div>
+      <div class="card-row-meta">
+        <span class="badge badge-gray">${d.tipo}</span>
+        <div class="card-row-field">${d.periodo_referencia?new Date(d.periodo_referencia).toLocaleDateString('pt-BR'):'—'}</div>
+      </div>
+    </div>`).join('');
 }
 
+// ── Relatórios ──
 async function carregarRelatorios() {
   const { data } = await db.from('relatorios')
-    .select('*')
-    .eq('publicado',true)
-    .eq('visibilidade','publico')
+    .select('*').eq('publicado',true)
     .order('created_at',{ascending:false});
   const tbody = document.getElementById('relatoriosBody');
+  const cards  = document.getElementById('relatoriosCards');
   if (!data?.length) {
-    tbody.innerHTML='<tr><td colspan="5"><div class="empty">Nenhum relatório público disponível.</div></td></tr>';
+    tbody.innerHTML='<tr><td colspan="5"><div class="empty">Nenhum relatório público.</div></td></tr>';
+    cards.innerHTML='<div class="empty">Nenhum relatório público.</div>';
     return;
   }
   tbody.innerHTML = data.map(r=>`
@@ -490,17 +707,18 @@ async function carregarRelatorios() {
       <td style="color:var(--off-white);">${r.titulo}</td>
       <td>${r.tipo}</td>
       <td>${r.periodo||'—'}</td>
-      <td style="font-size:11px;color:var(--gray);">
-        ${r.publicado_em?new Date(r.publicado_em).toLocaleDateString('pt-BR'):'—'}
-      </td>
-      <td>
-        ${r.url_pdf
-          ?`<a href="${r.url_pdf}" target="_blank"
-               style="color:var(--amber-l);font-size:12px;text-decoration:none;">
-               ↓ Baixar PDF</a>`
-          :'<span style="color:var(--gray);font-size:11px;">Indisponível</span>'}
-      </td>
+      <td style="font-size:11px;color:var(--gray);">${r.publicado_em?new Date(r.publicado_em).toLocaleDateString('pt-BR'):'—'}</td>
+      <td>${r.url_pdf?`<a href="${r.url_pdf}" target="_blank" style="color:var(--amber-l);font-size:12px;text-decoration:none;">↓ Baixar</a>`:'<span style="color:var(--gray);font-size:11px;">—</span>'}</td>
     </tr>`).join('');
+  cards.innerHTML = data.map(r=>`
+    <div class="card-row">
+      <div class="card-row-title">${r.titulo}</div>
+      <div class="card-row-meta">
+        <span class="badge badge-gray">${r.tipo}</span>
+        <div class="card-row-field">${r.periodo||'—'}</div>
+        ${r.url_pdf?`<a href="${r.url_pdf}" target="_blank" style="color:var(--amber-l);font-size:12px;text-decoration:none;margin-left:auto;">↓ Baixar PDF</a>`:''}
+      </div>
+    </div>`).join('');
 }
 </script>
 </body>
