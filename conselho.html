@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Condolytics — Conselho Fiscal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg:#0A0C0F;--surface:#111318;--surface2:#1A1D24;
+    --amber:#B8872A;--amber-l:#D4A44C;--amber-p:rgba(184,135,42,0.08);
+    --off-white:#E8E6E0;--gray:#6B7280;--gray-l:#9CA3AF;
+    --red:#E05C3A;--green:#4CAF82;--sidebar:220px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--off-white);min-height:100vh;display:flex;}
+  .sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid rgba(184,135,42,0.1);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:50;}
+  .sidebar-logo{padding:28px 24px 24px;border-bottom:1px solid rgba(255,255,255,0.05);}
+  .sidebar-logo-name{font-size:13px;font-weight:600;letter-spacing:0.15em;color:var(--amber-l);display:block;margin-bottom:3px;}
+  .sidebar-logo-role{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.12em;color:var(--gray);text-transform:uppercase;}
+  .sidebar-cond{padding:12px 24px;background:var(--amber-p);border-bottom:1px solid rgba(184,135,42,0.1);}
+  .sidebar-cond-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.12em;color:var(--amber);text-transform:uppercase;margin-bottom:4px;}
+  .sidebar-cond-name{font-size:12px;font-weight:500;color:var(--off-white);line-height:1.3;}
+  .sidebar-nav{flex:1;padding:16px 12px;display:flex;flex-direction:column;gap:2px;}
+  .nav-section{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.18em;color:var(--gray);text-transform:uppercase;padding:12px 12px 6px;margin-top:8px;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:400;color:var(--gray-l);transition:all 0.15s;border:none;background:none;width:100%;text-align:left;}
+  .nav-item:hover{background:rgba(255,255,255,0.04);color:var(--off-white);}
+  .nav-item.active{background:var(--amber-p);color:var(--amber-l);border:1px solid rgba(184,135,42,0.15);}
+  .nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:0.7;}
+  .nav-item.active svg{opacity:1;}
+  .sidebar-footer{padding:16px 12px;border-top:1px solid rgba(255,255,255,0.05);}
+  .user-info{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:var(--surface2);}
+  .user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--amber),var(--amber-l));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--bg);flex-shrink:0;}
+  .user-name{font-size:12px;font-weight:500;color:var(--off-white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .user-role{font-size:10px;color:var(--gray);}
+  .btn-logout{width:100%;margin-top:8px;padding:8px;background:none;border:1px solid rgba(255,255,255,0.06);border-radius:6px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--gray);cursor:pointer;transition:all 0.15s;}
+  .btn-logout:hover{border-color:var(--red);color:var(--red);background:rgba(224,92,58,0.05);}
+  .main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;}
+  .topbar{padding:20px 36px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;background:var(--surface);position:sticky;top:0;z-index:40;}
+  .page-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:var(--off-white);}
+  .page-title span{color:var(--amber-l);font-style:italic;}
+  .status-badge{display:flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(76,175,130,0.08);border:1px solid rgba(76,175,130,0.2);border-radius:20px;font-family:'DM Mono',monospace;font-size:10px;color:var(--green);letter-spacing:0.1em;}
+  .status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 6px var(--green);}50%{opacity:0.4;box-shadow:none;}}
+  .content{padding:32px 36px;flex:1;}
+  .section{display:none;}
+  .section.active{display:block;}
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;}
+  .kpi-card{background:var(--surface);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px;position:relative;overflow:hidden;transition:border-color 0.2s;}
+  .kpi-card:hover{border-color:rgba(184,135,42,0.2);}
+  .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--amber),transparent);}
+  .kpi-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray);margin-bottom:12px;}
+  .kpi-value{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:600;color:var(--amber-l);line-height:1;margin-bottom:8px;}
+  .kpi-value.red{color:var(--red);}
+  .kpi-value.green{color:var(--green);}
+  .kpi-sub{font-size:11px;color:var(--gray);line-height:1.4;}
+  .panel{background:var(--surface);border:1px solid rgba(255,255,255,0.06);border-radius:12px;overflow:hidden;margin-bottom:20px;}
+  .panel-header{padding:18px 22px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;}
+  .panel-title{font-size:12px;font-weight:600;letter-spacing:0.08em;color:var(--off-white);text-transform:uppercase;}
+  .panel-tag{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.12em;color:var(--amber);padding:4px 10px;background:var(--amber-p);border-radius:20px;}
+  .panel-body{padding:22px;}
+  .data-table{width:100%;border-collapse:collapse;}
+  .data-table th{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray);padding:10px 16px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.05);}
+  .data-table td{padding:13px 16px;font-size:12.5px;color:var(--gray-l);border-bottom:1px solid rgba(255,255,255,0.03);}
+  .data-table tr:last-child td{border-bottom:none;}
+  .data-table tr:hover td{background:rgba(255,255,255,0.02);color:var(--off-white);}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:500;letter-spacing:0.05em;}
+  .badge-green{background:rgba(76,175,130,0.12);color:var(--green);}
+  .badge-amber{background:var(--amber-p);color:var(--amber-l);}
+  .badge-red{background:rgba(224,92,58,0.1);color:var(--red);}
+  .badge-gray{background:rgba(255,255,255,0.06);color:var(--gray-l);}
+  .loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--gray);font-size:13px;gap:10px;}
+  .spinner{width:16px;height:16px;border:2px solid rgba(184,135,42,0.2);border-top-color:var(--amber);border-radius:50%;animation:spin 0.7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .empty{text-align:center;padding:40px;color:var(--gray);font-size:13px;}
+
+  /* Achado card */
+  .achado-card{background:var(--surface2);border-radius:10px;padding:20px;margin-bottom:12px;border-left:4px solid var(--gray);display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start;}
+  .achado-card.critico{border-color:var(--red);}
+  .achado-card.atencao{border-color:var(--amber);}
+  .achado-card.informativo{border-color:var(--gray);}
+  .achado-titulo{font-size:13px;font-weight:600;color:var(--off-white);margin-bottom:6px;}
+  .achado-desc{font-size:12px;color:var(--gray-l);line-height:1.6;}
+  .achado-meta{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .achado-impacto{text-align:right;}
+  .achado-impacto-val{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;color:var(--red);line-height:1;}
+  .achado-impacto-label{font-size:10px;color:var(--gray);font-family:'DM Mono',monospace;letter-spacing:0.1em;}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span class="sidebar-logo-name">CONDOLYTICS</span>
+    <span class="sidebar-logo-role">Conselho Fiscal</span>
+  </div>
+  <div class="sidebar-cond">
+    <div class="sidebar-cond-label">Condomínio</div>
+    <div class="sidebar-cond-name" id="condNome">Carregando...</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Menu</div>
+    <button class="nav-item active" onclick="mostrarSecao('dashboard',this)">
+      <svg viewBox="0 0 16 16" fill="none">
+        <rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+        <rect x="9" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+        <rect x="1" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+        <rect x="9" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+      </svg>
+      Dashboard
+    </button>
+    <button class="nav-item" onclick="mostrarSecao('analises',this)">
+      <svg viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/>
+        <path d="M8 5v3l2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      Análises
+    </button>
+    <button class="nav-item" onclick="mostrarSecao('achados',this)">
+      <svg viewBox="0 0 16 16" fill="none">
+        <path d="M8 2L2 12h12L8 2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+        <path d="M8 7v3M8 11.5v.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      Achados
+    </button>
+    <button class="nav-item" onclick="mostrarSecao('relatorios',this)">
+      <svg viewBox="0 0 16 16" fill="none">
+        <rect x="3" y="1" width="10" height="14" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+        <path d="M6 5h4M6 8h4M6 11h2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      Relatórios
+    </button>
+    <button class="nav-item" onclick="mostrarSecao('alertas',this)">
+      <svg viewBox="0 0 16 16" fill="none">
+        <path d="M8 1a5 5 0 015 5c0 3-1.5 5-2 6H5c-.5-1-2-3-2-6a5 5 0 015-5z" stroke="currentColor" stroke-width="1.3"/>
+        <path d="M6 13a2 2 0 004 0" stroke="currentColor" stroke-width="1.3"/>
+      </svg>
+      Alertas
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="user-avatar" id="userAvatar">C</div>
+      <div>
+        <div class="user-name" id="userName">Carregando...</div>
+        <div class="user-role">Conselho Fiscal</div>
+      </div>
+    </div>
+    <button class="btn-logout" onclick="logout()">Sair da conta</button>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <h1 class="page-title" id="pageTitle">Painel do <span>Conselho</span></h1>
+    <div class="status-badge"><div class="status-dot"></div>Sistema Ativo</div>
+  </div>
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <section class="section active" id="sec-dashboard">
+      <div class="kpi-grid" id="kpiGrid">
+        <div class="loading"><div class="spinner"></div>Carregando...</div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Resumo das Análises</span>
+          <span class="panel-tag" id="analiseCount">—</span>
+        </div>
+        <div class="panel-body" style="padding:0;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Análise</th>
+                <th>Período</th>
+                <th>Documentos</th>
+                <th>Irregularidades</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="analiseBody">
+              <tr><td colspan="5">
+                <div class="loading"><div class="spinner"></div>Carregando...</div>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ANÁLISES -->
+    <section class="section" id="sec-analises">
+      <div id="analiseDetalhe">
+        <div class="loading"><div class="spinner"></div>Carregando...</div>
+      </div>
+    </section>
+
+    <!-- ACHADOS -->
+    <section class="section" id="sec-achados">
+      <div class="kpi-grid" id="kpiAchados">
+        <div class="loading"><div class="spinner"></div>Carregando...</div>
+      </div>
+      <div id="achadosList">
+        <div class="loading"><div class="spinner"></div>Carregando...</div>
+      </div>
+    </section>
+
+    <!-- RELATÓRIOS -->
+    <section class="section" id="sec-relatorios">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Relatórios Disponíveis</span>
+        </div>
+        <div class="panel-body" style="padding:0;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Título</th><th>Tipo</th><th>Período</th>
+                <th>Publicado em</th><th>Ação</th>
+              </tr>
+            </thead>
+            <tbody id="relatoriosBody">
+              <tr><td colspan="5">
+                <div class="loading"><div class="spinner"></div>Carregando...</div>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ALERTAS -->
+    <section class="section" id="sec-alertas">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Alertas do Condomínio</span>
+        </div>
+        <div class="panel-body" style="padding:0;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Alerta</th><th>Tipo</th>
+                <th>Severidade</th><th>Data</th><th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="alertasBody">
+              <tr><td colspan="5">
+                <div class="loading"><div class="spinner"></div>Carregando...</div>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<script src="js/supabase.js"></script>
+<script>
+let usuario = null;
+
+window.addEventListener('load', async () => {
+  usuario = await protegerPagina(['conselho','admin']);
+  if (!usuario) return;
+  document.getElementById('userName').textContent = usuario.nome_completo || 'Conselheiro';
+  document.getElementById('userAvatar').textContent = (usuario.nome_completo||'C')[0].toUpperCase();
+  document.getElementById('condNome').textContent = usuario.condominios?.nome || 'Condomínio';
+  await Promise.all([
+    carregarKPIs(),
+    carregarAnalises(),
+    carregarAchados(),
+    carregarRelatorios(),
+    carregarAlertas()
+  ]);
+});
+
+function mostrarSecao(nome, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('sec-'+nome).classList.add('active');
+  el.classList.add('active');
+  const titulos = {
+    dashboard: 'Painel do <span>Conselho</span>',
+    analises:  'Análises <span>de Auditoria</span>',
+    achados:   'Achados <span>Identificados</span>',
+    relatorios:'Relatórios <span>Condolytics</span>',
+    alertas:   'Central de <span>Alertas</span>'
+  };
+  document.getElementById('pageTitle').innerHTML = titulos[nome] || nome;
+}
+
+async function carregarKPIs() {
+  const { count: totalAchados } = await db.from('achados')
+    .select('*',{count:'exact',head:true});
+  const { data: abertos } = await db.from('achados')
+    .select('valor_impacto').eq('status','aberto');
+  const { count: totalAlertas } = await db.from('alertas')
+    .select('*',{count:'exact',head:true}).eq('lido',false);
+  const { count: totalRelatorios } = await db.from('relatorios')
+    .select('*',{count:'exact',head:true}).eq('publicado',true);
+  const totalImpacto = abertos?.reduce((s,a) => s+(a.valor_impacto||0), 0) || 0;
+
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi-card">
+      <div class="kpi-label">Total de Achados</div>
+      <div class="kpi-value">${totalAchados||0}</div>
+      <div class="kpi-sub">identificados nas análises</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Impacto em Aberto</div>
+      <div class="kpi-value red">R$${(totalImpacto/1000).toFixed(1)}k</div>
+      <div class="kpi-sub">aguardando tratativa</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Alertas Ativos</div>
+      <div class="kpi-value ${totalAlertas>0?'red':'green'}">${totalAlertas||0}</div>
+      <div class="kpi-sub">não lidos</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Relatórios Disponíveis</div>
+      <div class="kpi-value green">${totalRelatorios||0}</div>
+      <div class="kpi-sub">publicados pela Condolytics</div>
+    </div>
+  `;
+}
+
+async function carregarAnalises() {
+  const { data, count } = await db.from('analises')
+    .select('*',{count:'exact'}).order('created_at',{ascending:false});
+  document.getElementById('analiseCount').textContent = (count||0)+' análises';
+
+  const statusBadge = {
+    em_andamento:'badge-amber',concluida:'badge-green',aprovada:'badge-green'
+  };
+  const tbody = document.getElementById('analiseBody');
+  if (!data?.length) {
+    tbody.innerHTML='<tr><td colspan="5"><div class="empty">Nenhuma análise.</div></td></tr>';
+  } else {
+    tbody.innerHTML = data.map(a=>`
+      <tr>
+        <td style="color:var(--off-white);">${a.titulo}</td>
+        <td style="font-size:11px;color:var(--gray);">
+          ${new Date(a.periodo_inicio).toLocaleDateString('pt-BR')} —
+          ${new Date(a.periodo_fim).toLocaleDateString('pt-BR')}
+        </td>
+        <td>${a.total_documentos}</td>
+        <td style="color:var(--red);">
+          R$ ${Number(a.valor_irregularidades).toLocaleString('pt-BR')}
+        </td>
+        <td>
+          <span class="badge ${statusBadge[a.status]||'badge-gray'}">
+            ${a.status.replace('_',' ')}
+          </span>
+        </td>
+      </tr>`).join('');
+  }
+
+  // Detalhe de análises
+  const det = document.getElementById('analiseDetalhe');
+  if (!data?.length) {
+    det.innerHTML = '<div class="empty">Nenhuma análise disponível.</div>';
+  } else {
+    det.innerHTML = data.map(a=>`
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">${a.titulo}</span>
+          <span class="panel-tag">${a.status.replace('_',' ')}</span>
+        </div>
+        <div class="panel-body">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px;">
+            <div>
+              <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.15em;color:var(--gray);text-transform:uppercase;margin-bottom:6px;">Período</div>
+              <div style="font-size:13px;color:var(--off-white);">
+                ${new Date(a.periodo_inicio).toLocaleDateString('pt-BR')} —
+                ${new Date(a.periodo_fim).toLocaleDateString('pt-BR')}
+              </div>
+            </div>
+            <div>
+              <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.15em;color:var(--gray);text-transform:uppercase;margin-bottom:6px;">Documentos Analisados</div>
+              <div style="font-size:13px;color:var(--off-white);">${a.total_documentos}</div>
+            </div>
+            <div>
+              <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.15em;color:var(--gray);text-transform:uppercase;margin-bottom:6px;">Valor das Irregularidades</div>
+              <div style="font-size:13px;color:var(--red);">R$ ${Number(a.valor_irregularidades).toLocaleString('pt-BR')}</div>
+            </div>
+          </div>
+          <div style="background:var(--surface2);border-radius:8px;padding:16px;">
+            <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.15em;color:var(--amber);text-transform:uppercase;margin-bottom:10px;">Resumo Executivo</div>
+            <p style="font-size:13px;color:var(--gray-l);line-height:1.7;">${a.resumo_executivo||'—'}</p>
+          </div>
+        </div>
+      </div>`).join('');
+  }
+}
+
+async function carregarAchados() {
+  const { data } = await db.from('achados')
+    .select('*').order('valor_impacto',{ascending:false});
+
+  const criticos = data?.filter(a=>a.severidade==='critico').length || 0;
+  const abertos  = data?.filter(a=>a.status==='aberto').length || 0;
+  const total    = data?.reduce((s,a)=>s+(a.valor_impacto||0),0) || 0;
+
+  document.getElementById('kpiAchados').innerHTML = `
+    <div class="kpi-card">
+      <div class="kpi-label">Total de Achados</div>
+      <div class="kpi-value">${data?.length||0}</div>
+      <div class="kpi-sub">encontrados nas análises</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Críticos</div>
+      <div class="kpi-value red">${criticos}</div>
+      <div class="kpi-sub">severidade crítica</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Em Aberto</div>
+      <div class="kpi-value red">${abertos}</div>
+      <div class="kpi-sub">aguardando resolução</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Impacto Total</div>
+      <div class="kpi-value">R$${(total/1000).toFixed(1)}k</div>
+      <div class="kpi-sub">valor recuperável</div>
+    </div>
+  `;
+
+  const el = document.getElementById('achadosList');
+  if (!data?.length) {
+    el.innerHTML = '<div class="empty">Nenhum achado encontrado.</div>';
+    return;
+  }
+  const sevBadge = {critico:'badge-red',atencao:'badge-amber',informativo:'badge-gray'};
+  const stsBadge = {aberto:'badge-red',em_tratativa:'badge-amber',resolvido:'badge-green'};
+  el.innerHTML = data.map(a=>`
+    <div class="achado-card ${a.severidade}">
+      <div>
+        <div class="achado-titulo">${a.titulo}</div>
+        <div class="achado-desc">${a.descricao}</div>
+        <div class="achado-meta">
+          <span class="badge ${sevBadge[a.severidade]||'badge-gray'}">${a.severidade}</span>
+          <span class="badge ${stsBadge[a.status]||'badge-gray'}">${a.status.replace('_',' ')}</span>
+          <span class="badge badge-gray">${a.categoria}</span>
+        </div>
+      </div>
+      <div class="achado-impacto">
+        <div class="achado-impacto-val">R$${(a.valor_impacto/1000).toFixed(1)}k</div>
+        <div class="achado-impacto-label">impacto</div>
+      </div>
+    </div>`).join('');
+}
+
+async function carregarRelatorios() {
+  const { data } = await db.from('relatorios')
+    .select('*').eq('publicado',true)
+    .order('created_at',{ascending:false});
+  const tbody = document.getElementById('relatoriosBody');
+  if (!data?.length) {
+    tbody.innerHTML='<tr><td colspan="5"><div class="empty">Nenhum relatório.</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(r=>`
+    <tr>
+      <td style="color:var(--off-white);">${r.titulo}</td>
+      <td>${r.tipo}</td>
+      <td>${r.periodo||'—'}</td>
+      <td style="font-size:11px;color:var(--gray);">
+        ${r.publicado_em?new Date(r.publicado_em).toLocaleDateString('pt-BR'):'—'}
+      </td>
+      <td>
+        ${r.url_pdf
+          ?`<a href="${r.url_pdf}" target="_blank"
+               style="color:var(--amber-l);font-size:12px;text-decoration:none;">
+               ↓ Baixar PDF</a>`
+          :'<span style="color:var(--gray);font-size:11px;">Indisponível</span>'}
+      </td>
+    </tr>`).join('');
+}
+
+async function carregarAlertas() {
+  const { data } = await db.from('alertas')
+    .select('*').order('created_at',{ascending:false});
+  const tbody = document.getElementById('alertasBody');
+  if (!data?.length) {
+    tbody.innerHTML='<tr><td colspan="5"><div class="empty">Nenhum alerta.</div></td></tr>';
+    return;
+  }
+  const sevBadge={critico:'badge-red',atencao:'badge-amber',informativo:'badge-gray'};
+  tbody.innerHTML = data.map(a=>`
+    <tr>
+      <td style="color:var(--off-white);max-width:300px;">${a.titulo}</td>
+      <td>${a.tipo}</td>
+      <td><span class="badge ${sevBadge[a.severidade]||'badge-gray'}">${a.severidade}</span></td>
+      <td style="font-size:11px;color:var(--gray);">
+        ${new Date(a.created_at).toLocaleDateString('pt-BR')}
+      </td>
+      <td>
+        <span class="badge ${a.lido?'badge-green':'badge-amber'}">
+          ${a.lido?'lido':'não lido'}
+        </span>
+      </td>
+    </tr>`).join('');
+}
+</script>
+</body>
+</html>
