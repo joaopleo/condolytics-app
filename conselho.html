@@ -1,448 +1,1134 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Condolytics — Conselho Fiscal</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-  :root {
-    --bg:#0A0C0F;--surface:#111318;--surface2:#1A1D24;
-    --amber:#B8872A;--amber-l:#D4A44C;--amber-p:rgba(184,135,42,0.08);
-    --off-white:#E8E6E0;--gray:#6B7280;--gray-l:#9CA3AF;
-    --red:#E05C3A;--green:#4CAF82;--sidebar:220px;
-  }
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--off-white);min-height:100vh;display:flex;}
-  .sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid rgba(184,135,42,0.1);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:50;}
-  .sidebar-logo{padding:28px 24px 24px;border-bottom:1px solid rgba(255,255,255,0.05);}
-  .sidebar-logo-name{font-size:13px;font-weight:600;letter-spacing:0.15em;color:var(--amber-l);display:block;margin-bottom:3px;}
-  .sidebar-logo-role{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.12em;color:var(--gray);text-transform:uppercase;}
-  .sidebar-cond{padding:12px 24px;background:var(--amber-p);border-bottom:1px solid rgba(184,135,42,0.1);}
-  .sidebar-cond-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.12em;color:var(--amber);text-transform:uppercase;margin-bottom:4px;}
-  .sidebar-cond-name{font-size:12px;font-weight:500;color:var(--off-white);line-height:1.3;}
-  .sidebar-nav{flex:1;padding:16px 12px;display:flex;flex-direction:column;gap:2px;}
-  .nav-section{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.18em;color:var(--gray);text-transform:uppercase;padding:12px 12px 6px;margin-top:8px;}
-  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:400;color:var(--gray-l);transition:all 0.15s;border:none;background:none;width:100%;text-align:left;}
-  .nav-item:hover{background:rgba(255,255,255,0.04);color:var(--off-white);}
-  .nav-item.active{background:var(--amber-p);color:var(--amber-l);border:1px solid rgba(184,135,42,0.15);}
-  .nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:0.7;}
-  .nav-item.active svg{opacity:1;}
-  .sidebar-footer{padding:16px 12px;border-top:1px solid rgba(255,255,255,0.05);}
-  .user-info{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:var(--surface2);}
-  .user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--amber),var(--amber-l));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--bg);flex-shrink:0;}
-  .user-name{font-size:12px;font-weight:500;color:var(--off-white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .user-role{font-size:10px;color:var(--gray);}
-  .btn-logout{width:100%;margin-top:8px;padding:8px;background:none;border:1px solid rgba(255,255,255,0.06);border-radius:6px;font-family:'Outfit',sans-serif;font-size:11px;color:var(--gray);cursor:pointer;transition:all 0.15s;}
-  .btn-logout:hover{border-color:var(--red);color:var(--red);background:rgba(224,92,58,0.05);}
-  .main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;}
-  .topbar{padding:20px 36px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;background:var(--surface);position:sticky;top:0;z-index:40;}
-  .page-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;color:var(--off-white);}
-  .page-title span{color:var(--amber-l);font-style:italic;}
-  .status-badge{display:flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(76,175,130,0.08);border:1px solid rgba(76,175,130,0.2);border-radius:20px;font-family:'DM Mono',monospace;font-size:10px;color:var(--green);letter-spacing:0.1em;}
-  .status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
-  @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 6px var(--green);}50%{opacity:0.4;box-shadow:none;}}
-  .content{padding:32px 36px;flex:1;}
-  .section{display:none;}
-  .section.active{display:block;}
-  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;}
-  .kpi-card{background:var(--surface);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px;position:relative;overflow:hidden;transition:border-color 0.2s;}
-  .kpi-card:hover{border-color:rgba(184,135,42,0.2);}
-  .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--amber),transparent);}
-  .kpi-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray);margin-bottom:12px;}
-  .kpi-value{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:600;color:var(--amber-l);line-height:1;margin-bottom:8px;}
-  .kpi-value.red{color:var(--red);}
-  .kpi-value.green{color:var(--green);}
-  .kpi-sub{font-size:11px;color:var(--gray);line-height:1.4;}
-  .panel{background:var(--surface);border:1px solid rgba(255,255,255,0.06);border-radius:12px;overflow:hidden;margin-bottom:20px;}
-  .panel-header{padding:18px 22px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;}
-  .panel-title{font-size:12px;font-weight:600;letter-spacing:0.08em;color:var(--off-white);text-transform:uppercase;}
-  .panel-tag{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.12em;color:var(--amber);padding:4px 10px;background:var(--amber-p);border-radius:20px;}
-  .panel-body{padding:22px;}
-  .data-table{width:100%;border-collapse:collapse;}
-  .data-table th{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray);padding:10px 16px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.05);}
-  .data-table td{padding:13px 16px;font-size:12.5px;color:var(--gray-l);border-bottom:1px solid rgba(255,255,255,0.03);}
-  .data-table tr:last-child td{border-bottom:none;}
-  .data-table tr:hover td{background:rgba(255,255,255,0.02);color:var(--off-white);}
-  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:500;letter-spacing:0.05em;}
-  .badge-green{background:rgba(76,175,130,0.12);color:var(--green);}
-  .badge-amber{background:var(--amber-p);color:var(--amber-l);}
-  .badge-red{background:rgba(224,92,58,0.1);color:var(--red);}
-  .badge-gray{background:rgba(255,255,255,0.06);color:var(--gray-l);}
-  .loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--gray);font-size:13px;gap:10px;}
-  .spinner{width:16px;height:16px;border:2px solid rgba(184,135,42,0.2);border-top-color:var(--amber);border-radius:50%;animation:spin 0.7s linear infinite;}
-  @keyframes spin{to{transform:rotate(360deg);}}
-  .empty{text-align:center;padding:40px;color:var(--gray);font-size:13px;}
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Condolytics — Conselho Fiscal</title>
 
-  /* Achado card */
-  .achado-card{background:var(--surface2);border-radius:10px;padding:20px;margin-bottom:12px;border-left:4px solid var(--gray);display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start;}
-  .achado-card.critico{border-color:var(--red);}
-  .achado-card.atencao{border-color:var(--amber);}
-  .achado-card.informativo{border-color:var(--gray);}
-  .achado-titulo{font-size:13px;font-weight:600;color:var(--off-white);margin-bottom:6px;}
-  .achado-desc{font-size:12px;color:var(--gray-l);line-height:1.6;}
-  .achado-meta{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
-  .achado-impacto{text-align:right;}
-  .achado-impacto-val{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;color:var(--red);line-height:1;}
-  .achado-impacto-label{font-size:10px;color:var(--gray);font-family:'DM Mono',monospace;letter-spacing:0.1em;}
-</style>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0A0C0F;
+      --surface:   #111318;
+      --surface2:  #16191F;
+      --surface3:  #1C2028;
+      --border:    rgba(201,168,76,0.12);
+      --border2:   rgba(255,255,255,0.06);
+      --gold:      #C9A84C;
+      --gold-dim:  rgba(201,168,76,0.18);
+      --gold-glow: rgba(201,168,76,0.08);
+      --text:      #E8E6E0;
+      --text-dim:  #9A9690;
+      --text-faint:#52504C;
+      --red:       #E05C3A;
+      --red-dim:   rgba(224,92,58,0.15);
+      --green:     #4CAF7D;
+      --green-dim: rgba(76,175,125,0.15);
+      --blue:      #5B9BD5;
+      --blue-dim:  rgba(91,155,213,0.15);
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Helvetica Neue", Arial, sans-serif;
+      --font-mono: 'IBM Plex Mono', ui-monospace, "SF Mono", monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--font-sans); font-size: 14px;
+      line-height: 1.5; min-height: 100vh; overflow-x: hidden;
+    }
+
+    .mono { font-family: var(--font-mono); }
+    .gold { color: var(--gold); }
+    .red  { color: var(--red);  }
+    .green{ color: var(--green);}
+    .dim  { color: var(--text-dim); }
+
+    .tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 2px 8px; border-radius: 3px;
+      font-family: var(--font-mono); font-size: 10px;
+      letter-spacing: 0.06em; text-transform: uppercase; font-weight: 500;
+    }
+    .tag-gold  { background: var(--gold-dim);  color: var(--gold); }
+    .tag-red   { background: var(--red-dim);   color: var(--red);  }
+    .tag-green { background: var(--green-dim); color: var(--green);}
+    .tag-blue  { background: var(--blue-dim);  color: var(--blue); }
+
+    .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 2px; }
+
+    /* ── HEADER ── */
+    header {
+      display: grid; grid-template-columns: 1fr auto 1fr;
+      align-items: center; padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(10,12,15,0.92);
+      backdrop-filter: blur(16px);
+      opacity: 0; animation: slideDown 0.5s ease 0.1s forwards;
+    }
+    @keyframes slideDown {
+      from { opacity:0; transform:translateY(-12px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    .logo-block { display: flex; align-items: center; gap: 14px; }
+    .logo-mark  { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
+    .logo-text  { line-height: 1.1; }
+    .logo-name  {
+      font-family: var(--font-sans); font-size: 20px; font-weight: 700;
+      letter-spacing: -0.01em; color: var(--text);
+    }
+    .logo-sub {
+      font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--gold);
+    }
+
+    .header-center { text-align: center; }
+    .condo-name  { font-family: var(--font-sans); font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: 0.04em; }
+    .condo-period{ font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); margin-top: 2px; letter-spacing: 0.06em; }
+
+    .header-right { display: flex; align-items: center; gap: 16px; justify-content: flex-end; }
+    .status-pill  {
+      display: flex; align-items: center; gap: 8px; padding: 6px 12px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+    }
+    .pulse-dot {
+      width: 8px; height: 8px; background: var(--green); border-radius: 50%; position: relative;
+    }
+    .pulse-dot::after {
+      content: ''; position: absolute; inset: -4px; background: var(--green);
+      border-radius: 50%; opacity: 0; animation: ripple 2s ease-out infinite;
+    }
+    @keyframes ripple {
+      0%   { transform: scale(0.5); opacity: 0.4; }
+      100% { transform: scale(2.2); opacity: 0; }
+    }
+    .status-text { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); letter-spacing: 0.04em; }
+
+    .notif-btn {
+      width: 36px; height: 36px; background: var(--surface);
+      border: 1px solid var(--border2); border-radius: 8px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      position: relative; transition: border-color 0.2s;
+    }
+    .notif-btn:hover { border-color: var(--gold); }
+    .notif-btn svg  { width: 16px; height: 16px; color: var(--text-dim); }
+    .notif-badge {
+      position: absolute; top: -5px; right: -5px;
+      width: 16px; height: 16px; background: var(--red); border-radius: 50%;
+      font-family: var(--font-mono); font-size: 9px; font-weight: 600; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── USER PILL ── */
+    .user-pill {
+      display: flex; align-items: center; gap: 10px; padding: 6px 12px;
+      background: var(--surface); border: 1px solid var(--border2); border-radius: 20px;
+    }
+    .user-avatar {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold), #E0C070);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: var(--bg); flex-shrink: 0;
+    }
+    .user-name-hdr { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); letter-spacing: 0.04em; }
+    .btn-logout-hdr {
+      font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--text-faint);
+      background: none; border: none; cursor: pointer; transition: color 0.2s;
+    }
+    .btn-logout-hdr:hover { color: var(--red); }
+
+    /* ── SHELL ── */
+    .shell { max-width: 1600px; margin: 0 auto; padding: 0 24px 40px; }
+
+    /* ── NAV TABS ── */
+    .nav-bar {
+      display: flex; align-items: center; gap: 4px;
+      padding: 20px 0 4px;
+      border-bottom: 1px solid var(--border2);
+      margin-bottom: 0;
+    }
+    .nav-tab {
+      font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em;
+      text-transform: uppercase; padding: 8px 16px; border-radius: 6px;
+      background: none; border: 1px solid transparent;
+      color: var(--text-faint); cursor: pointer; transition: all 0.2s;
+    }
+    .nav-tab:hover { color: var(--text); border-color: var(--border2); }
+    .nav-tab.n-active {
+      background: var(--gold-dim); border-color: rgba(201,168,76,0.35);
+      color: var(--gold);
+    }
+
+    /* ── SECTIONS ── */
+    .sec { display: none; padding-top: 20px; }
+    .sec.s-active { display: block; }
+
+    /* ── KPI STRIP ── */
+    .kpi-strip {
+      display: grid; grid-template-columns: repeat(5,1fr);
+      gap: 12px; padding: 0 0 16px;
+    }
+    .kpi-card {
+      background: var(--surface); border: 1px solid var(--border2);
+      border-radius: 10px; padding: 18px 20px;
+      position: relative; overflow: hidden; cursor: default;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .kpi-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .kpi-card:hover { border-color: rgba(201,168,76,0.3); box-shadow: 0 0 28px rgba(201,168,76,0.06); }
+    .kpi-card:hover::before { opacity: 1; }
+    .kpi-label {
+      font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px;
+    }
+    .kpi-value {
+      font-family: var(--font-sans); font-size: 28px; font-weight: 700;
+      color: var(--text); line-height: 1; margin-bottom: 8px; letter-spacing: -0.02em;
+    }
+    .kpi-value .unit { font-size: 14px; font-weight: 400; color: var(--text-dim); margin-right: 2px; letter-spacing: 0; }
+    .kpi-delta { display: flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 11px; }
+    .kpi-delta.up   { color: var(--green); }
+    .kpi-delta.down { color: var(--red);   }
+    .kpi-delta.warn { color: var(--gold);  }
+
+    /* Fundo de reserva progress */
+    .progress-wrap { margin-top: 10px; }
+    .progress-bar-bg { height: 3px; background: var(--border2); border-radius: 2px; overflow: hidden; }
+    .progress-bar-fill {
+      height: 100%; border-radius: 2px;
+      background: linear-gradient(90deg, var(--gold), #E0C070);
+      width: 0; transition: width 1.5s cubic-bezier(.4,0,.2,1) 0.8s;
+    }
+    .progress-label {
+      display: flex; justify-content: space-between;
+      font-family: var(--font-mono); font-size: 9px; color: var(--text-faint); margin-top: 5px;
+    }
+
+    /* Execução arc */
+    .radial-wrap { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+    .radial-svg  { flex-shrink: 0; }
+    .radial-info { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); }
+
+    /* Alertas count */
+    .kpi-alerts-count {
+      font-family: var(--font-sans); font-size: 48px; font-weight: 700;
+      color: var(--gold); line-height: 1; letter-spacing: -0.03em;
+    }
+
+    /* ── MAIN GRID ── */
+    .main-grid {
+      display: grid; grid-template-columns: 60fr 40fr;
+      gap: 16px; margin-top: 16px;
+    }
+    .panel {
+      background: var(--surface); border: 1px solid var(--border2);
+      border-radius: 10px; overflow: hidden;
+    }
+    .panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--border2);
+    }
+    .panel-title {
+      font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--text-dim);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .panel-title-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+    .panel-body { padding: 20px; }
+    .left-col  { display: flex; flex-direction: column; gap: 16px; }
+    .right-col { display: flex; flex-direction: column; gap: 16px; }
+    .chart-container { position: relative; flex: 1; min-height: 240px; }
+
+    /* Chart source toggle */
+    .ct-btn {
+      font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--text-dim); background: var(--surface2);
+      border: 1px solid var(--border2); border-radius: 4px; padding: 3px 9px;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .ct-btn.ct-active { background: rgba(201,168,76,0.15); border-color: rgba(201,168,76,0.4); color: var(--gold); }
+    .ct-btn:hover:not(.ct-active) { border-color: rgba(201,168,76,0.2); color: var(--text); }
+
+    /* Expense table */
+    .expense-table { width: 100%; border-collapse: collapse; }
+    .expense-table thead tr { border-bottom: 1px solid var(--border2); }
+    .expense-table th {
+      font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--text-faint); padding: 0 12px 10px;
+      text-align: right; font-weight: 400;
+    }
+    .expense-table th:first-child { text-align: left; }
+    .expense-table tbody tr { border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.2s; }
+    .expense-table tbody tr:hover { background: var(--surface2); }
+    .expense-table td { padding: 11px 12px; font-family: var(--font-mono); font-size: 12px; color: var(--text); text-align: right; }
+    .expense-table td:first-child { text-align: left; }
+    .cat-name { font-family: var(--font-sans); font-size: 13px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+    .cat-dot  { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+    .var-chip { display: inline-flex; align-items: center; gap: 3px; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-family: var(--font-mono); }
+    .var-up   { background: var(--red-dim);   color: var(--red);   }
+    .var-down { background: var(--green-dim); color: var(--green); }
+    .var-neu  { background: var(--surface3);  color: var(--text-dim); }
+    .budget-mini-bg   { height: 2px; background: var(--border2); border-radius: 1px; overflow: hidden; margin-top: 4px; }
+    .budget-mini-fill { height: 100%; border-radius: 1px; }
+
+    /* Alertas */
+    .alert-list { display: flex; flex-direction: column; gap: 10px; }
+    .alert-item {
+      display: flex; gap: 12px; padding: 12px 14px;
+      background: var(--surface2); border-radius: 8px;
+      border-left: 3px solid transparent; position: relative;
+      transition: background 0.2s; cursor: pointer;
+    }
+    .alert-item:hover { background: var(--surface3); }
+    .alert-item.crit { border-left-color: var(--red);  animation: pulseBorder-red  3s ease-in-out infinite; }
+    .alert-item.warn { border-left-color: var(--gold); animation: pulseBorder-gold 3s ease-in-out infinite; }
+    .alert-item.info { border-left-color: var(--blue); }
+    @keyframes pulseBorder-red  { 0%,100%{border-left-color:var(--red);}  50%{border-left-color:rgba(224,92,58,0.3);} }
+    @keyframes pulseBorder-gold { 0%,100%{border-left-color:var(--gold);} 50%{border-left-color:rgba(201,168,76,0.3);} }
+    .alert-icon { width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px; }
+    .alert-icon.crit { background: var(--red-dim);  }
+    .alert-icon.warn { background: var(--gold-dim); }
+    .alert-icon.info { background: var(--blue-dim); }
+    .alert-body { flex:1;min-width:0; }
+    .alert-desc { font-family:var(--font-sans);font-size:12px;color:var(--text);line-height:1.4;margin-bottom:5px; }
+    .alert-meta { display:flex;align-items:center;justify-content:space-between;gap:8px; }
+    .alert-date { font-family:var(--font-mono);font-size:9px;color:var(--text-faint);letter-spacing:0.05em; }
+    .btn-ver    { font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);background:none;border:none;cursor:pointer;padding:0;transition:opacity 0.2s;white-space:nowrap; }
+    .btn-ver:hover { opacity:0.7; }
+
+    /* Achados / findings */
+    .achado-list { display: flex; flex-direction: column; gap: 10px; }
+    .achado-item {
+      background: var(--surface2); border-radius: 8px; padding: 14px 16px;
+      border-left: 3px solid var(--border2); transition: background 0.2s;
+      display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
+    }
+    .achado-item:hover { background: var(--surface3); }
+    .achado-item.crit { border-left-color: var(--red); }
+    .achado-item.warn { border-left-color: var(--gold); }
+    .achado-item.info { border-left-color: var(--blue); }
+    .achado-titulo { font-family: var(--font-sans); font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 5px; }
+    .achado-desc   { font-family: var(--font-sans); font-size: 11px; color: var(--text-dim); line-height: 1.5; }
+    .achado-meta   { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .achado-impacto { text-align: right; flex-shrink: 0; }
+    .achado-impacto-val   { font-family: var(--font-sans); font-size: 22px; font-weight: 700; color: var(--red); letter-spacing: -0.02em; line-height: 1; }
+    .achado-impacto-label { font-family: var(--font-mono); font-size: 9px; color: var(--text-faint); letter-spacing: 0.08em; margin-top: 3px; }
+
+    /* Pareceres */
+    .parecer-list { display: flex; flex-direction: column; gap: 8px; }
+    .parecer-item {
+      display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+      background: var(--surface2); border-radius: 8px; transition: background 0.2s;
+    }
+    .parecer-item:hover { background: var(--surface3); }
+    .parecer-icon { width:32px;height:32px;background:var(--gold-dim);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px; }
+    .parecer-info { flex:1;min-width:0; }
+    .parecer-title { font-family:var(--font-sans);font-size:12px;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+    .parecer-date  { font-family:var(--font-mono);font-size:10px;color:var(--text-faint);margin-top:2px; }
+    .btn-dl {
+      width:28px;height:28px;background:var(--surface);border:1px solid var(--border2);
+      border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+      flex-shrink:0;transition:border-color 0.2s;color:var(--text-dim);font-size:12px;text-decoration:none;
+    }
+    .btn-dl:hover { border-color:var(--gold);color:var(--gold); }
+    .btn-dl-pending { opacity:0.45;cursor:not-allowed; }
+    .btn-dl-pending:hover { border-color:var(--border2)!important;color:var(--text-dim)!important; }
+
+    /* Análise card */
+    .analise-card {
+      background: var(--surface); border: 1px solid var(--border2);
+      border-radius: 10px; overflow: hidden; margin-bottom: 16px;
+    }
+    .analise-header {
+      padding: 16px 20px; border-bottom: 1px solid var(--border2);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .analise-kv  { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; padding: 16px 20px; }
+    .akv-item    { background: var(--surface2); border-radius: 6px; padding: 12px 14px; }
+    .akv-label   { font-family: var(--font-mono); font-size: 9px; color: var(--text-faint); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 5px; }
+    .akv-val     { font-family: var(--font-sans); font-size: 15px; font-weight: 600; color: var(--text); }
+    .analise-resumo { padding: 0 20px 20px; font-family: var(--font-sans); font-size: 13px; color: var(--text-dim); line-height: 1.7; }
+
+    /* Relatórios table */
+    .rel-table { width: 100%; border-collapse: collapse; }
+    .rel-table th { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); padding: 0 16px 10px; text-align: left; border-bottom: 1px solid var(--border2); font-weight: 400; }
+    .rel-table td { padding: 13px 16px; font-family: var(--font-sans); font-size: 12.5px; color: var(--text-dim); border-bottom: 1px solid rgba(255,255,255,0.03); }
+    .rel-table tr:last-child td { border-bottom: none; }
+    .rel-table tr:hover td { background: var(--surface2); color: var(--text); }
+
+    /* Bottom strip + timeline */
+    .bottom-strip {
+      margin-top: 16px; background: var(--surface);
+      border: 1px solid var(--border2); border-radius: 10px; padding: 16px 24px;
+    }
+    .timeline-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 14px; }
+    .timeline-track { display: flex; align-items: flex-start; gap: 0; position: relative; overflow-x: auto; padding-bottom: 4px; }
+    .timeline-track::before { content: ''; position: absolute; top: 13px; left: 0; right: 0; height: 1px; background: var(--border2); z-index: 0; }
+    .timeline-event { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; min-width: 120px; position: relative; z-index: 1; }
+    .t-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--surface); flex-shrink: 0; }
+    .t-dot.past   { background: var(--text-faint); }
+    .t-dot.next   { background: var(--gold); box-shadow: 0 0 8px rgba(201,168,76,0.5); }
+    .t-dot.future { background: var(--surface3); border-color: var(--border2); }
+    .t-info { text-align: center; }
+    .t-name { font-family: var(--font-sans); font-size: 11px; color: var(--text); font-weight: 500; line-height: 1.3; }
+    .t-date { font-family: var(--font-mono); font-size: 9px; color: var(--text-faint); margin-top: 2px; }
+
+    .footer { display: flex; align-items: center; justify-content: space-between; margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border2); }
+    .footer-left  { font-family: var(--font-sans); font-size: 11px; color: var(--text-faint); display: flex; align-items: center; gap: 8px; }
+    .footer-left strong { color: var(--text-dim); font-weight: 500; }
+    .footer-right { font-family: var(--font-mono); font-size: 9px; color: var(--text-faint); letter-spacing: 0.06em; }
+
+    /* Responsável */
+    .responsavel-box {
+      margin-top: 16px; padding: 12px 14px;
+      background: var(--surface2); border-radius: 8px; border: 1px solid var(--border);
+    }
+    .resp-label { font-family: var(--font-mono); font-size: 9px; color: var(--text-faint); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
+    .resp-nome  { font-family: var(--font-sans); font-size: 14px; font-weight: 600; letter-spacing: -0.01em; color: var(--gold); }
+    .resp-cargo { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+    .resp-role  { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); margin-top: 5px; letter-spacing: 0.06em; border-top: 1px solid var(--border2); padding-top: 7px; }
+
+    /* Tooltip */
+    #kpiTooltip {
+      position: fixed; z-index: 9000; background: #16191F;
+      border: 1px solid rgba(201,168,76,0.3); border-radius: 8px;
+      padding: 12px 14px; max-width: 230px; pointer-events: none;
+      opacity: 0; transform: translateY(6px);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.55);
+    }
+    #kpiTooltip.tip-visible { opacity:1; transform:translateY(0); }
+    .tip-title { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+    .tip-body  { font-family: var(--font-sans); font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+
+    /* Modal */
+    #mainModal {
+      position: fixed; inset: 0; z-index: 10000;
+      display: flex; align-items: center; justify-content: center; padding: 24px;
+      opacity: 0; pointer-events: none; transition: opacity 0.22s ease;
+    }
+    #mainModal.modal-open { opacity:1; pointer-events:all; }
+    .modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.78); backdrop-filter: blur(6px); }
+    .modal-panel {
+      position: relative; z-index: 1; background: #111318;
+      border: 1px solid rgba(201,168,76,0.22); border-radius: 14px;
+      width: 100%; max-width: 560px; max-height: 82vh; overflow-y: auto;
+      transform: translateY(18px) scale(0.97);
+      transition: transform 0.28s cubic-bezier(.34,1.4,.64,1);
+      box-shadow: 0 28px 80px rgba(0,0,0,0.65);
+    }
+    #mainModal.modal-open .modal-panel { transform: translateY(0) scale(1); }
+    .modal-header { display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 16px;border-bottom:1px solid rgba(255,255,255,0.06); }
+    .modal-title-block { flex:1;min-width:0; }
+    .modal-badge { font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;padding:3px 9px;border-radius:3px;display:inline-block;margin-bottom:9px; }
+    .modal-badge.crit { background:var(--red-dim);  color:var(--red);  }
+    .modal-badge.warn { background:var(--gold-dim); color:var(--gold); }
+    .modal-badge.info { background:var(--blue-dim); color:var(--blue); }
+    .modal-h    { font-family:var(--font-sans);font-size:16px;font-weight:600;color:var(--text);line-height:1.3;letter-spacing:-0.01em; }
+    .modal-close { width:32px;height:32px;flex-shrink:0;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:15px;transition:border-color 0.2s,color 0.2s,background 0.2s;margin-top:2px;line-height:1; }
+    .modal-close:hover { border-color:var(--red);color:var(--red);background:var(--red-dim); }
+    .modal-body { padding: 20px 22px 24px; }
+    .modal-section { margin-bottom: 16px; }
+    .modal-section:last-child { margin-bottom: 0; }
+    .modal-section-label { font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-faint);margin-bottom:7px; }
+    .modal-section-text  { font-family:var(--font-sans);font-size:13px;color:var(--text-dim);line-height:1.6; }
+    .modal-section-text strong { color:var(--text);font-weight:600; }
+    .modal-divider { height:1px;background:rgba(255,255,255,0.05);margin:16px 0; }
+    .modal-kv { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
+    .modal-kv-item { background:var(--surface2);border-radius:6px;padding:10px 12px; }
+    .modal-kv-label { font-family:var(--font-mono);font-size:9px;color:var(--text-faint);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px; }
+    .modal-kv-val   { font-family:var(--font-sans);font-size:14px;font-weight:600;color:var(--text); }
+    .modal-rec { background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.18);border-radius:8px;padding:13px 15px; }
+    .modal-rec-label { font-family:var(--font-mono);font-size:9px;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:7px; }
+    .modal-rec-text  { font-family:var(--font-sans);font-size:12px;color:var(--text-dim);line-height:1.6; }
+
+    /* Notif Popover */
+    #notifPopover {
+      position: fixed; z-index: 9500; width: 310px;
+      background: #16191F; border: 1px solid rgba(201,168,76,0.22);
+      border-radius: 12px; box-shadow: 0 20px 56px rgba(0,0,0,0.65);
+      opacity: 0; pointer-events: none;
+      transform: translateY(-8px) scale(0.97);
+      transition: opacity 0.2s ease, transform 0.2s ease; overflow: hidden;
+    }
+    #notifPopover.pop-open { opacity:1;pointer-events:all;transform:translateY(0) scale(1); }
+    .pop-header { display:flex;align-items:center;justify-content:space-between;padding:13px 16px 11px;border-bottom:1px solid rgba(255,255,255,0.05); }
+    .pop-title  { font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-faint); }
+    .pop-list   { padding:6px 0; }
+    .pop-item   { display:flex;gap:11px;padding:10px 16px;cursor:pointer;transition:background 0.15s;border-left:2px solid transparent; }
+    .pop-item:hover { background:rgba(255,255,255,0.03); }
+    .pop-crit { border-left-color:var(--red);  }
+    .pop-warn { border-left-color:var(--gold); }
+    .pop-info { border-left-color:var(--blue); }
+    .pop-icon { font-size:14px;flex-shrink:0;padding-top:1px; }
+    .pop-content { flex:1;min-width:0; }
+    .pop-item-title { font-family:var(--font-sans);font-size:12px;font-weight:500;color:var(--text);line-height:1.3;margin-bottom:3px; }
+    .pop-item-desc  { font-family:var(--font-sans);font-size:11px;color:var(--text-dim);line-height:1.4; }
+    .pop-item-date  { font-family:var(--font-mono);font-size:9px;color:var(--text-faint);margin-top:4px;letter-spacing:0.04em; }
+    .pop-footer { padding:9px 16px;border-top:1px solid rgba(255,255,255,0.05);font-family:var(--font-mono);font-size:9px;color:var(--gold);letter-spacing:0.06em;cursor:pointer;transition:opacity 0.2s;text-align:center; }
+    .pop-footer:hover { opacity:0.7; }
+
+    /* Expense popover */
+    #expPopover {
+      position: fixed; z-index: 9999; background: #1A1E26;
+      border: 1px solid rgba(201,168,76,0.3); border-radius: 12px;
+      padding: 14px 16px; width: 310px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.65), 0 0 0 1px rgba(201,168,76,0.06);
+      pointer-events: auto; opacity: 0;
+      transform: translateY(6px) scale(0.97);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+    #expPopover.ep-visible { opacity:1;transform:translateY(0) scale(1); }
+    .ep-header { display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:8px; }
+    .ep-title  { font-size:11px;font-weight:600;color:var(--gold);letter-spacing:0.3px;line-height:1.35;flex:1; }
+    .ep-source { font-size:9px;color:rgba(255,255,255,0.32);letter-spacing:0.5px;text-transform:uppercase;white-space:nowrap;padding-top:2px; }
+    .ep-unavail{ font-size:12px;color:rgba(255,255,255,0.42);text-align:center;padding:10px 0 6px;font-style:italic; }
+    .ep-item   { display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04); }
+    .ep-item:last-child { border-bottom:none; }
+    .ep-item-label { flex:1;font-size:11px;color:rgba(255,255,255,0.72);line-height:1.3; }
+    .ep-item-val   { font-size:11px;font-weight:600;color:rgba(255,255,255,0.9);white-space:nowrap; }
+    .ep-bar-wrap   { width:44px;height:3px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;flex-shrink:0; }
+    .ep-bar-fill   { height:100%;border-radius:2px;background:var(--gold); }
+
+    /* Loading */
+    .ld { display:flex;align-items:center;justify-content:center;padding:40px;color:var(--text-faint);font-size:13px;gap:10px;font-family:var(--font-mono); }
+    .sp { width:16px;height:16px;border:2px solid rgba(201,168,76,0.2);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .empty-state { text-align:center;padding:40px;color:var(--text-faint);font-family:var(--font-mono);font-size:12px; }
+
+    /* Toast */
+    #dlToast {
+      position:fixed;bottom:28px;left:50%;
+      transform:translateX(-50%) translateY(12px);
+      z-index:11000;background:#16191F;
+      border:1px solid rgba(201,168,76,0.25);border-radius:8px;
+      padding:11px 18px;font-family:var(--font-mono);font-size:11px;
+      color:var(--text-dim);letter-spacing:0.04em;
+      box-shadow:0 8px 32px rgba(0,0,0,0.5);
+      opacity:0;pointer-events:none;
+      transition:opacity 0.2s ease,transform 0.2s ease;white-space:nowrap;
+    }
+    #dlToast.toast-show { opacity:1;transform:translateX(-50%) translateY(0); }
+
+    /* Responsive */
+    @media (max-width:1100px) { .main-grid{grid-template-columns:1fr;} .kpi-strip{grid-template-columns:repeat(3,1fr);} }
+    @media (max-width:720px)  { header{grid-template-columns:1fr;gap:10px;padding:14px;} .header-center,.header-right{display:none;} .kpi-strip{grid-template-columns:repeat(2,1fr);} .shell{padding:0 12px 32px;} .kpi-value{font-size:22px;} }
+    @media (max-width:420px)  { .kpi-strip{grid-template-columns:1fr;} }
+  </style>
 </head>
 <body>
 
-<aside class="sidebar">
-  <div class="sidebar-logo">
-    <span class="sidebar-logo-name">CONDOLYTICS</span>
-    <span class="sidebar-logo-role">Conselho Fiscal</span>
+<!-- ── HEADER ── -->
+<header>
+  <div class="logo-block">
+    <div class="logo-mark">
+      <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+        <polygon points="22,2 39,11.5 39,32.5 22,42 5,32.5 5,11.5" fill="#0A0C0F" stroke="#C9A84C" stroke-width="2"/>
+        <rect x="9"  y="26" width="4" height="9"  rx="0.5" fill="#C9A84C"/>
+        <rect x="14" y="20" width="4" height="15" rx="0.5" fill="#C9A84C"/>
+        <rect x="19" y="13" width="4" height="22" rx="0.5" fill="#C9A84C"/>
+        <rect x="24" y="20" width="4" height="15" rx="0.5" fill="#C9A84C"/>
+        <rect x="29" y="26" width="4" height="9"  rx="0.5" fill="#C9A84C"/>
+        <line x1="8" y1="35.5" x2="36" y2="35.5" stroke="#C9A84C" stroke-width="1.2"/>
+      </svg>
+    </div>
+    <div class="logo-text">
+      <div class="logo-name">Condo<span style="color:var(--gold);font-weight:300">lytics</span></div>
+      <div class="logo-sub">Inteligência Fiscal Condominial</div>
+    </div>
   </div>
-  <div class="sidebar-cond">
-    <div class="sidebar-cond-label">Condomínio</div>
-    <div class="sidebar-cond-name" id="condNome">Carregando...</div>
+
+  <div class="header-center">
+    <div class="condo-name" id="hdrCondoNome">Carregando...</div>
+    <div class="condo-period mono" id="hdrCondoPeriod">Conselho Fiscal · 2025</div>
   </div>
-  <nav class="sidebar-nav">
-    <div class="nav-section">Menu</div>
-    <button class="nav-item active" onclick="mostrarSecao('dashboard',this)">
-      <svg viewBox="0 0 16 16" fill="none">
-        <rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
-        <rect x="9" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
-        <rect x="1" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
-        <rect x="9" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+
+  <div class="header-right">
+    <div class="status-pill">
+      <div class="pulse-dot"></div>
+      <span class="status-text">Agentes ativos</span>
+    </div>
+    <div class="user-pill">
+      <div class="user-avatar" id="hdrAvatar">C</div>
+      <span class="user-name-hdr" id="hdrNome">Carregando...</span>
+      <button class="btn-logout-hdr" onclick="logout()">Sair</button>
+    </div>
+    <button class="notif-btn" id="notifBtn" title="Alertas ativos">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M10 2a6 6 0 00-6 6v3l-1.5 2.5h15L16 11V8a6 6 0 00-6-6z"/>
+        <path d="M8.5 17.5a1.5 1.5 0 003 0"/>
       </svg>
-      Dashboard
+      <span class="notif-badge" id="notifBadge">0</span>
     </button>
-    <button class="nav-item" onclick="mostrarSecao('analises',this)">
-      <svg viewBox="0 0 16 16" fill="none">
-        <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/>
-        <path d="M8 5v3l2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-      </svg>
-      Análises
-    </button>
-    <button class="nav-item" onclick="mostrarSecao('achados',this)">
-      <svg viewBox="0 0 16 16" fill="none">
-        <path d="M8 2L2 12h12L8 2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
-        <path d="M8 7v3M8 11.5v.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-      </svg>
-      Achados
-    </button>
-    <button class="nav-item" onclick="mostrarSecao('relatorios',this)">
-      <svg viewBox="0 0 16 16" fill="none">
-        <rect x="3" y="1" width="10" height="14" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
-        <path d="M6 5h4M6 8h4M6 11h2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-      </svg>
-      Relatórios
-    </button>
-    <button class="nav-item" onclick="mostrarSecao('alertas',this)">
-      <svg viewBox="0 0 16 16" fill="none">
-        <path d="M8 1a5 5 0 015 5c0 3-1.5 5-2 6H5c-.5-1-2-3-2-6a5 5 0 015-5z" stroke="currentColor" stroke-width="1.3"/>
-        <path d="M6 13a2 2 0 004 0" stroke="currentColor" stroke-width="1.3"/>
-      </svg>
-      Alertas
-    </button>
-  </nav>
-  <div class="sidebar-footer">
-    <div class="user-info">
-      <div class="user-avatar" id="userAvatar">C</div>
-      <div>
-        <div class="user-name" id="userName">Carregando...</div>
-        <div class="user-role">Conselho Fiscal</div>
+  </div>
+</header>
+
+<!-- ── SHELL ── -->
+<div class="shell">
+
+  <!-- NAV TABS -->
+  <div class="nav-bar">
+    <button class="nav-tab n-active" onclick="showSec('dashboard',this)">Dashboard</button>
+    <button class="nav-tab" onclick="showSec('analises',this)">Análises</button>
+    <button class="nav-tab" onclick="showSec('achados',this)">Achados</button>
+    <button class="nav-tab" onclick="showSec('relatorios',this)">Relatórios</button>
+    <button class="nav-tab" onclick="showSec('alertas',this)">Alertas</button>
+  </div>
+
+  <!-- ══ DASHBOARD ══ -->
+  <div class="sec s-active" id="sec-dashboard">
+
+    <!-- KPIs -->
+    <div class="kpi-strip" id="kpiStrip">
+      <div class="ld" style="grid-column:1/-1"><div class="sp"></div>Carregando indicadores...</div>
+    </div>
+
+    <!-- Main grid -->
+    <div class="main-grid">
+      <div class="left-col">
+
+        <!-- Gráfico Receitas vs Despesas -->
+        <div class="panel reveal" style="transition-delay:0.1s">
+          <div class="panel-header">
+            <div class="panel-title">
+              <div class="panel-title-dot"></div>
+              <span id="chartPanelTitle">Receitas vs. Despesas</span>
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button class="ct-btn ct-active" id="ctBellevue" onclick="switchChartSource('bellevue')">Bellevue</button>
+              <button class="ct-btn" id="ctAmalpes"  onclick="switchChartSource('amalpes')">AMALPES</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="chart-container">
+              <canvas id="revenueChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabela de despesas -->
+        <div class="panel reveal" style="transition-delay:0.2s">
+          <div class="panel-header">
+            <div class="panel-title">
+              <div class="panel-title-dot" style="background:var(--red)"></div>
+              Despesas por Categoria
+            </div>
+            <span class="tag tag-gold" id="monthTag">Jan/2026</span>
+          </div>
+          <div class="panel-body" style="padding:0;">
+            <table class="expense-table">
+              <thead>
+                <tr>
+                  <th>Categoria</th>
+                  <th>Realizado</th>
+                  <th>Variação</th>
+                  <th>Orçamento</th>
+                </tr>
+              </thead>
+              <tbody id="expenseBody">
+                <tr><td colspan="4"><div class="ld"><div class="sp"></div>Carregando...</div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div><!-- /left-col -->
+
+      <div class="right-col">
+
+        <!-- Alertas -->
+        <div class="panel reveal" style="transition-delay:0.15s">
+          <div class="panel-header">
+            <div class="panel-title">
+              <div class="panel-title-dot" style="background:var(--red)"></div>
+              Alertas Prioritários
+            </div>
+            <span class="tag tag-red" id="alertCountTag">—</span>
+          </div>
+          <div class="panel-body">
+            <div class="alert-list" id="alertList">
+              <div class="ld"><div class="sp"></div>Carregando...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pareceres / Relatórios -->
+        <div class="panel reveal" style="transition-delay:0.25s">
+          <div class="panel-header">
+            <div class="panel-title">
+              <div class="panel-title-dot" style="background:var(--blue)"></div>
+              Últimos Relatórios
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="parecer-list" id="parecerList">
+              <div class="ld"><div class="sp"></div>Carregando...</div>
+            </div>
+            <div class="responsavel-box" id="respBox" style="display:none">
+              <div class="resp-label">Responsável Técnico</div>
+              <div class="resp-nome" id="respNome">—</div>
+              <div class="resp-cargo">Especialista Sênior em Finanças Condominiais</div>
+              <div class="resp-role">Conselho Fiscal · <span id="respCondo">—</span></div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /right-col -->
+    </div><!-- /main-grid -->
+
+    <!-- Timeline -->
+    <div class="bottom-strip reveal" style="transition-delay:0.3s" id="timelineStrip">
+      <div class="timeline-label">Próximos Eventos</div>
+      <div class="timeline-track" id="timelineTrack">
+        <div class="ld"><div class="sp"></div>Carregando...</div>
+      </div>
+      <div class="footer">
+        <div class="footer-left">
+          <span>🤖</span>
+          <span>Análise conduzida por agentes de IA supervisionados por <strong>especialista sênior em finanças condominiais</strong></span>
+        </div>
+        <div class="footer-right">Condolytics v2.4 &nbsp;·&nbsp; © 2025 Condolytics Tecnologia Fiscal</div>
       </div>
     </div>
-    <button class="btn-logout" onclick="logout()">Sair da conta</button>
+
+  </div><!-- /sec-dashboard -->
+
+  <!-- ══ ANÁLISES ══ -->
+  <div class="sec" id="sec-analises">
+    <div id="analiseContainer">
+      <div class="ld"><div class="sp"></div>Carregando análises...</div>
+    </div>
   </div>
-</aside>
 
-<main class="main">
-  <div class="topbar">
-    <h1 class="page-title" id="pageTitle">Painel do <span>Conselho</span></h1>
-    <div class="status-badge"><div class="status-dot"></div>Sistema Ativo</div>
+  <!-- ══ ACHADOS ══ -->
+  <div class="sec" id="sec-achados">
+    <!-- KPI resumo achados -->
+    <div class="kpi-strip" id="kpiAchados" style="padding-top:0;">
+      <div class="ld" style="grid-column:1/-1"><div class="sp"></div>Carregando...</div>
+    </div>
+    <div class="achado-list" id="achadoList">
+      <div class="ld"><div class="sp"></div>Carregando achados...</div>
+    </div>
   </div>
-  <div class="content">
 
-    <!-- DASHBOARD -->
-    <section class="section active" id="sec-dashboard">
-      <div class="kpi-grid" id="kpiGrid">
-        <div class="loading"><div class="spinner"></div>Carregando...</div>
+  <!-- ══ RELATÓRIOS ══ -->
+  <div class="sec" id="sec-relatorios">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><div class="panel-title-dot" style="background:var(--blue)"></div>Relatórios Disponíveis</div>
       </div>
-      <div class="panel">
-        <div class="panel-header">
-          <span class="panel-title">Resumo das Análises</span>
-          <span class="panel-tag" id="analiseCount">—</span>
-        </div>
-        <div class="panel-body" style="padding:0;">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Análise</th>
-                <th>Período</th>
-                <th>Documentos</th>
-                <th>Irregularidades</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="analiseBody">
-              <tr><td colspan="5">
-                <div class="loading"><div class="spinner"></div>Carregando...</div>
-              </td></tr>
-            </tbody>
-          </table>
-        </div>
+      <div style="padding:0;">
+        <table class="rel-table">
+          <thead>
+            <tr>
+              <th>Título</th><th>Tipo</th><th>Período</th><th>Publicado em</th><th>Download</th>
+            </tr>
+          </thead>
+          <tbody id="relBody">
+            <tr><td colspan="5"><div class="ld"><div class="sp"></div>Carregando...</div></td></tr>
+          </tbody>
+        </table>
       </div>
-    </section>
-
-    <!-- ANÁLISES -->
-    <section class="section" id="sec-analises">
-      <div id="analiseDetalhe">
-        <div class="loading"><div class="spinner"></div>Carregando...</div>
-      </div>
-    </section>
-
-    <!-- ACHADOS -->
-    <section class="section" id="sec-achados">
-      <div class="kpi-grid" id="kpiAchados">
-        <div class="loading"><div class="spinner"></div>Carregando...</div>
-      </div>
-      <div id="achadosList">
-        <div class="loading"><div class="spinner"></div>Carregando...</div>
-      </div>
-    </section>
-
-    <!-- RELATÓRIOS -->
-    <section class="section" id="sec-relatorios">
-      <div class="panel">
-        <div class="panel-header">
-          <span class="panel-title">Relatórios Disponíveis</span>
-        </div>
-        <div class="panel-body" style="padding:0;">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Título</th><th>Tipo</th><th>Período</th>
-                <th>Publicado em</th><th>Ação</th>
-              </tr>
-            </thead>
-            <tbody id="relatoriosBody">
-              <tr><td colspan="5">
-                <div class="loading"><div class="spinner"></div>Carregando...</div>
-              </td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- ALERTAS -->
-    <section class="section" id="sec-alertas">
-      <div class="panel">
-        <div class="panel-header">
-          <span class="panel-title">Alertas do Condomínio</span>
-        </div>
-        <div class="panel-body" style="padding:0;">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Alerta</th><th>Tipo</th>
-                <th>Severidade</th><th>Data</th><th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="alertasBody">
-              <tr><td colspan="5">
-                <div class="loading"><div class="spinner"></div>Carregando...</div>
-              </td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
+    </div>
   </div>
-</main>
+
+  <!-- ══ ALERTAS (tabela completa) ══ -->
+  <div class="sec" id="sec-alertas">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><div class="panel-title-dot" style="background:var(--red)"></div>Central de Alertas</div>
+      </div>
+      <div style="padding:0;">
+        <table class="rel-table">
+          <thead>
+            <tr><th>Alerta</th><th>Tipo</th><th>Severidade</th><th>Data</th><th>Status</th></tr>
+          </thead>
+          <tbody id="alertTableBody">
+            <tr><td colspan="5"><div class="ld"><div class="sp"></div>Carregando...</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /shell -->
+
+<!-- POPOVERS / MODAIS -->
+<div id="expPopover">
+  <div class="ep-header"><span class="ep-title" id="epTitle"></span><span class="ep-source" id="epSource"></span></div>
+  <div id="epBody"></div>
+</div>
+
+<div id="notifPopover">
+  <div class="pop-header">
+    <span class="pop-title">Alertas Ativos</span>
+    <span class="tag tag-red" id="popBadgeCount">0</span>
+  </div>
+  <div class="pop-list" id="popList"></div>
+  <div class="pop-footer" onclick="showSec('alertas', document.querySelector('.nav-tab:nth-child(5)'))">Ver análise detalhada dos alertas →</div>
+</div>
+
+<div id="dlToast">⏳ Arquivo em preparação — disponível em breve</div>
+<div id="kpiTooltip" role="tooltip">
+  <div class="tip-title" id="tipTitle"></div>
+  <div class="tip-body"  id="tipBody"></div>
+</div>
+
+<div id="mainModal" role="dialog" aria-modal="true" aria-labelledby="modalH">
+  <div class="modal-backdrop" id="modalBackdrop"></div>
+  <div class="modal-panel">
+    <div class="modal-header">
+      <div class="modal-title-block">
+        <div class="modal-badge" id="modalBadge"></div>
+        <div class="modal-h"    id="modalH"></div>
+      </div>
+      <button class="modal-close" id="modalClose" title="Fechar (Esc)">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
 
 <script src="js/supabase.js"></script>
 <script>
+/* ─── SUPABASE DATA ─── */
 let usuario = null;
+let alertasData = [];
+let revenueChart = null;
 
+const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+/* Dados do gráfico: mantidos do argus original (dados reais Bellevue/AMALPES) */
+const chartSources = {
+  bellevue: {
+    title: 'Receitas vs. Despesas — Bellevue',
+    receitas: [124.6,135.8,131.4,125.3,118.7,142.4,147.8],
+    despesas: [125.0,131.6,108.8,123.5,115.0,114.7,121.5],
+    yMin:90, yMax:165
+  },
+  amalpes: {
+    title: 'Receitas vs. Despesas — AMALPES',
+    receitas: [185.3,null,183.7,183.7,null,184.2,184.7],
+    despesas: [158.5,null,176.7,164.1,null,176.8,164.9],
+    yMin:140, yMax:205
+  }
+};
+
+/* Eventos da timeline (fixos por enquanto) */
+const timelineEvents = [
+  { nome:'Entrega Parecer Jan/2025', data:'31 Jan 2025 · Concluído', tipo:'past' },
+  { nome:'Reunião do Conselho Fiscal', data:'15 Mar 2025 · Em 14 dias', tipo:'next', gold:true },
+  { nome:'Entrega Parecer Mensal', data:'28 Mar 2025', tipo:'future' },
+  { nome:'Resposta PBC List — ValleCon', data:'16 Mar 2025', tipo:'future' },
+  { nome:'Assembleia Geral Ordinária', data:'Mai 2025', tipo:'future' },
+  { nome:'Relatório Final de Auditoria', data:'Abr 2025', tipo:'future' }
+];
+
+/* Dados de despesas por categoria (reais Bellevue Jan/2026) */
+const expenseData = {
+  expenses:[
+    {cat:'Limpeza e Conservação', color:'#E05C3A', val:'R$ 10.379', varCls:'var-up',   varTxt:'+23% vs mercado · benchmark 47 contratos', bpct:91, bcol:'var(--red)',   bw:'91%',
+     bdHeader:'Limpeza · Jan/2026 — Total: R$10.379', bdSource:'Prestação de Contas Bellevue',
+     breakdown:[{item:'Limpeza Terceirizada (Contrato Vigente)',val:'R$ 10.379',pct:100}]},
+    {cat:'Manutenção Predial', color:'#C9A84C', val:'R$ 4.985', varCls:'var-neu', varTxt:'Dentro do previsto', bpct:55, bcol:'var(--gold)', bw:'55%',
+     bdHeader:'Manutenção · Jan/2026 — Total: R$4.985', bdSource:'Prestação de Contas Bellevue',
+     breakdown:[{item:'Elevadores (manutenção preventiva)',val:'R$ 2.800',pct:56.2},{item:'Áreas comuns e jardins',val:'R$ 2.185',pct:43.8}]},
+    {cat:'Utilidades (Energia e Água)', color:'#5B9BD5', val:'R$ 23.783', varCls:'var-up', varTxt:'+8% vs Dez/2025', bpct:78, bcol:'var(--blue)', bw:'78%',
+     bdHeader:'Utilidades · Jan/2026 — Total: R$23.783', bdSource:'Prestação de Contas Bellevue',
+     breakdown:[{item:'Energia Elétrica (CPFL + Consórcio)',val:'R$ 15.810',pct:66.5},{item:'Água e Esgoto (DAERP)',val:'R$ 7.963',pct:33.5},{item:'Gás (Ultragaz)',val:'R$ 10',pct:0.0}]},
+    {cat:'Administração', color:'#4CAF7D', val:'R$ 6.833', varCls:'var-down', varTxt:'−31% vs Jul/2025 · sem Hon. Adv.', bpct:69, bcol:'var(--green)', bw:'69%',
+     bdHeader:'Administração · Jan/2026 — Total: R$6.833', bdSource:'Prestação de Contas Bellevue',
+     breakdown:[{item:'Serv. Administrativos (Vallecon)',val:'R$ 4.554',pct:66.6},{item:'Remuneração Síndico (ACA)',val:'R$ 2.279',pct:33.4}]},
+    {cat:'Outros Serviços', color:'#9B7FD4', val:'R$ 2.471', varCls:'var-down', varTxt:'−70% vs Jul/2025', bpct:30, bcol:'var(--green)', bw:'30%',
+     bdHeader:'Outros Serviços · Jan/2026 — Total: R$2.471', bdSource:'Prestação de Contas Bellevue',
+     breakdown:[{item:'Investimentos (aprovados em assembleia)',val:'R$ 1.640',pct:66.4},{item:'Encargos e Impostos',val:'R$ 318',pct:12.9},{item:'Despesas Reembolsáveis',val:'R$ 299',pct:12.1},{item:'Pessoal',val:'R$ 213',pct:8.6}]}
+  ]
+};
+
+/* ─── INIT ─── */
 window.addEventListener('load', async () => {
   usuario = await protegerPagina(['conselho','admin']);
   if (!usuario) return;
-  document.getElementById('userName').textContent = usuario.nome_completo || 'Conselheiro';
-  document.getElementById('userAvatar').textContent = (usuario.nome_completo||'C')[0].toUpperCase();
-  document.getElementById('condNome').textContent = usuario.condominios?.nome || 'Condomínio';
+
+  const nome = usuario.nome_completo || 'Conselheiro';
+  document.getElementById('hdrNome').textContent    = nome;
+  document.getElementById('hdrAvatar').textContent  = nome[0].toUpperCase();
+  document.getElementById('respNome').textContent   = nome;
+  document.getElementById('respBox').style.display  = 'block';
+
+  const condoNome = usuario.condominios?.nome || 'Condomínio';
+  document.getElementById('hdrCondoNome').textContent  = condoNome;
+  document.getElementById('hdrCondoPeriod').textContent = `Conselho Fiscal · Exercício 2025 · ${condoNome}`;
+  document.getElementById('respCondo').textContent     = condoNome;
+
   await Promise.all([
     carregarKPIs(),
+    carregarAlertas(),
+    carregarRelatorios(),
     carregarAnalises(),
     carregarAchados(),
-    carregarRelatorios(),
-    carregarAlertas()
+    carregarAlertasTabela()
   ]);
+
+  initChart();
+  renderExpenseTable(expenseData);
+  renderTimeline();
+  initRevealObserver();
 });
 
-function mostrarSecao(nome, el) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('sec-'+nome).classList.add('active');
-  el.classList.add('active');
-  const titulos = {
-    dashboard: 'Painel do <span>Conselho</span>',
-    analises:  'Análises <span>de Auditoria</span>',
-    achados:   'Achados <span>Identificados</span>',
-    relatorios:'Relatórios <span>Condolytics</span>',
-    alertas:   'Central de <span>Alertas</span>'
-  };
-  document.getElementById('pageTitle').innerHTML = titulos[nome] || nome;
+/* ─── SEÇÕES ─── */
+function showSec(nome, el) {
+  document.querySelectorAll('.sec').forEach(s => s.classList.remove('s-active'));
+  document.querySelectorAll('.nav-tab').forEach(n => n.classList.remove('n-active'));
+  document.getElementById('sec-'+nome).classList.add('s-active');
+  if (el) el.classList.add('n-active');
 }
 
+/* ─── KPIs (Supabase) ─── */
 async function carregarKPIs() {
-  const { count: totalAchados } = await db.from('achados')
-    .select('*',{count:'exact',head:true});
-  const { data: abertos } = await db.from('achados')
-    .select('valor_impacto').eq('status','aberto');
-  const { count: totalAlertas } = await db.from('alertas')
-    .select('*',{count:'exact',head:true}).eq('lido',false);
-  const { count: totalRelatorios } = await db.from('relatorios')
-    .select('*',{count:'exact',head:true}).eq('publicado',true);
-  const totalImpacto = abertos?.reduce((s,a) => s+(a.valor_impacto||0), 0) || 0;
+  const { data: ind } = await db.from('indicadores_financeiros')
+    .select('*').order('periodo',{ascending:false}).limit(1);
+  const d = ind?.[0];
 
-  document.getElementById('kpiGrid').innerHTML = `
-    <div class="kpi-card">
-      <div class="kpi-label">Total de Achados</div>
-      <div class="kpi-value">${totalAchados||0}</div>
-      <div class="kpi-sub">identificados nas análises</div>
+  const { count: totalAchados } = await db.from('achados').select('*',{count:'exact',head:true});
+  const { data: abertos }       = await db.from('achados').select('valor_impacto').eq('status','aberto');
+  const { count: alertasCount } = await db.from('alertas').select('*',{count:'exact',head:true}).eq('lido',false);
+  const totalImpacto = abertos?.reduce((s,a)=>s+(a.valor_impacto||0),0) || 0;
+  const reservaPct   = d ? ((d.fundo_reserva/380000)*100).toFixed(1) : 0;
+  const orcPct       = d ? ((d.despesa_realizada/d.despesa_prevista)*100).toFixed(0) : 0;
+
+  document.getElementById('notifBadge').textContent    = alertasCount || 0;
+  document.getElementById('alertCountTag').textContent = (alertasCount||0)+' ativos';
+
+  document.getElementById('kpiStrip').innerHTML = `
+    <!-- KPI 1: Inadimplência -->
+    <div class="kpi-card reveal" style="transition-delay:0.1s" data-tip="0">
+      <div class="kpi-label">Taxa de Inadimplência</div>
+      <div class="kpi-value"><span class="counter" data-target="${d?.inadimplencia_pct||0}" data-decimals="1" data-suffix="%"></span></div>
+      <div class="kpi-delta ${(d?.inadimplencia_pct||0)<5?'up':'down'}">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><path d="M5 2L2 7h6L5 2z" transform="${(d?.inadimplencia_pct||0)<5?'':'rotate(180,5,5)'}"/></svg>
+        <span class="mono" style="font-size:11px">${(d?.inadimplencia_pct||0)<3?'Dentro da meta':'Requer atenção'}</span>
+      </div>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Impacto em Aberto</div>
-      <div class="kpi-value red">R$${(totalImpacto/1000).toFixed(1)}k</div>
-      <div class="kpi-sub">aguardando tratativa</div>
+    <!-- KPI 2: Saldo CC -->
+    <div class="kpi-card reveal" style="transition-delay:0.2s" data-tip="1">
+      <div class="kpi-label">Saldo — Conta Corrente</div>
+      <div class="kpi-value"><span class="unit">R$</span><span class="counter" data-target="${d?.saldo_conta||0}" data-decimals="0" data-format="brl"></span></div>
+      <div class="kpi-delta up"><span class="mono" style="font-size:11px">Último mês registrado</span></div>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Alertas Ativos</div>
-      <div class="kpi-value ${totalAlertas>0?'red':'green'}">${totalAlertas||0}</div>
-      <div class="kpi-sub">não lidos</div>
+    <!-- KPI 3: Fundo de Reserva -->
+    <div class="kpi-card reveal" style="transition-delay:0.3s" data-tip="2">
+      <div class="kpi-label">Fundo de Reserva</div>
+      <div class="kpi-value"><span class="unit">R$</span><span class="counter" data-target="${d?.fundo_reserva||0}" data-decimals="0" data-format="brl"></span></div>
+      <div class="progress-wrap">
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="reserveProg" style="width:0"></div></div>
+        <div class="progress-label"><span id="reserveDeltaText">${reservaPct}% da meta · R$ 380.000</span><span>Meta</span></div>
+      </div>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Relatórios Disponíveis</div>
-      <div class="kpi-value green">${totalRelatorios||0}</div>
-      <div class="kpi-sub">publicados pela Condolytics</div>
+    <!-- KPI 4: Execução Orçamentária -->
+    <div class="kpi-card reveal" style="transition-delay:0.4s" data-tip="3">
+      <div class="kpi-label">Execução Orçamentária</div>
+      <div class="radial-wrap">
+        <svg class="radial-svg" width="56" height="56" viewBox="0 0 56 56">
+          <circle cx="28" cy="28" r="22" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="4"/>
+          <circle id="arcCircle" cx="28" cy="28" r="22" fill="none" stroke="#C9A84C" stroke-width="4"
+            stroke-linecap="round" stroke-dasharray="138.2" stroke-dashoffset="138.2"
+            transform="rotate(-90 28 28)"/>
+          <text x="28" y="33" text-anchor="middle" font-family="var(--font-sans)" font-size="13" font-weight="700" fill="#E8E6E0">${orcPct}%</text>
+        </svg>
+        <div class="radial-info">
+          <div id="arcInfoMain" style="font-size:12px;color:var(--text);font-weight:600;">R$ ${Number(d?.despesa_realizada||0).toLocaleString('pt-BR')}</div>
+          <div id="arcInfoSub"  style="margin-top:3px;">do orçamento executado</div>
+        </div>
+      </div>
+    </div>
+    <!-- KPI 5: Achados -->
+    <div class="kpi-card reveal" style="transition-delay:0.5s" data-tip="4">
+      <div class="kpi-label">Achados Identificados</div>
+      <div class="kpi-alerts-count">${totalAchados||0}</div>
+      <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;" id="alertTagsDiv">
+        <span class="tag tag-red">Impacto R$${(totalImpacto/1000).toFixed(1)}k</span>
+        <span class="tag tag-gold">${alertasCount||0} alertas</span>
+      </div>
     </div>
   `;
+
+  // Animate after render
+  setTimeout(() => {
+    document.querySelectorAll('#kpiStrip .counter').forEach(animateCounter);
+    const pb = document.getElementById('reserveProg');
+    if (pb) { pb.style.transition='width 1.5s cubic-bezier(.4,0,.2,1)'; pb.style.width=reservaPct+'%'; }
+    setTimeout(()=>{
+      const arc = document.getElementById('arcCircle');
+      if (arc) { arc.style.transition='stroke-dashoffset 1.5s cubic-bezier(.4,0,.2,1)'; arc.style.strokeDashoffset=138.2*(1-orcPct/100); }
+    },200);
+    initKPITooltips();
+    initRevealObserver();
+  }, 100);
 }
 
-async function carregarAnalises() {
-  const { data, count } = await db.from('analises')
-    .select('*',{count:'exact'}).order('created_at',{ascending:false});
-  document.getElementById('analiseCount').textContent = (count||0)+' análises';
+/* ─── ALERTAS (dashboard cards) ─── */
+async function carregarAlertas() {
+  const { data } = await db.from('alertas').select('*').eq('lido',false)
+    .order('created_at',{ascending:false}).limit(5);
+  alertasData = data || [];
 
-  const statusBadge = {
-    em_andamento:'badge-amber',concluida:'badge-green',aprovada:'badge-green'
-  };
-  const tbody = document.getElementById('analiseBody');
-  if (!data?.length) {
-    tbody.innerHTML='<tr><td colspan="5"><div class="empty">Nenhuma análise.</div></td></tr>';
-  } else {
-    tbody.innerHTML = data.map(a=>`
-      <tr>
-        <td style="color:var(--off-white);">${a.titulo}</td>
-        <td style="font-size:11px;color:var(--gray);">
-          ${new Date(a.periodo_inicio).toLocaleDateString('pt-BR')} —
-          ${new Date(a.periodo_fim).toLocaleDateString('pt-BR')}
-        </td>
-        <td>${a.total_documentos}</td>
-        <td style="color:var(--red);">
-          R$ ${Number(a.valor_irregularidades).toLocaleString('pt-BR')}
-        </td>
-        <td>
-          <span class="badge ${statusBadge[a.status]||'badge-gray'}">
-            ${a.status.replace('_',' ')}
-          </span>
-        </td>
-      </tr>`).join('');
-  }
+  const el = document.getElementById('alertList');
+  if (!alertasData.length) { el.innerHTML='<div class="empty-state">Nenhum alerta ativo.</div>'; return; }
 
-  // Detalhe de análises
-  const det = document.getElementById('analiseDetalhe');
-  if (!data?.length) {
-    det.innerHTML = '<div class="empty">Nenhuma análise disponível.</div>';
-  } else {
-    det.innerHTML = data.map(a=>`
-      <div class="panel">
-        <div class="panel-header">
-          <span class="panel-title">${a.titulo}</span>
-          <span class="panel-tag">${a.status.replace('_',' ')}</span>
+  const sevMap = {critico:'crit',atencao:'warn',informativo:'info'};
+  const emoMap = {critico:'🔴',atencao:'⚠️',informativo:'ℹ️'};
+
+  el.innerHTML = alertasData.map((a,i)=>`
+    <div class="alert-item ${sevMap[a.severidade]||'info'}" onclick="openAlertModal(${i})">
+      <div class="alert-icon ${sevMap[a.severidade]||'info'}">${emoMap[a.severidade]||'ℹ️'}</div>
+      <div class="alert-body">
+        <div class="alert-desc">${a.titulo}</div>
+        <div class="alert-meta">
+          <span class="alert-date">${new Date(a.created_at).toLocaleDateString('pt-BR')}</span>
+          <button class="btn-ver">Ver detalhes →</button>
         </div>
-        <div class="panel-body">
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px;">
-            <div>
-              <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.15em;color:var(--gray);text-transform:uppercase;margin-bottom:6px;">Período</div>
-              <div style="font-size:13px;color:var(--off-white);">
-                ${new Date(a.periodo_inicio).toLocaleDateString('pt-BR')} —
-                ${new Date(a.periodo_fim).toLocaleDateString('pt-BR')}
-              </div>
-            </div>
-            <div>
-              <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.15em;color:var(--gray);text-transform:uppercase;margin-bottom:6px;">Documentos Analisados</div>
-              <div style="font-size:13px;color:var(--off-white);">${a.total_documentos}</div>
-            </div>
-            <div>
-              <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.15em;color:var(--gray);text-transform:uppercase;margin-bottom:6px;">Valor das Irregularidades</div>
-              <div style="font-size:13px;color:var(--red);">R$ ${Number(a.valor_irregularidades).toLocaleString('pt-BR')}</div>
-            </div>
-          </div>
-          <div style="background:var(--surface2);border-radius:8px;padding:16px;">
-            <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.15em;color:var(--amber);text-transform:uppercase;margin-bottom:10px;">Resumo Executivo</div>
-            <p style="font-size:13px;color:var(--gray-l);line-height:1.7;">${a.resumo_executivo||'—'}</p>
-          </div>
+      </div>
+    </div>`).join('');
+
+  // Notif popover
+  const sevPMap = {critico:'pop-crit',atencao:'pop-warn',informativo:'pop-info'};
+  document.getElementById('popList').innerHTML = alertasData.map((a,i)=>`
+    <div class="pop-item ${sevPMap[a.severidade]||'pop-info'}" onclick="openAlertModal(${i})">
+      <div class="pop-icon">${emoMap[a.severidade]||'ℹ️'}</div>
+      <div class="pop-content">
+        <div class="pop-item-title">${a.titulo}</div>
+        <div class="pop-item-desc">${a.descricao.substring(0,70)}...</div>
+        <div class="pop-item-date">${new Date(a.created_at).toLocaleDateString('pt-BR')}</div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('popBadgeCount').textContent = alertasData.length;
+}
+
+/* ─── RELATÓRIOS ─── */
+async function carregarRelatorios() {
+  const { data } = await db.from('relatorios').select('*').eq('publicado',true)
+    .order('created_at',{ascending:false});
+
+  // Sidebar pareceres
+  const pl = document.getElementById('parecerList');
+  if (!data?.length) { pl.innerHTML='<div class="empty-state">Nenhum relatório publicado.</div>'; }
+  else {
+    const statusTag = (r) => r.url_pdf
+      ? '<span class="tag tag-green" style="font-size:9px;padding:1px 6px">Disponível</span>'
+      : '<span class="tag tag-gold" style="font-size:9px;padding:1px 6px">Em preparação</span>';
+    pl.innerHTML = data.slice(0,3).map(r=>`
+      <div class="parecer-item">
+        <div class="parecer-icon">📄</div>
+        <div class="parecer-info">
+          <div class="parecer-title">${r.titulo}</div>
+          <div class="parecer-date mono">${r.publicado_em?new Date(r.publicado_em).toLocaleDateString('pt-BR'):'—'} &nbsp;·&nbsp; ${statusTag(r)}</div>
         </div>
+        ${r.url_pdf
+          ? `<a class="btn-dl" href="${r.url_pdf}" target="_blank" title="Baixar">⬇</a>`
+          : `<button class="btn-dl btn-dl-pending" onclick="showToast()" title="Em preparação">⬇</button>`}
       </div>`).join('');
   }
+
+  // Tabela relatórios (aba)
+  const tbody = document.getElementById('relBody');
+  if (!data?.length) { tbody.innerHTML='<tr><td colspan="5"><div class="empty-state">Nenhum relatório.</div></td></tr>'; return; }
+  tbody.innerHTML = data.map(r=>`
+    <tr>
+      <td style="color:var(--text)">${r.titulo}</td>
+      <td>${r.tipo}</td>
+      <td>${r.periodo||'—'}</td>
+      <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-faint)">
+        ${r.publicado_em?new Date(r.publicado_em).toLocaleDateString('pt-BR'):'—'}
+      </td>
+      <td>
+        ${r.url_pdf
+          ? `<a href="${r.url_pdf}" target="_blank" class="btn-ver">↓ Baixar</a>`
+          : '<span style="color:var(--text-faint);font-size:11px;">Em preparação</span>'}
+      </td>
+    </tr>`).join('');
 }
 
-async function carregarAchados() {
-  const { data } = await db.from('achados')
-    .select('*').order('valor_impacto',{ascending:false});
+/* ─── ANÁLISES ─── */
+async function carregarAnalises() {
+  const { data } = await db.from('analises').select('*').order('created_at',{ascending:false});
+  const ct = document.getElementById('analiseContainer');
+  if (!data?.length) { ct.innerHTML='<div class="empty-state" style="padding:60px">Nenhuma análise disponível.</div>'; return; }
 
-  const criticos = data?.filter(a=>a.severidade==='critico').length || 0;
-  const abertos  = data?.filter(a=>a.status==='aberto').length || 0;
-  const total    = data?.reduce((s,a)=>s+(a.valor_impacto||0),0) || 0;
+  const stsBadge = {em_andamento:'tag-gold',concluida:'tag-green',aprovada:'tag-green'};
+  ct.innerHTML = data.map(a=>`
+    <div class="analise-card reveal">
+      <div class="analise-header">
+        <div class="panel-title"><div class="panel-title-dot"></div>${a.titulo}</div>
+        <span class="tag ${stsBadge[a.status]||'tag-gold'}">${a.status.replace('_',' ')}</span>
+      </div>
+      <div class="analise-kv">
+        <div class="akv-item">
+          <div class="akv-label">Período</div>
+          <div class="akv-val" style="font-size:13px">${new Date(a.periodo_inicio).toLocaleDateString('pt-BR')} — ${new Date(a.periodo_fim).toLocaleDateString('pt-BR')}</div>
+        </div>
+        <div class="akv-item">
+          <div class="akv-label">Documentos Analisados</div>
+          <div class="akv-val">${a.total_documentos}</div>
+        </div>
+        <div class="akv-item">
+          <div class="akv-label">Valor de Irregularidades</div>
+          <div class="akv-val" style="color:var(--red)">R$ ${Number(a.valor_irregularidades).toLocaleString('pt-BR')}</div>
+        </div>
+      </div>
+      <div class="analise-resumo">${a.resumo_executivo||'—'}</div>
+    </div>`).join('');
+  initRevealObserver();
+}
+
+/* ─── ACHADOS ─── */
+async function carregarAchados() {
+  const { data } = await db.from('achados').select('*').order('valor_impacto',{ascending:false});
+
+  const criticos = data?.filter(a=>a.severidade==='critico').length||0;
+  const abertos  = data?.filter(a=>a.status==='aberto').length||0;
+  const total    = data?.reduce((s,a)=>s+(a.valor_impacto||0),0)||0;
 
   document.getElementById('kpiAchados').innerHTML = `
-    <div class="kpi-card">
-      <div class="kpi-label">Total de Achados</div>
-      <div class="kpi-value">${data?.length||0}</div>
-      <div class="kpi-sub">encontrados nas análises</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Críticos</div>
-      <div class="kpi-value red">${criticos}</div>
-      <div class="kpi-sub">severidade crítica</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Em Aberto</div>
-      <div class="kpi-value red">${abertos}</div>
-      <div class="kpi-sub">aguardando resolução</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Impacto Total</div>
-      <div class="kpi-value">R$${(total/1000).toFixed(1)}k</div>
-      <div class="kpi-sub">valor recuperável</div>
-    </div>
+    <div class="kpi-card"><div class="kpi-label">Total de Achados</div><div class="kpi-value">${data?.length||0}</div><div class="kpi-delta warn"><span class="mono" style="font-size:11px">identificados nas análises</span></div></div>
+    <div class="kpi-card"><div class="kpi-label">Críticos</div><div class="kpi-value" style="color:var(--red)">${criticos}</div><div class="kpi-delta down"><span class="mono" style="font-size:11px">severidade crítica</span></div></div>
+    <div class="kpi-card"><div class="kpi-label">Em Aberto</div><div class="kpi-value" style="color:var(--red)">${abertos}</div><div class="kpi-delta down"><span class="mono" style="font-size:11px">aguardando resolução</span></div></div>
+    <div class="kpi-card"><div class="kpi-label">Impacto Total</div><div class="kpi-value"><span class="unit">R$</span>${(total/1000).toFixed(1)}k</div><div class="kpi-delta warn"><span class="mono" style="font-size:11px">valor recuperável</span></div></div>
   `;
 
-  const el = document.getElementById('achadosList');
-  if (!data?.length) {
-    el.innerHTML = '<div class="empty">Nenhum achado encontrado.</div>';
-    return;
-  }
-  const sevBadge = {critico:'badge-red',atencao:'badge-amber',informativo:'badge-gray'};
-  const stsBadge = {aberto:'badge-red',em_tratativa:'badge-amber',resolvido:'badge-green'};
+  const sevMap = {critico:'crit',atencao:'warn',informativo:'info'};
+  const stsBadge = {aberto:'tag-red',em_tratativa:'tag-gold',resolvido:'tag-green'};
+  const sevBadge = {critico:'tag-red',atencao:'tag-gold',informativo:'tag-blue'};
+
+  const el = document.getElementById('achadoList');
+  if (!data?.length) { el.innerHTML='<div class="empty-state">Nenhum achado encontrado.</div>'; return; }
   el.innerHTML = data.map(a=>`
-    <div class="achado-card ${a.severidade}">
-      <div>
+    <div class="achado-item ${sevMap[a.severidade]||'info'}">
+      <div style="flex:1">
         <div class="achado-titulo">${a.titulo}</div>
         <div class="achado-desc">${a.descricao}</div>
         <div class="achado-meta">
-          <span class="badge ${sevBadge[a.severidade]||'badge-gray'}">${a.severidade}</span>
-          <span class="badge ${stsBadge[a.status]||'badge-gray'}">${a.status.replace('_',' ')}</span>
-          <span class="badge badge-gray">${a.categoria}</span>
+          <span class="tag ${sevBadge[a.severidade]||'tag-blue'}">${a.severidade}</span>
+          <span class="tag ${stsBadge[a.status]||'tag-gold'}">${a.status.replace('_',' ')}</span>
+          <span class="tag" style="background:var(--surface3);color:var(--text-dim)">${a.categoria}</span>
         </div>
       </div>
       <div class="achado-impacto">
@@ -452,57 +1138,258 @@ async function carregarAchados() {
     </div>`).join('');
 }
 
-async function carregarRelatorios() {
-  const { data } = await db.from('relatorios')
-    .select('*').eq('publicado',true)
-    .order('created_at',{ascending:false});
-  const tbody = document.getElementById('relatoriosBody');
-  if (!data?.length) {
-    tbody.innerHTML='<tr><td colspan="5"><div class="empty">Nenhum relatório.</div></td></tr>';
-    return;
-  }
-  tbody.innerHTML = data.map(r=>`
+/* ─── ALERTAS TABELA ─── */
+async function carregarAlertasTabela() {
+  const { data } = await db.from('alertas').select('*').order('created_at',{ascending:false});
+  const tbody = document.getElementById('alertTableBody');
+  if (!data?.length) { tbody.innerHTML='<tr><td colspan="5"><div class="empty-state">Nenhum alerta.</div></td></tr>'; return; }
+  const sevBadge={critico:'tag-red',atencao:'tag-gold',informativo:'tag-blue'};
+  tbody.innerHTML = data.map(a=>`
     <tr>
-      <td style="color:var(--off-white);">${r.titulo}</td>
-      <td>${r.tipo}</td>
-      <td>${r.periodo||'—'}</td>
-      <td style="font-size:11px;color:var(--gray);">
-        ${r.publicado_em?new Date(r.publicado_em).toLocaleDateString('pt-BR'):'—'}
-      </td>
-      <td>
-        ${r.url_pdf
-          ?`<a href="${r.url_pdf}" target="_blank"
-               style="color:var(--amber-l);font-size:12px;text-decoration:none;">
-               ↓ Baixar PDF</a>`
-          :'<span style="color:var(--gray);font-size:11px;">Indisponível</span>'}
-      </td>
+      <td style="color:var(--text)">${a.titulo}</td>
+      <td>${a.tipo}</td>
+      <td><span class="tag ${sevBadge[a.severidade]||'tag-blue'}">${a.severidade}</span></td>
+      <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-faint)">${new Date(a.created_at).toLocaleDateString('pt-BR')}</td>
+      <td><span class="tag ${a.lido?'tag-green':'tag-gold'}">${a.lido?'lido':'não lido'}</span></td>
     </tr>`).join('');
 }
 
-async function carregarAlertas() {
-  const { data } = await db.from('alertas')
-    .select('*').order('created_at',{ascending:false});
-  const tbody = document.getElementById('alertasBody');
-  if (!data?.length) {
-    tbody.innerHTML='<tr><td colspan="5"><div class="empty">Nenhum alerta.</div></td></tr>';
-    return;
-  }
-  const sevBadge={critico:'badge-red',atencao:'badge-amber',informativo:'badge-gray'};
-  tbody.innerHTML = data.map(a=>`
-    <tr>
-      <td style="color:var(--off-white);max-width:300px;">${a.titulo}</td>
-      <td>${a.tipo}</td>
-      <td><span class="badge ${sevBadge[a.severidade]||'badge-gray'}">${a.severidade}</span></td>
-      <td style="font-size:11px;color:var(--gray);">
-        ${new Date(a.created_at).toLocaleDateString('pt-BR')}
-      </td>
-      <td>
-        <span class="badge ${a.lido?'badge-green':'badge-amber'}">
-          ${a.lido?'lido':'não lido'}
-        </span>
-      </td>
-    </tr>`).join('');
+/* ─── CHART ─── */
+function initChart() {
+  Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Helvetica Neue', Arial, sans-serif";
+  Chart.defaults.color = '#52504C';
+  const ctx = document.getElementById('revenueChart')?.getContext('2d');
+  if (!ctx) return;
+  const gradRec = ctx.createLinearGradient(0,0,0,240);
+  gradRec.addColorStop(0,'rgba(201,168,76,0.22)'); gradRec.addColorStop(1,'rgba(201,168,76,0)');
+  const gradDesp = ctx.createLinearGradient(0,0,0,240);
+  gradDesp.addColorStop(0,'rgba(224,92,58,0.18)'); gradDesp.addColorStop(1,'rgba(224,92,58,0)');
+
+  const src = chartSources.bellevue;
+  revenueChart = new Chart(ctx, {
+    type:'line',
+    data:{
+      labels:['Jul','Ago','Set','Out','Nov','Dez','Jan'],
+      datasets:[
+        {label:'Receitas',data:src.receitas,borderColor:'#C9A84C',backgroundColor:gradRec,borderWidth:2,pointBackgroundColor:'#C9A84C',pointBorderColor:'#0A0C0F',pointBorderWidth:2,pointRadius:4,pointHoverRadius:6,tension:0.4,fill:true,spanGaps:true},
+        {label:'Despesas',data:src.despesas,borderColor:'#E05C3A',backgroundColor:gradDesp,borderWidth:2,pointBackgroundColor:'#E05C3A',pointBorderColor:'#0A0C0F',pointBorderWidth:2,pointRadius:4,pointHoverRadius:6,tension:0.4,fill:true,spanGaps:true}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      animation:{duration:1800,easing:'easeInOutQuart'},
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{backgroundColor:'#16191F',borderColor:'rgba(201,168,76,0.25)',borderWidth:1,titleColor:'#9A9690',bodyColor:'#E8E6E0',padding:12,cornerRadius:6,
+          callbacks:{label:c=>`  ${c.dataset.label}: R$ ${c.parsed.y?.toLocaleString('pt-BR')||'N/D'}k`}}
+      },
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{font:{size:10},color:'#52504C'},border:{display:false}},
+        y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:10},color:'#52504C',callback:v=>`R$ ${v}k`},border:{display:false},min:src.yMin,max:src.yMax}
+      }
+    }
+  });
 }
+
+function switchChartSource(src) {
+  if (!revenueChart) return;
+  const d = chartSources[src];
+  document.getElementById('ctBellevue').classList.toggle('ct-active', src==='bellevue');
+  document.getElementById('ctAmalpes').classList.toggle('ct-active',  src==='amalpes');
+  revenueChart.data.datasets[0].data = d.receitas;
+  revenueChart.data.datasets[1].data = d.despesas;
+  revenueChart.options.scales.y.min  = d.yMin;
+  revenueChart.options.scales.y.max  = d.yMax;
+  document.getElementById('chartPanelTitle').textContent = d.title;
+  revenueChart.update('active');
+}
+
+/* ─── EXPENSE TABLE ─── */
+let _epDataset = null;
+function renderExpenseTable(d) {
+  _epDataset = d;
+  const tbody = document.getElementById('expenseBody');
+  if (!tbody) return;
+  tbody.innerHTML = d.expenses.map((r,i)=>`
+    <tr data-row-idx="${i}">
+      <td style="padding-left:20px"><span class="cat-name"><span class="cat-dot" style="background:${r.color}"></span>${r.cat}</span></td>
+      <td>${r.val}</td>
+      <td><span class="var-chip ${r.varCls}">${r.varTxt}</span></td>
+      <td style="padding-right:20px"><div>${r.bpct}%</div><div class="budget-mini-bg"><div class="budget-mini-fill" style="width:${r.bw};background:${r.bcol}"></div></div></td>
+    </tr>`).join('');
+  attachExpensePopover();
+}
+
+const expPop   = document.getElementById('expPopover');
+const epTitleEl= document.getElementById('epTitle');
+const epSrcEl  = document.getElementById('epSource');
+const epBodyEl = document.getElementById('epBody');
+
+function showExpPopover(rowEl, idx) {
+  if (!_epDataset||!expPop) return;
+  const r = _epDataset.expenses[idx]; if (!r) return;
+  clearTimeout(window._epHideTimer);
+  epTitleEl.textContent = r.bdHeader||r.cat;
+  epSrcEl.textContent   = r.bdSource||'';
+  if (!r.breakdown) { epBodyEl.innerHTML='<div class="ep-unavail">Detalhamento não disponível para este período.</div>'; }
+  else {
+    const maxP = Math.max(...r.breakdown.map(x=>x.pct),1);
+    epBodyEl.innerHTML = r.breakdown.map(item=>{
+      const bw = Math.max(4,Math.round((item.pct/maxP)*100));
+      return `<div class="ep-item"><div class="ep-item-label">${item.item}</div><div class="ep-bar-wrap"><div class="ep-bar-fill" style="width:${bw}%"></div></div><div class="ep-item-val">${item.val}</div></div>`;
+    }).join('');
+  }
+  const rect = rowEl.getBoundingClientRect();
+  const tableRect = rowEl.closest('table').getBoundingClientRect();
+  const popW = 310; let left = tableRect.right+12;
+  if (left+popW>window.innerWidth-8) left=tableRect.left-popW-12;
+  if (left<8) { left=Math.max(8,rect.left+rect.width/2-popW/2); if(left+popW>window.innerWidth-8)left=window.innerWidth-popW-8; }
+  expPop.style.left=left+'px'; expPop.style.top='-9999px'; expPop.classList.add('ep-visible');
+  const popH=expPop.offsetHeight;
+  let top=rect.top+rect.height/2-popH/2;
+  top=Math.max(8,Math.min(top,window.innerHeight-popH-8));
+  expPop.style.top=top+'px';
+}
+function hideExpPopover() { window._epHideTimer=setTimeout(()=>{if(expPop)expPop.classList.remove('ep-visible');},120); }
+function attachExpensePopover() {
+  const tbody=document.querySelector('#expenseBody');
+  if(!tbody)return;
+  tbody.onmouseover=e=>{const tr=e.target.closest('tr[data-row-idx]');if(tr)showExpPopover(tr,parseInt(tr.dataset.rowIdx));else clearTimeout(window._epHideTimer);};
+  tbody.onmouseleave=()=>hideExpPopover();
+  expPop.addEventListener('mouseenter',()=>clearTimeout(window._epHideTimer));
+  expPop.addEventListener('mouseleave',()=>hideExpPopover());
+}
+
+/* ─── TIMELINE ─── */
+function renderTimeline() {
+  const el = document.getElementById('timelineTrack');
+  el.innerHTML = timelineEvents.map(e=>`
+    <div class="timeline-event">
+      <div class="t-dot ${e.tipo}"></div>
+      <div class="t-info">
+        <div class="t-name" ${e.gold?'style="color:var(--gold)"':''}>${e.nome}</div>
+        <div class="t-date mono" ${e.gold?'style="color:var(--gold)"':''}>${e.data}</div>
+      </div>
+    </div>`).join('');
+}
+
+/* ─── MODAL (alertas) ─── */
+const mainModal  = document.getElementById('mainModal');
+const modalBadge = document.getElementById('modalBadge');
+const modalH2    = document.getElementById('modalH');
+const modalBody2 = document.getElementById('modalBody');
+
+function openAlertModal(idx) {
+  const a = alertasData[idx]; if (!a) return;
+  const sevMap = {critico:{cls:'crit',txt:'Crítico'},atencao:{cls:'warn',txt:'Atenção'},informativo:{cls:'info',txt:'Informativo'}};
+  const s = sevMap[a.severidade]||sevMap.informativo;
+  modalBadge.className=`modal-badge ${s.cls}`; modalBadge.textContent=s.txt;
+  modalH2.textContent=a.titulo;
+  modalBody2.innerHTML=`
+    <div class="modal-section">
+      <div class="modal-section-label">Descrição</div>
+      <div class="modal-section-text">${a.descricao}</div>
+    </div>
+    <div class="modal-divider"></div>
+    <div class="modal-section">
+      <div class="modal-section-label">Data de Detecção</div>
+      <div class="modal-section-text">${new Date(a.created_at).toLocaleDateString('pt-BR')}</div>
+    </div>
+    <div class="modal-divider"></div>
+    <div class="modal-rec">
+      <div class="modal-rec-label">Recomendação Condolytics</div>
+      <div class="modal-rec-text">Analisar o achado junto ao síndico e administradora, registrar posicionamento formal no livro de atas do conselho fiscal e acompanhar a resolução nas próximas reuniões.</div>
+    </div>`;
+  mainModal.classList.add('modal-open');
+}
+
+document.getElementById('modalClose').onclick  = ()=>mainModal.classList.remove('modal-open');
+document.getElementById('modalBackdrop').onclick=()=>mainModal.classList.remove('modal-open');
+document.addEventListener('keydown',e=>{ if(e.key==='Escape')mainModal.classList.remove('modal-open'); });
+
+/* ─── NOTIF POPOVER ─── */
+const notifBtn = document.getElementById('notifBtn');
+const notifPop = document.getElementById('notifPopover');
+notifBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  const isOpen = notifPop.classList.contains('pop-open');
+  notifPop.classList.toggle('pop-open');
+  if (!isOpen) {
+    const rect = notifBtn.getBoundingClientRect();
+    notifPop.style.top  = (rect.bottom+8)+'px';
+    notifPop.style.right = (window.innerWidth-rect.right)+'px';
+  }
+});
+document.addEventListener('click', ()=>notifPop.classList.remove('pop-open'));
+notifPop.addEventListener('click',e=>e.stopPropagation());
+
+/* ─── COUNTER ANIMATION ─── */
+function formatBRL(v) { return v.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}); }
+function animateCounter(el) {
+  const target=parseFloat(el.dataset.target); const decimals=parseInt(el.dataset.decimals)||0;
+  const suffix=el.dataset.suffix||''; const isBRL=el.dataset.format==='brl';
+  const duration=1500; const start=performance.now();
+  function step(now) {
+    const p=Math.min((now-start)/duration,1); const ease=1-Math.pow(1-p,3); const val=ease*target;
+    el.textContent=isBRL?formatBRL(val):val.toFixed(decimals)+suffix;
+    if(p<1)requestAnimationFrame(step);
+    else el.textContent=isBRL?formatBRL(target):target.toFixed(decimals)+suffix;
+  }
+  requestAnimationFrame(step);
+}
+
+/* ─── REVEAL OBSERVER ─── */
+function initRevealObserver() {
+  const obs = new IntersectionObserver(entries=>{
+    entries.forEach(e=>{ if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target);} });
+  },{threshold:0.08});
+  document.querySelectorAll('.reveal:not(.visible)').forEach(el=>obs.observe(el));
+}
+
+/* ─── KPI TOOLTIPS ─── */
+const kpiTips = [
+  {title:'Taxa de Inadimplência',text:'Percentual das unidades com cota condominial em atraso há mais de 30 dias. Meta recomendada: abaixo de 3%.'},
+  {title:'Saldo Conta Corrente', text:'Saldo disponível na conta corrente do condomínio no último mês registrado.'},
+  {title:'Fundo de Reserva',     text:'Reserva financeira acumulada. Meta aprovada em assembleia: R$ 380.000 conforme ABNT NBR 5674.'},
+  {title:'Execução Orçamentária',text:'Percentual do orçamento anual já executado. Indica alinhamento com a sazonalidade esperada.'},
+  {title:'Achados Identificados',text:'Total de achados identificados nas análises da Condolytics, classificados por severidade e impacto financeiro.'}
+];
+const tipEl=document.getElementById('kpiTooltip');
+const tipTitle=document.getElementById('tipTitle');
+const tipBody=document.getElementById('tipBody');
+
+function initKPITooltips() {
+  document.querySelectorAll('#kpiStrip .kpi-card').forEach((card,i)=>{
+    const data=kpiTips[i]; if(!data) return;
+    card.addEventListener('mouseenter',e=>{tipTitle.textContent=data.title;tipBody.textContent=data.text;posTip(e);tipEl.classList.add('tip-visible');});
+    card.addEventListener('mousemove',posTip);
+    card.addEventListener('mouseleave',()=>tipEl.classList.remove('tip-visible'));
+  });
+}
+function posTip(e) {
+  const tw=tipEl.offsetWidth||230; const th=tipEl.offsetHeight||80;
+  let x=e.clientX+18; let y=e.clientY+18;
+  if(x+tw>window.innerWidth-16)x=e.clientX-tw-14;
+  if(y+th>window.innerHeight-16)y=e.clientY-th-14;
+  tipEl.style.left=x+'px'; tipEl.style.top=y+'px';
+}
+
+/* ─── TOAST ─── */
+function showToast() {
+  const t=document.getElementById('dlToast');
+  t.classList.add('toast-show');
+  setTimeout(()=>t.classList.remove('toast-show'),3000);
+}
+
+/* ─── BADGE ANIMATION ─── */
+const style=document.createElement('style');
+style.textContent=`@keyframes badgePop{0%{transform:scale(0.8);}60%{transform:scale(1.3);}100%{transform:scale(1);}}`;
+document.head.appendChild(style);
+notifBtn.addEventListener('click',()=>{
+  const b=notifBtn.querySelector('.notif-badge');
+  b.style.animation='none'; b.offsetHeight; b.style.animation='badgePop 0.3s ease';
+});
 </script>
 </body>
 </html>
