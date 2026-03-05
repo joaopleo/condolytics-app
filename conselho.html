@@ -937,7 +937,7 @@
     <div class="condo-period mono">Conselho Fiscal · Gestão 2026/2027 · Condomínio Bellevue - Les Alpes</div>
   </div>
 
-  <!-- Status + Notificações -->
+  <!-- Status + Notificações (desktop) -->
   <div class="header-right">
     <div class="status-pill">
       <div class="pulse-dot"></div>
@@ -948,7 +948,7 @@
       <span id="userName" style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);letter-spacing:0.04em;">Carregando...</span>
       <button onclick="logout()" style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-faint);background:none;border:none;cursor:pointer;transition:color 0.2s;margin-left:4px;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text-faint)'">Sair</button>
     </div>
-    <button class="notif-btn" title="3 alertas ativos">
+    <button class="notif-btn" id="notifBtn" title="Alertas ativos">
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
         <path d="M10 2a6 6 0 00-6 6v3l-1.5 2.5h15L16 11V8a6 6 0 00-6-6z"/>
         <path d="M8.5 17.5a1.5 1.5 0 003 0"/>
@@ -956,6 +956,12 @@
       <span class="notif-badge">3</span>
     </button>
   </div>
+  <!-- Hamburger (mobile only) -->
+  <button class="mob-menu-btn" id="mobMenuBtn" aria-label="Menu">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+  </button>
 </header>
 
 <!-- ═══════════════════════════════════════════════════════════════════
@@ -1127,6 +1133,7 @@
           <span class="tag tag-gold" id="monthTag">Dez/2025</span>
         </div>
         <div class="panel-body" style="padding:0">
+          <div class="expense-table-wrap">
           <table class="expense-table">
             <thead>
               <tr>
@@ -2465,8 +2472,128 @@ document.querySelectorAll('.m-tab').forEach((tab, i) => {
 
 // Initialise default month (Dez 2025)
 applyMonth(6);
+
+/* ─────────────────────────────────────────────────────────────────
+   MOBILE NAVIGATION
+───────────────────────────────────────────────────────────────── */
+const SCROLL_TARGETS = {
+  dash:      '#revenueChart',
+  kpis:      '.kpi-strip',
+  alertas:   '.alert-list',
+  pareceres: '.parecer-list',
+  timeline:  '.bottom-strip',
+};
+
+function mobNav(id) {
+  // Update bottom nav active state
+  document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('bn-active'));
+  const btn = document.getElementById('bn-' + id);
+  if (btn) btn.classList.add('bn-active');
+
+  const target = document.querySelector(SCROLL_TARGETS[id] || '.kpi-strip');
+  if (target) {
+    const y = target.getBoundingClientRect().top + window.scrollY - 70;
+    window.scrollTo({ top: y, behavior: 'smooth' });
+  }
+}
+
+function openMobMore() {
+  const drawer = document.getElementById('mobDrawer');
+  const overlay = document.getElementById('mobOverlay');
+  drawer.classList.add('open');
+  overlay.classList.add('show');
+  document.body.style.overflow = 'hidden';
+  // Sync user name in drawer
+  const name = document.getElementById('userName')?.textContent || '';
+  if (name && name !== 'Carregando...') {
+    document.getElementById('mobUserName').textContent = name;
+    document.getElementById('mobAvatar').textContent = name[0].toUpperCase();
+  }
+}
+
+function closeMobDrawer() {
+  document.getElementById('mobDrawer')?.classList.remove('open');
+  document.getElementById('mobOverlay')?.classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+// Hamburger opens more drawer
+document.getElementById('mobMenuBtn')?.addEventListener('click', openMobMore);
+
+// Scroll spy — update bottom nav active tab based on scroll position
+window.addEventListener('scroll', () => {
+  if (window.innerWidth > 640) return;
+  const entries = Object.entries(SCROLL_TARGETS);
+  let active = 'dash';
+  for (const [id, sel] of entries) {
+    const el = document.querySelector(sel);
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      if (rect.top <= 120) active = id;
+    }
+  }
+  document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('bn-active'));
+  const btn = document.getElementById('bn-' + active);
+  if (btn) btn.classList.add('bn-active');
+}, { passive: true });
+
 </script>
 
 
+
+<!-- ── MOBILE OVERLAY ── -->
+<div class="mob-overlay" id="mobOverlay" onclick="closeMobDrawer()"></div>
+
+<!-- ── BOTTOM NAV ── -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="bn-item bn-active" id="bn-dash"     onclick="mobNav('dash')">
+    <svg viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="2" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="2" y="11" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="11" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>
+    Início
+  </button>
+  <button class="bn-item" id="bn-kpis"    onclick="mobNav('kpis')">
+    <svg viewBox="0 0 20 20" fill="none"><path d="M3 17L7 11l4 3 4-7 3 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    KPIs
+  </button>
+  <button class="bn-item" id="bn-alertas" onclick="mobNav('alertas')">
+    <svg viewBox="0 0 20 20" fill="none"><path d="M10 3L3 15h14L10 3z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M10 9v3M10 13.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    Alertas
+  </button>
+  <button class="bn-item" id="bn-pareceres" onclick="mobNav('pareceres')">
+    <svg viewBox="0 0 20 20" fill="none"><rect x="4" y="2" width="12" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    Docs
+  </button>
+  <button class="bn-item" id="bn-more"    onclick="openMobMore()">
+    <svg viewBox="0 0 20 20" fill="none"><circle cx="4" cy="10" r="1.5" fill="currentColor"/><circle cx="10" cy="10" r="1.5" fill="currentColor"/><circle cx="16" cy="10" r="1.5" fill="currentColor"/></svg>
+    Mais
+  </button>
+</nav>
+
+<!-- ── MOBILE DRAWER (more menu) ── -->
+<div class="mob-drawer" id="mobDrawer">
+  <div class="mob-drawer-handle"></div>
+  <div class="mob-drawer-title">Menu</div>
+  <div style="padding:8px 0 16px;">
+    <div id="mobUserRow" style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border2);margin-bottom:8px;">
+      <div id="mobAvatar" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#E0C070);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#0A0C0F;flex-shrink:0;">C</div>
+      <div>
+        <div id="mobUserName" style="font-family:var(--font-sans);font-size:13px;font-weight:600;color:var(--text);">Carregando...</div>
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--gold);letter-spacing:0.08em;text-transform:uppercase;margin-top:2px;">Conselho Fiscal</div>
+      </div>
+    </div>
+    <button onclick="closeMobDrawer();mobNav('timeline')" style="display:flex;align-items:center;gap:14px;width:100%;padding:14px 16px;background:none;border:none;cursor:pointer;color:var(--text-dim);font-family:var(--font-sans);font-size:13px;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='none'">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="3" cy="9" r="2" fill="currentColor" opacity="0.6"/><circle cx="9" cy="9" r="2" fill="var(--gold)"/><circle cx="15" cy="9" r="2" fill="currentColor" opacity="0.3"/><path d="M5 9h2M11 9h2" stroke="currentColor" stroke-width="1.2"/></svg>
+      Linha do Tempo
+    </button>
+    <button onclick="closeMobDrawer();applyMonth(document.querySelector('.m-tab.m-active')?Array.from(document.querySelectorAll('.m-tab')).indexOf(document.querySelector('.m-tab.m-active')):6)" style="display:flex;align-items:center;gap:14px;width:100%;padding:14px 16px;background:none;border:none;cursor:pointer;color:var(--text-dim);font-family:var(--font-sans);font-size:13px;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='none'">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="4" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M6 2v3M12 2v3M2 8h14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Selecionar Período
+    </button>
+    <div style="height:1px;background:var(--border2);margin:8px 0;"></div>
+    <button onclick="logout()" style="display:flex;align-items:center;gap:14px;width:100%;padding:14px 16px;background:none;border:none;cursor:pointer;color:var(--red);font-family:var(--font-sans);font-size:13px;transition:background 0.15s;" onmouseover="this.style.background='var(--red-dim)'" onmouseout="this.style.background='none'">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M7 16H3a1 1 0 01-1-1V3a1 1 0 011-1h4M12 13l4-4-4-4M7 9h9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Sair da conta
+    </button>
+  </div>
+</div>
 </body>
 </html>
