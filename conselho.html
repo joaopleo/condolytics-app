@@ -1,17 +1,23 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Condolytics — Conselho Fiscal</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <!-- ─── TIPOGRAFIA: Inter (Google Fonts) + SF Pro nativo em Apple ── -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <!-- ─── CHART.JS ───────────────────────────────────────────────── -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
+    /* ═══════════════════════════════════════════════════════════════
+       RESET & BASE
+    ═══════════════════════════════════════════════════════════════ */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
@@ -33,185 +39,236 @@
       --green-dim: rgba(76,175,125,0.15);
       --blue:      #5B9BD5;
       --blue-dim:  rgba(91,155,213,0.15);
-      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Helvetica Neue", Arial, sans-serif;
-      --font-mono: 'IBM Plex Mono', ui-monospace, "SF Mono", monospace;
+      /* Apple SF Pro nativo em macOS/iOS · Inter como fallback universal */
+      --font-sans:   -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Helvetica Neue", Arial, sans-serif;
+      --font-serif:  -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Helvetica Neue", Arial, sans-serif;
+      --font-mono:   'IBM Plex Mono', ui-monospace, "SF Mono", monospace;
     }
 
     html { scroll-behavior: smooth; }
+
     body {
-      background: var(--bg); color: var(--text);
-      font-family: var(--font-sans); font-size: 14px;
-      line-height: 1.5; min-height: 100vh; overflow-x: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+      overflow-x: hidden;
     }
 
+    /* ═══════════════════════════════════════════════════════════════
+       UTILITIES
+    ═══════════════════════════════════════════════════════════════ */
     .mono { font-family: var(--font-mono); }
+    .serif { font-family: var(--font-serif); }
     .gold { color: var(--gold); }
-    .red  { color: var(--red);  }
-    .green{ color: var(--green);}
-    .dim  { color: var(--text-dim); }
+    .red { color: var(--red); }
+    .green { color: var(--green); }
+    .dim { color: var(--text-dim); }
+    .faint { color: var(--text-faint); }
 
     .tag {
       display: inline-flex; align-items: center; gap: 5px;
       padding: 2px 8px; border-radius: 3px;
       font-family: var(--font-mono); font-size: 10px;
-      letter-spacing: 0.06em; text-transform: uppercase; font-weight: 500;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      font-weight: 500;
     }
     .tag-gold  { background: var(--gold-dim);  color: var(--gold); }
     .tag-red   { background: var(--red-dim);   color: var(--red);  }
     .tag-green { background: var(--green-dim); color: var(--green);}
     .tag-blue  { background: var(--blue-dim);  color: var(--blue); }
 
+    /* Invisible initially for animation */
     .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
     .reveal.visible { opacity: 1; transform: translateY(0); }
 
+    /* ═══════════════════════════════════════════════════════════════
+       SCROLLBAR
+    ═══════════════════════════════════════════════════════════════ */
     ::-webkit-scrollbar { width: 4px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
     ::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 2px; }
 
-    /* ── HEADER ── */
+    /* ═══════════════════════════════════════════════════════════════
+       LAYOUT WRAPPER
+    ═══════════════════════════════════════════════════════════════ */
+    .shell {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 0 24px 40px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       1. HEADER
+    ═══════════════════════════════════════════════════════════════ */
     header {
-      display: grid; grid-template-columns: 1fr auto 1fr;
-      align-items: center; padding: 20px 24px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      padding: 20px 24px;
       border-bottom: 1px solid var(--border);
       position: sticky; top: 0; z-index: 100;
       background: rgba(10,12,15,0.92);
       backdrop-filter: blur(16px);
-      opacity: 0; animation: slideDown 0.5s ease 0.1s forwards;
-    }
-    @keyframes slideDown {
-      from { opacity:0; transform:translateY(-12px); }
-      to   { opacity:1; transform:translateY(0); }
+      -webkit-backdrop-filter: blur(16px);
+      opacity: 0;
+      animation: slideDown 0.5s ease 0.1s forwards;
     }
 
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Logo */
     .logo-block { display: flex; align-items: center; gap: 14px; }
-    .logo-mark  { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
-    .logo-text  { line-height: 1.1; }
-    .logo-name  {
-      font-family: var(--font-sans); font-size: 20px; font-weight: 700;
-      letter-spacing: -0.01em; color: var(--text);
+    .logo-mark {
+      width: 44px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .logo-text { line-height: 1.1; }
+    .logo-name {
+      font-family: var(--font-sans);
+      font-size: 20px; font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text);
     }
     .logo-sub {
-      font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em;
-      text-transform: uppercase; color: var(--gold);
+      font-family: var(--font-mono);
+      font-size: 9px; letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
     }
 
+    /* Centro */
     .header-center { text-align: center; }
-    .condo-name  { font-family: var(--font-sans); font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: 0.04em; }
-    .condo-period{ font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); margin-top: 2px; letter-spacing: 0.06em; }
+    .condo-name {
+      font-family: var(--font-serif);
+      font-size: 15px; font-weight: 600;
+      color: var(--text);
+      letter-spacing: 0.04em;
+    }
+    .condo-period {
+      font-family: var(--font-mono);
+      font-size: 11px; color: var(--text-dim);
+      margin-top: 2px; letter-spacing: 0.06em;
+    }
 
-    .header-right { display: flex; align-items: center; gap: 16px; justify-content: flex-end; }
-    .status-pill  {
-      display: flex; align-items: center; gap: 8px; padding: 6px 12px;
-      background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+    /* Direita */
+    .header-right {
+      display: flex; align-items: center;
+      gap: 16px; justify-content: flex-end;
+    }
+    .status-pill {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 12px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px;
     }
     .pulse-dot {
-      width: 8px; height: 8px; background: var(--green); border-radius: 50%; position: relative;
+      width: 8px; height: 8px;
+      background: var(--green); border-radius: 50%;
+      position: relative;
     }
     .pulse-dot::after {
-      content: ''; position: absolute; inset: -4px; background: var(--green);
-      border-radius: 50%; opacity: 0; animation: ripple 2s ease-out infinite;
+      content: '';
+      position: absolute; inset: -4px;
+      background: var(--green);
+      border-radius: 50%; opacity: 0;
+      animation: ripple 2s ease-out infinite;
     }
     @keyframes ripple {
       0%   { transform: scale(0.5); opacity: 0.4; }
       100% { transform: scale(2.2); opacity: 0; }
     }
-    .status-text { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); letter-spacing: 0.04em; }
-
+    .status-text {
+      font-family: var(--font-mono);
+      font-size: 10px; color: var(--text-dim);
+      letter-spacing: 0.04em;
+    }
     .notif-btn {
-      width: 36px; height: 36px; background: var(--surface);
-      border: 1px solid var(--border2); border-radius: 8px; cursor: pointer;
+      width: 36px; height: 36px;
+      background: var(--surface); border: 1px solid var(--border2);
+      border-radius: 8px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       position: relative; transition: border-color 0.2s;
     }
     .notif-btn:hover { border-color: var(--gold); }
-    .notif-btn svg  { width: 16px; height: 16px; color: var(--text-dim); }
+    .notif-btn svg { width: 16px; height: 16px; color: var(--text-dim); }
     .notif-badge {
       position: absolute; top: -5px; right: -5px;
-      width: 16px; height: 16px; background: var(--red); border-radius: 50%;
-      font-family: var(--font-mono); font-size: 9px; font-weight: 600; color: #fff;
+      width: 16px; height: 16px;
+      background: var(--red); border-radius: 50%;
+      font-family: var(--font-mono);
+      font-size: 9px; font-weight: 600; color: #fff;
       display: flex; align-items: center; justify-content: center;
     }
 
-    /* ── USER PILL ── */
-    .user-pill {
-      display: flex; align-items: center; gap: 10px; padding: 6px 12px;
-      background: var(--surface); border: 1px solid var(--border2); border-radius: 20px;
-    }
-    .user-avatar {
-      width: 26px; height: 26px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--gold), #E0C070);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 11px; font-weight: 700; color: var(--bg); flex-shrink: 0;
-    }
-    .user-name-hdr { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); letter-spacing: 0.04em; }
-    .btn-logout-hdr {
-      font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em;
-      text-transform: uppercase; color: var(--text-faint);
-      background: none; border: none; cursor: pointer; transition: color 0.2s;
-    }
-    .btn-logout-hdr:hover { color: var(--red); }
-
-    /* ── SHELL ── */
-    .shell { max-width: 1600px; margin: 0 auto; padding: 0 24px 40px; }
-
-    /* ── NAV TABS ── */
-    .nav-bar {
-      display: flex; align-items: center; gap: 4px;
-      padding: 20px 0 4px;
-      border-bottom: 1px solid var(--border2);
-      margin-bottom: 0;
-    }
-    .nav-tab {
-      font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em;
-      text-transform: uppercase; padding: 8px 16px; border-radius: 6px;
-      background: none; border: 1px solid transparent;
-      color: var(--text-faint); cursor: pointer; transition: all 0.2s;
-    }
-    .nav-tab:hover { color: var(--text); border-color: var(--border2); }
-    .nav-tab.n-active {
-      background: var(--gold-dim); border-color: rgba(201,168,76,0.35);
-      color: var(--gold);
-    }
-
-    /* ── SECTIONS ── */
-    .sec { display: none; padding-top: 20px; }
-    .sec.s-active { display: block; }
-
-    /* ── KPI STRIP ── */
+    /* ═══════════════════════════════════════════════════════════════
+       2. KPI STRIP
+    ═══════════════════════════════════════════════════════════════ */
     .kpi-strip {
-      display: grid; grid-template-columns: repeat(5,1fr);
-      gap: 12px; padding: 0 0 16px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      padding: 24px 0 0;
     }
+
     .kpi-card {
-      background: var(--surface); border: 1px solid var(--border2);
-      border-radius: 10px; padding: 18px 20px;
-      position: relative; overflow: hidden; cursor: default;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      padding: 18px 20px;
+      position: relative; overflow: hidden;
+      cursor: default;
       transition: border-color 0.3s, box-shadow 0.3s;
     }
     .kpi-card::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
       background: linear-gradient(90deg, transparent, var(--gold), transparent);
       opacity: 0; transition: opacity 0.3s;
     }
-    .kpi-card:hover { border-color: rgba(201,168,76,0.3); box-shadow: 0 0 28px rgba(201,168,76,0.06); }
+    .kpi-card:hover {
+      border-color: rgba(201,168,76,0.3);
+      box-shadow: 0 0 28px rgba(201,168,76,0.06);
+    }
     .kpi-card:hover::before { opacity: 1; }
+
     .kpi-label {
-      font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em;
-      text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px;
+      font-family: var(--font-mono);
+      font-size: 9px; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--text-dim);
+      margin-bottom: 10px;
     }
     .kpi-value {
-      font-family: var(--font-sans); font-size: 28px; font-weight: 700;
-      color: var(--text); line-height: 1; margin-bottom: 8px; letter-spacing: -0.02em;
+      font-family: var(--font-sans);
+      font-size: 28px; font-weight: 700;
+      color: var(--text); line-height: 1;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em; /* tracking tight — estilo Apple */
     }
-    .kpi-value .unit { font-size: 14px; font-weight: 400; color: var(--text-dim); margin-right: 2px; letter-spacing: 0; }
-    .kpi-delta { display: flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 11px; }
+    .kpi-value .unit {
+      font-size: 14px; font-weight: 400;
+      color: var(--text-dim); margin-right: 2px;
+      letter-spacing: 0;
+    }
+    .kpi-delta {
+      display: flex; align-items: center; gap: 5px;
+      font-family: var(--font-mono); font-size: 11px;
+    }
     .kpi-delta.up   { color: var(--green); }
     .kpi-delta.down { color: var(--red);   }
     .kpi-delta.warn { color: var(--gold);  }
 
-    /* Fundo de reserva progress */
+    /* Progress bar (Fundo de Reserva) */
     .progress-wrap { margin-top: 10px; }
-    .progress-bar-bg { height: 3px; background: var(--border2); border-radius: 2px; overflow: hidden; }
+    .progress-bar-bg {
+      height: 3px; background: var(--border2);
+      border-radius: 2px; overflow: hidden;
+    }
     .progress-bar-fill {
       height: 100%; border-radius: 2px;
       background: linear-gradient(90deg, var(--gold), #E0C070);
@@ -219,334 +276,652 @@
     }
     .progress-label {
       display: flex; justify-content: space-between;
-      font-family: var(--font-mono); font-size: 9px; color: var(--text-faint); margin-top: 5px;
+      font-family: var(--font-mono); font-size: 9px;
+      color: var(--text-faint); margin-top: 5px;
     }
 
-    /* Execução arc */
-    .radial-wrap { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
-    .radial-svg  { flex-shrink: 0; }
+    /* Radial arc (Execução Orçamentária) */
+    .radial-wrap {
+      display: flex; align-items: center; gap: 12px;
+      margin-top: 8px;
+    }
+    .radial-svg { flex-shrink: 0; }
     .radial-info { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); }
 
-    /* Alertas count */
+    /* Alertas active count */
     .kpi-alerts-count {
-      font-family: var(--font-sans); font-size: 48px; font-weight: 700;
-      color: var(--gold); line-height: 1; letter-spacing: -0.03em;
+      font-family: var(--font-sans);
+      font-size: 48px; font-weight: 700;
+      color: var(--gold); line-height: 1;
+      letter-spacing: -0.03em;
     }
 
-    /* ── MAIN GRID ── */
+    /* ═══════════════════════════════════════════════════════════════
+       3. MAIN AREA
+    ═══════════════════════════════════════════════════════════════ */
     .main-grid {
-      display: grid; grid-template-columns: 60fr 40fr;
-      gap: 16px; margin-top: 16px;
+      display: grid;
+      grid-template-columns: 60fr 40fr;
+      gap: 16px;
+      margin-top: 16px;
     }
+
+    /* ─── Panels ─── */
     .panel {
-      background: var(--surface); border: 1px solid var(--border2);
-      border-radius: 10px; overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      overflow: hidden;
     }
     .panel-header {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 16px 20px; border-bottom: 1px solid var(--border2);
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border2);
     }
     .panel-title {
-      font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em;
+      font-family: var(--font-mono);
+      font-size: 10px; letter-spacing: 0.12em;
       text-transform: uppercase; color: var(--text-dim);
       display: flex; align-items: center; gap: 8px;
     }
-    .panel-title-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
-    .panel-body { padding: 20px; }
-    .left-col  { display: flex; flex-direction: column; gap: 16px; }
-    .right-col { display: flex; flex-direction: column; gap: 16px; }
-    .chart-container { position: relative; flex: 1; min-height: 240px; }
-
-    /* Chart source toggle */
-    .ct-btn {
-      font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em;
-      text-transform: uppercase; color: var(--text-dim); background: var(--surface2);
-      border: 1px solid var(--border2); border-radius: 4px; padding: 3px 9px;
-      cursor: pointer; transition: all 0.15s;
+    .panel-title-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%; background: var(--gold);
     }
-    .ct-btn.ct-active { background: rgba(201,168,76,0.15); border-color: rgba(201,168,76,0.4); color: var(--gold); }
+    .panel-body { padding: 20px; }
+
+    /* ─── Coluna esquerda ─── */
+    .left-col { display: flex; flex-direction: column; gap: 16px; }
+
+    /* Chart container */
+    .chart-container {
+      position: relative; flex: 1; min-height: 240px;
+    }
+
+    /* ─── Chart source toggle ─── */
+    .ct-btn {
+      font-family: var(--font-mono);
+      font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--text-dim); background: var(--surface2);
+      border: 1px solid var(--border2); border-radius: 4px;
+      padding: 3px 9px; cursor: pointer; transition: all 0.15s;
+    }
+    .ct-btn.ct-active {
+      background: rgba(201,168,76,0.15);
+      border-color: rgba(201,168,76,0.4);
+      color: var(--gold);
+    }
     .ct-btn:hover:not(.ct-active) { border-color: rgba(201,168,76,0.2); color: var(--text); }
 
-    /* Expense table */
+    /* Tabela de despesas */
     .expense-table { width: 100%; border-collapse: collapse; }
-    .expense-table thead tr { border-bottom: 1px solid var(--border2); }
+    .expense-table thead tr {
+      border-bottom: 1px solid var(--border2);
+    }
     .expense-table th {
-      font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em;
-      text-transform: uppercase; color: var(--text-faint); padding: 0 12px 10px;
-      text-align: right; font-weight: 400;
+      font-family: var(--font-mono);
+      font-size: 9px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--text-faint);
+      padding: 0 12px 10px; text-align: right;
+      font-weight: 400;
     }
     .expense-table th:first-child { text-align: left; }
-    .expense-table tbody tr { border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.2s; }
+    .expense-table tbody tr {
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      transition: background 0.2s;
+    }
     .expense-table tbody tr:hover { background: var(--surface2); }
-    .expense-table td { padding: 11px 12px; font-family: var(--font-mono); font-size: 12px; color: var(--text); text-align: right; }
+    .expense-table td {
+      padding: 11px 12px;
+      font-family: var(--font-mono); font-size: 12px;
+      color: var(--text); text-align: right;
+    }
     .expense-table td:first-child { text-align: left; }
-    .cat-name { font-family: var(--font-sans); font-size: 13px; color: var(--text); display: flex; align-items: center; gap: 8px; }
-    .cat-dot  { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
-    .var-chip { display: inline-flex; align-items: center; gap: 3px; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-family: var(--font-mono); }
+    .cat-name {
+      font-family: var(--font-sans); font-size: 13px; color: var(--text);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .cat-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .var-chip {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 1px 6px; border-radius: 3px;
+      font-size: 10px; font-family: var(--font-mono);
+    }
     .var-up   { background: var(--red-dim);   color: var(--red);   }
     .var-down { background: var(--green-dim); color: var(--green); }
     .var-neu  { background: var(--surface3);  color: var(--text-dim); }
-    .budget-mini-bg   { height: 2px; background: var(--border2); border-radius: 1px; overflow: hidden; margin-top: 4px; }
+
+    /* Budget bar in table */
+    .budget-cell { min-width: 80px; }
+    .budget-mini-bg {
+      height: 2px; background: var(--border2);
+      border-radius: 1px; overflow: hidden; margin-top: 4px;
+    }
     .budget-mini-fill { height: 100%; border-radius: 1px; }
+
+    /* ─── Coluna direita ─── */
+    .right-col { display: flex; flex-direction: column; gap: 16px; }
 
     /* Alertas */
     .alert-list { display: flex; flex-direction: column; gap: 10px; }
     .alert-item {
-      display: flex; gap: 12px; padding: 12px 14px;
-      background: var(--surface2); border-radius: 8px;
-      border-left: 3px solid transparent; position: relative;
-      transition: background 0.2s; cursor: pointer;
+      display: flex; gap: 12px;
+      padding: 12px 14px;
+      background: var(--surface2);
+      border-radius: 8px;
+      border-left: 3px solid transparent;
+      position: relative;
+      transition: background 0.2s;
     }
     .alert-item:hover { background: var(--surface3); }
-    .alert-item.crit { border-left-color: var(--red);  animation: pulseBorder-red  3s ease-in-out infinite; }
+    .alert-item.crit { border-left-color: var(--red); animation: pulseBorder-red 3s ease-in-out infinite; }
     .alert-item.warn { border-left-color: var(--gold); animation: pulseBorder-gold 3s ease-in-out infinite; }
     .alert-item.info { border-left-color: var(--blue); }
-    @keyframes pulseBorder-red  { 0%,100%{border-left-color:var(--red);}  50%{border-left-color:rgba(224,92,58,0.3);} }
-    @keyframes pulseBorder-gold { 0%,100%{border-left-color:var(--gold);} 50%{border-left-color:rgba(201,168,76,0.3);} }
-    .alert-icon { width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px; }
+
+    @keyframes pulseBorder-red {
+      0%,100% { border-left-color: var(--red); }
+      50%      { border-left-color: rgba(224,92,58,0.3); }
+    }
+    @keyframes pulseBorder-gold {
+      0%,100% { border-left-color: var(--gold); }
+      50%      { border-left-color: rgba(201,168,76,0.3); }
+    }
+
+    .alert-icon {
+      width: 28px; height: 28px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-size: 13px;
+    }
     .alert-icon.crit { background: var(--red-dim);  }
     .alert-icon.warn { background: var(--gold-dim); }
     .alert-icon.info { background: var(--blue-dim); }
-    .alert-body { flex:1;min-width:0; }
-    .alert-desc { font-family:var(--font-sans);font-size:12px;color:var(--text);line-height:1.4;margin-bottom:5px; }
-    .alert-meta { display:flex;align-items:center;justify-content:space-between;gap:8px; }
-    .alert-date { font-family:var(--font-mono);font-size:9px;color:var(--text-faint);letter-spacing:0.05em; }
-    .btn-ver    { font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);background:none;border:none;cursor:pointer;padding:0;transition:opacity 0.2s;white-space:nowrap; }
-    .btn-ver:hover { opacity:0.7; }
 
-    /* Achados / findings */
-    .achado-list { display: flex; flex-direction: column; gap: 10px; }
-    .achado-item {
-      background: var(--surface2); border-radius: 8px; padding: 14px 16px;
-      border-left: 3px solid var(--border2); transition: background 0.2s;
-      display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
+    .alert-body { flex: 1; min-width: 0; }
+    .alert-desc {
+      font-family: var(--font-sans); font-size: 12px;
+      color: var(--text); line-height: 1.4;
+      margin-bottom: 5px;
     }
-    .achado-item:hover { background: var(--surface3); }
-    .achado-item.crit { border-left-color: var(--red); }
-    .achado-item.warn { border-left-color: var(--gold); }
-    .achado-item.info { border-left-color: var(--blue); }
-    .achado-titulo { font-family: var(--font-sans); font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 5px; }
-    .achado-desc   { font-family: var(--font-sans); font-size: 11px; color: var(--text-dim); line-height: 1.5; }
-    .achado-meta   { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
-    .achado-impacto { text-align: right; flex-shrink: 0; }
-    .achado-impacto-val   { font-family: var(--font-sans); font-size: 22px; font-weight: 700; color: var(--red); letter-spacing: -0.02em; line-height: 1; }
-    .achado-impacto-label { font-family: var(--font-mono); font-size: 9px; color: var(--text-faint); letter-spacing: 0.08em; margin-top: 3px; }
+    .alert-meta {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px;
+    }
+    .alert-date {
+      font-family: var(--font-mono); font-size: 9px;
+      color: var(--text-faint); letter-spacing: 0.05em;
+    }
+    .btn-ver {
+      font-family: var(--font-mono); font-size: 9px;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--gold); background: none; border: none;
+      cursor: pointer; padding: 0;
+      transition: opacity 0.2s;
+      white-space: nowrap;
+    }
+    .btn-ver:hover { opacity: 0.7; }
 
     /* Pareceres */
     .parecer-list { display: flex; flex-direction: column; gap: 8px; }
     .parecer-item {
-      display: flex; align-items: center; gap: 12px; padding: 12px 14px;
-      background: var(--surface2); border-radius: 8px; transition: background 0.2s;
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px;
+      background: var(--surface2); border-radius: 8px;
+      transition: background 0.2s;
     }
     .parecer-item:hover { background: var(--surface3); }
-    .parecer-icon { width:32px;height:32px;background:var(--gold-dim);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px; }
-    .parecer-info { flex:1;min-width:0; }
-    .parecer-title { font-family:var(--font-sans);font-size:12px;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
-    .parecer-date  { font-family:var(--font-mono);font-size:10px;color:var(--text-faint);margin-top:2px; }
+    .parecer-icon {
+      width: 32px; height: 32px;
+      background: var(--gold-dim); border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-size: 14px;
+    }
+    .parecer-info { flex: 1; min-width: 0; }
+    .parecer-title {
+      font-family: var(--font-sans); font-size: 12px;
+      color: var(--text); font-weight: 500;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .parecer-date {
+      font-family: var(--font-mono); font-size: 10px;
+      color: var(--text-faint); margin-top: 2px;
+    }
     .btn-dl {
-      width:28px;height:28px;background:var(--surface);border:1px solid var(--border2);
-      border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;
-      flex-shrink:0;transition:border-color 0.2s;color:var(--text-dim);font-size:12px;text-decoration:none;
-    }
-    .btn-dl:hover { border-color:var(--gold);color:var(--gold); }
-    .btn-dl-pending { opacity:0.45;cursor:not-allowed; }
-    .btn-dl-pending:hover { border-color:var(--border2)!important;color:var(--text-dim)!important; }
-
-    /* Análise card */
-    .analise-card {
+      width: 28px; height: 28px;
       background: var(--surface); border: 1px solid var(--border2);
-      border-radius: 10px; overflow: hidden; margin-bottom: 16px;
+      border-radius: 6px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: border-color 0.2s;
+      color: var(--text-dim); font-size: 12px;
     }
-    .analise-header {
-      padding: 16px 20px; border-bottom: 1px solid var(--border2);
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .analise-kv  { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; padding: 16px 20px; }
-    .akv-item    { background: var(--surface2); border-radius: 6px; padding: 12px 14px; }
-    .akv-label   { font-family: var(--font-mono); font-size: 9px; color: var(--text-faint); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 5px; }
-    .akv-val     { font-family: var(--font-sans); font-size: 15px; font-weight: 600; color: var(--text); }
-    .analise-resumo { padding: 0 20px 20px; font-family: var(--font-sans); font-size: 13px; color: var(--text-dim); line-height: 1.7; }
+    .btn-dl:hover { border-color: var(--gold); color: var(--gold); }
 
-    /* Relatórios table */
-    .rel-table { width: 100%; border-collapse: collapse; }
-    .rel-table th { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); padding: 0 16px 10px; text-align: left; border-bottom: 1px solid var(--border2); font-weight: 400; }
-    .rel-table td { padding: 13px 16px; font-family: var(--font-sans); font-size: 12.5px; color: var(--text-dim); border-bottom: 1px solid rgba(255,255,255,0.03); }
-    .rel-table tr:last-child td { border-bottom: none; }
-    .rel-table tr:hover td { background: var(--surface2); color: var(--text); }
-
-    /* Bottom strip + timeline */
+    /* ═══════════════════════════════════════════════════════════════
+       4. FAIXA INFERIOR
+    ═══════════════════════════════════════════════════════════════ */
     .bottom-strip {
-      margin-top: 16px; background: var(--surface);
-      border: 1px solid var(--border2); border-radius: 10px; padding: 16px 24px;
+      margin-top: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      padding: 16px 24px;
     }
-    .timeline-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 14px; }
-    .timeline-track { display: flex; align-items: flex-start; gap: 0; position: relative; overflow-x: auto; padding-bottom: 4px; }
-    .timeline-track::before { content: ''; position: absolute; top: 13px; left: 0; right: 0; height: 1px; background: var(--border2); z-index: 0; }
-    .timeline-event { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; min-width: 120px; position: relative; z-index: 1; }
-    .t-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--surface); flex-shrink: 0; }
-    .t-dot.past   { background: var(--text-faint); }
-    .t-dot.next   { background: var(--gold); box-shadow: 0 0 8px rgba(201,168,76,0.5); }
-    .t-dot.future { background: var(--surface3); border-color: var(--border2); }
+
+    .timeline-label {
+      font-family: var(--font-mono);
+      font-size: 9px; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--text-faint);
+      margin-bottom: 14px;
+    }
+
+    .timeline-track {
+      display: flex; align-items: flex-start;
+      gap: 0;
+      position: relative;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .timeline-track::before {
+      content: '';
+      position: absolute; top: 13px; left: 0; right: 0; height: 1px;
+      background: var(--border2); z-index: 0;
+    }
+
+    .timeline-event {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 8px;
+      flex: 1; min-width: 120px;
+      position: relative; z-index: 1;
+    }
+    .t-dot {
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      border: 2px solid var(--surface);
+      flex-shrink: 0;
+      position: relative;
+    }
+    .t-dot.past    { background: var(--text-faint); }
+    .t-dot.next    { background: var(--gold); box-shadow: 0 0 8px rgba(201,168,76,0.5); }
+    .t-dot.future  { background: var(--surface3); border-color: var(--border2); }
     .t-info { text-align: center; }
-    .t-name { font-family: var(--font-sans); font-size: 11px; color: var(--text); font-weight: 500; line-height: 1.3; }
-    .t-date { font-family: var(--font-mono); font-size: 9px; color: var(--text-faint); margin-top: 2px; }
-
-    .footer { display: flex; align-items: center; justify-content: space-between; margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border2); }
-    .footer-left  { font-family: var(--font-sans); font-size: 11px; color: var(--text-faint); display: flex; align-items: center; gap: 8px; }
-    .footer-left strong { color: var(--text-dim); font-weight: 500; }
-    .footer-right { font-family: var(--font-mono); font-size: 9px; color: var(--text-faint); letter-spacing: 0.06em; }
-
-    /* Responsável */
-    .responsavel-box {
-      margin-top: 16px; padding: 12px 14px;
-      background: var(--surface2); border-radius: 8px; border: 1px solid var(--border);
+    .t-name {
+      font-family: var(--font-sans); font-size: 11px;
+      color: var(--text); font-weight: 500; line-height: 1.3;
     }
-    .resp-label { font-family: var(--font-mono); font-size: 9px; color: var(--text-faint); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
-    .resp-nome  { font-family: var(--font-sans); font-size: 14px; font-weight: 600; letter-spacing: -0.01em; color: var(--gold); }
-    .resp-cargo { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); margin-top: 2px; }
-    .resp-role  { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); margin-top: 5px; letter-spacing: 0.06em; border-top: 1px solid var(--border2); padding-top: 7px; }
+    .t-date {
+      font-family: var(--font-mono); font-size: 9px;
+      color: var(--text-faint); margin-top: 2px;
+    }
 
-    /* Tooltip */
+    /* Footer */
+    .footer {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 20px; padding-top: 14px;
+      border-top: 1px solid var(--border2);
+    }
+    .footer-left {
+      font-family: var(--font-sans); font-size: 11px;
+      color: var(--text-faint); display: flex; align-items: center; gap: 8px;
+    }
+    .footer-left strong { color: var(--text-dim); font-weight: 500; }
+    .footer-right {
+      font-family: var(--font-mono); font-size: 9px;
+      color: var(--text-faint); letter-spacing: 0.06em;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       DIVISOR / SEPARATOR
+    ═══════════════════════════════════════════════════════════════ */
+    .sep {
+      height: 1px; background: var(--border2);
+      margin: 16px 0;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════════════════════════════════════ */
+    @media (max-width: 1100px) {
+      .main-grid { grid-template-columns: 1fr; }
+      .kpi-strip { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 720px) {
+      header { grid-template-columns: 1fr; gap: 10px; padding: 14px; }
+      .header-center, .header-right { display: none; }
+      .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+      .shell { padding: 0 12px 32px; }
+      .kpi-value { font-size: 22px; }
+    }
+    @media (max-width: 420px) {
+      .kpi-strip { grid-template-columns: 1fr; }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       TOOLTIP (KPI hover)
+    ═══════════════════════════════════════════════════════════════ */
     #kpiTooltip {
-      position: fixed; z-index: 9000; background: #16191F;
-      border: 1px solid rgba(201,168,76,0.3); border-radius: 8px;
-      padding: 12px 14px; max-width: 230px; pointer-events: none;
-      opacity: 0; transform: translateY(6px);
+      position: fixed; z-index: 9000;
+      background: #16191F;
+      border: 1px solid rgba(201,168,76,0.3);
+      border-radius: 8px;
+      padding: 12px 14px;
+      max-width: 230px;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(6px);
       transition: opacity 0.18s ease, transform 0.18s ease;
       box-shadow: 0 8px 32px rgba(0,0,0,0.55);
     }
-    #kpiTooltip.tip-visible { opacity:1; transform:translateY(0); }
-    .tip-title { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
-    .tip-body  { font-family: var(--font-sans); font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+    #kpiTooltip.tip-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .tip-title {
+      font-family: var(--font-mono);
+      font-size: 9px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--gold);
+      margin-bottom: 6px;
+    }
+    .tip-body {
+      font-family: var(--font-sans);
+      font-size: 12px; color: var(--text-dim);
+      line-height: 1.5;
+    }
 
-    /* Modal */
+    /* ═══════════════════════════════════════════════════════════════
+       MODAL OVERLAY
+    ═══════════════════════════════════════════════════════════════ */
+    /* ─── EXPENSE POPOVER ─── */
+    #expPopover {
+      position: fixed; z-index: 9999;
+      background: #1A1E26;
+      border: 1px solid rgba(201,168,76,0.3);
+      border-radius: 12px;
+      padding: 14px 16px;
+      width: 310px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.65), 0 0 0 1px rgba(201,168,76,0.06);
+      pointer-events: auto;
+      opacity: 0;
+      transform: translateY(6px) scale(0.97);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+    #expPopover.ep-visible { opacity: 1; transform: translateY(0) scale(1); }
+    .ep-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 8px; }
+    .ep-title { font-size: 11px; font-weight: 600; color: var(--gold); letter-spacing: 0.3px; line-height: 1.35; flex: 1; }
+    .ep-source { font-size: 9px; color: rgba(255,255,255,0.32); letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap; padding-top: 2px; }
+    .ep-unavail { font-size: 12px; color: rgba(255,255,255,0.42); text-align: center; padding: 10px 0 6px; font-style: italic; }
+    .ep-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .ep-item:last-child { border-bottom: none; }
+    .ep-item-label { flex: 1; font-size: 11px; color: rgba(255,255,255,0.72); line-height: 1.3; }
+    .ep-item-val { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.9); white-space: nowrap; }
+    .ep-bar-wrap { width: 44px; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
+    .ep-bar-fill { height: 100%; border-radius: 2px; background: var(--gold); }
+    /* ─────────────────────────── */
     #mainModal {
       position: fixed; inset: 0; z-index: 10000;
-      display: flex; align-items: center; justify-content: center; padding: 24px;
-      opacity: 0; pointer-events: none; transition: opacity 0.22s ease;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.22s ease;
     }
-    #mainModal.modal-open { opacity:1; pointer-events:all; }
-    .modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.78); backdrop-filter: blur(6px); }
+    #mainModal.modal-open {
+      opacity: 1; pointer-events: all;
+    }
+    .modal-backdrop {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.78);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
     .modal-panel {
-      position: relative; z-index: 1; background: #111318;
-      border: 1px solid rgba(201,168,76,0.22); border-radius: 14px;
-      width: 100%; max-width: 560px; max-height: 82vh; overflow-y: auto;
+      position: relative; z-index: 1;
+      background: #111318;
+      border: 1px solid rgba(201,168,76,0.22);
+      border-radius: 14px;
+      width: 100%; max-width: 560px;
+      max-height: 82vh; overflow-y: auto;
       transform: translateY(18px) scale(0.97);
       transition: transform 0.28s cubic-bezier(.34,1.4,.64,1);
       box-shadow: 0 28px 80px rgba(0,0,0,0.65);
     }
-    #mainModal.modal-open .modal-panel { transform: translateY(0) scale(1); }
-    .modal-header { display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 16px;border-bottom:1px solid rgba(255,255,255,0.06); }
-    .modal-title-block { flex:1;min-width:0; }
-    .modal-badge { font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;padding:3px 9px;border-radius:3px;display:inline-block;margin-bottom:9px; }
-    .modal-badge.crit { background:var(--red-dim);  color:var(--red);  }
-    .modal-badge.warn { background:var(--gold-dim); color:var(--gold); }
-    .modal-badge.info { background:var(--blue-dim); color:var(--blue); }
-    .modal-h    { font-family:var(--font-sans);font-size:16px;font-weight:600;color:var(--text);line-height:1.3;letter-spacing:-0.01em; }
-    .modal-close { width:32px;height:32px;flex-shrink:0;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:15px;transition:border-color 0.2s,color 0.2s,background 0.2s;margin-top:2px;line-height:1; }
-    .modal-close:hover { border-color:var(--red);color:var(--red);background:var(--red-dim); }
+    #mainModal.modal-open .modal-panel {
+      transform: translateY(0) scale(1);
+    }
+    .modal-panel::-webkit-scrollbar { width: 4px; }
+    .modal-panel::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.2); border-radius: 2px; }
+
+    .modal-header {
+      display: flex; align-items: flex-start;
+      justify-content: space-between; gap: 12px;
+      padding: 20px 22px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .modal-title-block { flex: 1; min-width: 0; }
+    .modal-badge {
+      font-family: var(--font-mono);
+      font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 3px 9px; border-radius: 3px;
+      display: inline-block; margin-bottom: 9px;
+    }
+    .modal-badge.crit { background: var(--red-dim);  color: var(--red);  }
+    .modal-badge.warn { background: var(--gold-dim); color: var(--gold); }
+    .modal-badge.info { background: var(--blue-dim); color: var(--blue); }
+    .modal-h {
+      font-family: var(--font-sans);
+      font-size: 16px; font-weight: 600;
+      color: var(--text); line-height: 1.3;
+      letter-spacing: -0.01em;
+    }
+    .modal-close {
+      width: 32px; height: 32px; flex-shrink: 0;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 8px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-dim); font-size: 15px;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+      margin-top: 2px; line-height: 1;
+    }
+    .modal-close:hover { border-color: var(--red); color: var(--red); background: var(--red-dim); }
+
     .modal-body { padding: 20px 22px 24px; }
     .modal-section { margin-bottom: 16px; }
     .modal-section:last-child { margin-bottom: 0; }
-    .modal-section-label { font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-faint);margin-bottom:7px; }
-    .modal-section-text  { font-family:var(--font-sans);font-size:13px;color:var(--text-dim);line-height:1.6; }
-    .modal-section-text strong { color:var(--text);font-weight:600; }
-    .modal-divider { height:1px;background:rgba(255,255,255,0.05);margin:16px 0; }
-    .modal-kv { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
-    .modal-kv-item { background:var(--surface2);border-radius:6px;padding:10px 12px; }
-    .modal-kv-label { font-family:var(--font-mono);font-size:9px;color:var(--text-faint);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px; }
-    .modal-kv-val   { font-family:var(--font-sans);font-size:14px;font-weight:600;color:var(--text); }
-    .modal-rec { background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.18);border-radius:8px;padding:13px 15px; }
-    .modal-rec-label { font-family:var(--font-mono);font-size:9px;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:7px; }
-    .modal-rec-text  { font-family:var(--font-sans);font-size:12px;color:var(--text-dim);line-height:1.6; }
+    .modal-section-label {
+      font-family: var(--font-mono);
+      font-size: 9px; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--text-faint);
+      margin-bottom: 7px;
+    }
+    .modal-section-text {
+      font-family: var(--font-sans);
+      font-size: 13px; color: var(--text-dim); line-height: 1.6;
+    }
+    .modal-section-text strong { color: var(--text); font-weight: 600; }
+    .modal-divider { height: 1px; background: rgba(255,255,255,0.05); margin: 16px 0; }
+    .modal-kv {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    }
+    .modal-kv-item {
+      background: var(--surface2); border-radius: 6px; padding: 10px 12px;
+    }
+    .modal-kv-label {
+      font-family: var(--font-mono);
+      font-size: 9px; color: var(--text-faint);
+      letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px;
+    }
+    .modal-kv-val {
+      font-family: var(--font-sans);
+      font-size: 14px; font-weight: 600; color: var(--text);
+    }
+    .modal-rec {
+      background: rgba(201,168,76,0.05);
+      border: 1px solid rgba(201,168,76,0.18);
+      border-radius: 8px; padding: 13px 15px;
+    }
+    .modal-rec-label {
+      font-family: var(--font-mono);
+      font-size: 9px; color: var(--gold);
+      letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 7px;
+    }
+    .modal-rec-text {
+      font-family: var(--font-sans);
+      font-size: 12px; color: var(--text-dim); line-height: 1.6;
+    }
+    .alert-item { cursor: pointer; }
 
-    /* Notif Popover */
+    /* ═══════════════════════════════════════════════════════════════
+       MONTH TABS (seletor de período)
+    ═══════════════════════════════════════════════════════════════ */
+    .month-bar {
+      display: flex; align-items: center; gap: 10px;
+      padding: 20px 0 4px;
+    }
+    .month-bar-label {
+      font-family: var(--font-mono);
+      font-size: 9px; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--text-faint);
+      margin-right: 4px;
+    }
+    .month-tabs { display: flex; gap: 4px; }
+    .m-tab {
+      font-family: var(--font-mono);
+      font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase;
+      padding: 6px 14px; border-radius: 6px;
+      background: var(--surface); border: 1px solid var(--border2);
+      color: var(--text-dim); cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .m-tab:hover { border-color: rgba(201,168,76,0.3); color: var(--text); }
+    .m-tab.m-active {
+      background: var(--gold-dim);
+      border-color: rgba(201,168,76,0.45);
+      color: var(--gold);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       NOTIF POPOVER (sininho)
+    ═══════════════════════════════════════════════════════════════ */
     #notifPopover {
-      position: fixed; z-index: 9500; width: 310px;
-      background: #16191F; border: 1px solid rgba(201,168,76,0.22);
-      border-radius: 12px; box-shadow: 0 20px 56px rgba(0,0,0,0.65);
+      position: fixed; z-index: 9500;
+      width: 310px;
+      background: #16191F;
+      border: 1px solid rgba(201,168,76,0.22);
+      border-radius: 12px;
+      box-shadow: 0 20px 56px rgba(0,0,0,0.65);
       opacity: 0; pointer-events: none;
       transform: translateY(-8px) scale(0.97);
-      transition: opacity 0.2s ease, transform 0.2s ease; overflow: hidden;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      overflow: hidden;
     }
-    #notifPopover.pop-open { opacity:1;pointer-events:all;transform:translateY(0) scale(1); }
-    .pop-header { display:flex;align-items:center;justify-content:space-between;padding:13px 16px 11px;border-bottom:1px solid rgba(255,255,255,0.05); }
-    .pop-title  { font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-faint); }
-    .pop-list   { padding:6px 0; }
-    .pop-item   { display:flex;gap:11px;padding:10px 16px;cursor:pointer;transition:background 0.15s;border-left:2px solid transparent; }
-    .pop-item:hover { background:rgba(255,255,255,0.03); }
-    .pop-crit { border-left-color:var(--red);  }
-    .pop-warn { border-left-color:var(--gold); }
-    .pop-info { border-left-color:var(--blue); }
-    .pop-icon { font-size:14px;flex-shrink:0;padding-top:1px; }
-    .pop-content { flex:1;min-width:0; }
-    .pop-item-title { font-family:var(--font-sans);font-size:12px;font-weight:500;color:var(--text);line-height:1.3;margin-bottom:3px; }
-    .pop-item-desc  { font-family:var(--font-sans);font-size:11px;color:var(--text-dim);line-height:1.4; }
-    .pop-item-date  { font-family:var(--font-mono);font-size:9px;color:var(--text-faint);margin-top:4px;letter-spacing:0.04em; }
-    .pop-footer { padding:9px 16px;border-top:1px solid rgba(255,255,255,0.05);font-family:var(--font-mono);font-size:9px;color:var(--gold);letter-spacing:0.06em;cursor:pointer;transition:opacity 0.2s;text-align:center; }
-    .pop-footer:hover { opacity:0.7; }
-
-    /* Expense popover */
-    #expPopover {
-      position: fixed; z-index: 9999; background: #1A1E26;
-      border: 1px solid rgba(201,168,76,0.3); border-radius: 12px;
-      padding: 14px 16px; width: 310px;
-      box-shadow: 0 16px 48px rgba(0,0,0,0.65), 0 0 0 1px rgba(201,168,76,0.06);
-      pointer-events: auto; opacity: 0;
-      transform: translateY(6px) scale(0.97);
-      transition: opacity 0.18s ease, transform 0.18s ease;
+    #notifPopover.pop-open {
+      opacity: 1; pointer-events: all;
+      transform: translateY(0) scale(1);
     }
-    #expPopover.ep-visible { opacity:1;transform:translateY(0) scale(1); }
-    .ep-header { display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:8px; }
-    .ep-title  { font-size:11px;font-weight:600;color:var(--gold);letter-spacing:0.3px;line-height:1.35;flex:1; }
-    .ep-source { font-size:9px;color:rgba(255,255,255,0.32);letter-spacing:0.5px;text-transform:uppercase;white-space:nowrap;padding-top:2px; }
-    .ep-unavail{ font-size:12px;color:rgba(255,255,255,0.42);text-align:center;padding:10px 0 6px;font-style:italic; }
-    .ep-item   { display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04); }
-    .ep-item:last-child { border-bottom:none; }
-    .ep-item-label { flex:1;font-size:11px;color:rgba(255,255,255,0.72);line-height:1.3; }
-    .ep-item-val   { font-size:11px;font-weight:600;color:rgba(255,255,255,0.9);white-space:nowrap; }
-    .ep-bar-wrap   { width:44px;height:3px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;flex-shrink:0; }
-    .ep-bar-fill   { height:100%;border-radius:2px;background:var(--gold); }
+    .pop-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 16px 11px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .pop-title {
+      font-family: var(--font-mono);
+      font-size: 9px; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--text-faint);
+    }
+    .pop-list { padding: 6px 0; }
+    .pop-item {
+      display: flex; gap: 11px;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: background 0.15s;
+      border-left: 2px solid transparent;
+    }
+    .pop-item:hover { background: rgba(255,255,255,0.03); }
+    .pop-crit { border-left-color: var(--red); }
+    .pop-warn { border-left-color: var(--gold); }
+    .pop-info { border-left-color: var(--blue); }
+    .pop-icon { font-size: 14px; flex-shrink: 0; padding-top: 1px; }
+    .pop-content { flex: 1; min-width: 0; }
+    .pop-item-title {
+      font-family: var(--font-sans);
+      font-size: 12px; font-weight: 500; color: var(--text);
+      line-height: 1.3; margin-bottom: 3px;
+    }
+    .pop-item-desc {
+      font-family: var(--font-sans);
+      font-size: 11px; color: var(--text-dim); line-height: 1.4;
+    }
+    .pop-item-date {
+      font-family: var(--font-mono);
+      font-size: 9px; color: var(--text-faint);
+      margin-top: 4px; letter-spacing: 0.04em;
+    }
+    .pop-footer {
+      padding: 9px 16px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      font-family: var(--font-mono);
+      font-size: 9px; color: var(--gold);
+      letter-spacing: 0.06em; cursor: pointer;
+      transition: opacity 0.2s; text-align: center;
+    }
+    .pop-footer:hover { opacity: 0.7; }
 
-    /* Loading */
-    .ld { display:flex;align-items:center;justify-content:center;padding:40px;color:var(--text-faint);font-size:13px;gap:10px;font-family:var(--font-mono); }
-    .sp { width:16px;height:16px;border:2px solid rgba(201,168,76,0.2);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite; }
-    @keyframes spin { to { transform:rotate(360deg); } }
-    .empty-state { text-align:center;padding:40px;color:var(--text-faint);font-family:var(--font-mono);font-size:12px; }
+    /* ─── Download link (parece botão) ─── */
+    a.btn-dl {
+      text-decoration: none;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .btn-dl-pending { opacity: 0.45; cursor: not-allowed; }
+    .btn-dl-pending:hover { border-color: var(--border2) !important; color: var(--text-dim) !important; }
 
-    /* Toast */
+    /* ─── Toast notification ─── */
     #dlToast {
-      position:fixed;bottom:28px;left:50%;
-      transform:translateX(-50%) translateY(12px);
-      z-index:11000;background:#16191F;
-      border:1px solid rgba(201,168,76,0.25);border-radius:8px;
-      padding:11px 18px;font-family:var(--font-mono);font-size:11px;
-      color:var(--text-dim);letter-spacing:0.04em;
-      box-shadow:0 8px 32px rgba(0,0,0,0.5);
-      opacity:0;pointer-events:none;
-      transition:opacity 0.2s ease,transform 0.2s ease;white-space:nowrap;
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      z-index: 11000;
+      background: #16191F;
+      border: 1px solid rgba(201,168,76,0.25);
+      border-radius: 8px;
+      padding: 11px 18px;
+      font-family: var(--font-mono); font-size: 11px; color: var(--text-dim);
+      letter-spacing: 0.04em;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      white-space: nowrap;
     }
-    #dlToast.toast-show { opacity:1;transform:translateX(-50%) translateY(0); }
-
-    /* Responsive */
-    @media (max-width:1100px) { .main-grid{grid-template-columns:1fr;} .kpi-strip{grid-template-columns:repeat(3,1fr);} }
-    @media (max-width:720px)  { header{grid-template-columns:1fr;gap:10px;padding:14px;} .header-center,.header-right{display:none;} .kpi-strip{grid-template-columns:repeat(2,1fr);} .shell{padding:0 12px 32px;} .kpi-value{font-size:22px;} }
-    @media (max-width:420px)  { .kpi-strip{grid-template-columns:1fr;} }
+    #dlToast.toast-show {
+      opacity: 1; transform: translateX(-50%) translateY(0);
+    }
   </style>
 </head>
 <body>
 
-<!-- ── HEADER ── -->
+<!-- ═══════════════════════════════════════════════════════════════════
+     1. HEADER
+═══════════════════════════════════════════════════════════════════ -->
 <header>
+  <!-- Logo Condolytics -->
   <div class="logo-block">
-    <div class="logo-mark">
-      <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
-        <polygon points="22,2 39,11.5 39,32.5 22,42 5,32.5 5,11.5" fill="#0A0C0F" stroke="#C9A84C" stroke-width="2"/>
-        <rect x="9"  y="26" width="4" height="9"  rx="0.5" fill="#C9A84C"/>
+    <div class="logo-mark" title="Condolytics">
+      <!-- SVG fiel à logomarca: hexágono dourado + barras de edifício -->
+      <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Hexágono externo -->
+        <polygon points="22,2 39,11.5 39,32.5 22,42 5,32.5 5,11.5"
+          fill="#0A0C0F" stroke="#C9A84C" stroke-width="2"/>
+        <!-- Barras do edifício / bar chart interior -->
+        <!-- barra esq baixa -->
+        <rect x="9"  y="26" width="4" height="9" rx="0.5" fill="#C9A84C"/>
+        <!-- barra esq media -->
         <rect x="14" y="20" width="4" height="15" rx="0.5" fill="#C9A84C"/>
+        <!-- barra centro alta -->
         <rect x="19" y="13" width="4" height="22" rx="0.5" fill="#C9A84C"/>
+        <!-- barra dir media -->
         <rect x="24" y="20" width="4" height="15" rx="0.5" fill="#C9A84C"/>
-        <rect x="29" y="26" width="4" height="9"  rx="0.5" fill="#C9A84C"/>
+        <!-- barra dir baixa -->
+        <rect x="29" y="26" width="4" height="9" rx="0.5" fill="#C9A84C"/>
+        <!-- linha horizontal base -->
         <line x1="8" y1="35.5" x2="36" y2="35.5" stroke="#C9A84C" stroke-width="1.2"/>
       </svg>
     </div>
@@ -556,242 +931,486 @@
     </div>
   </div>
 
+  <!-- Centro -->
   <div class="header-center">
-    <div class="condo-name" id="hdrCondoNome">Carregando...</div>
-    <div class="condo-period mono" id="hdrCondoPeriod">Conselho Fiscal · 2025</div>
+    <div class="condo-name">Les Alpes Residence Bellevue</div>
+    <div class="condo-period mono">Conselho Fiscal · Gestão 2026/2027 · Condomínio Bellevue - Les Alpes</div>
   </div>
 
+  <!-- Status + Notificações -->
   <div class="header-right">
     <div class="status-pill">
       <div class="pulse-dot"></div>
-      <span class="status-text">Agentes ativos</span>
+      <span class="status-text">Agentes ativos &nbsp;·&nbsp; última análise: hoje 14h32</span>
     </div>
-    <div class="user-pill">
-      <div class="user-avatar" id="hdrAvatar">C</div>
-      <span class="user-name-hdr" id="hdrNome">Carregando...</span>
-      <button class="btn-logout-hdr" onclick="logout()">Sair</button>
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--surface);border:1px solid var(--border2);border-radius:20px;">
+      <div id="userAvatar" style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#E0C070);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--bg);flex-shrink:0;">C</div>
+      <span id="userName" style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);letter-spacing:0.04em;">Carregando...</span>
+      <button onclick="logout()" style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-faint);background:none;border:none;cursor:pointer;transition:color 0.2s;margin-left:4px;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text-faint)'">Sair</button>
     </div>
-    <button class="notif-btn" id="notifBtn" title="Alertas ativos">
+    <button class="notif-btn" title="3 alertas ativos">
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5">
         <path d="M10 2a6 6 0 00-6 6v3l-1.5 2.5h15L16 11V8a6 6 0 00-6-6z"/>
         <path d="M8.5 17.5a1.5 1.5 0 003 0"/>
       </svg>
-      <span class="notif-badge" id="notifBadge">0</span>
+      <span class="notif-badge">3</span>
     </button>
   </div>
 </header>
 
-<!-- ── SHELL ── -->
+<!-- ═══════════════════════════════════════════════════════════════════
+     SHELL
+═══════════════════════════════════════════════════════════════════ -->
 <div class="shell">
 
-  <!-- NAV TABS -->
-  <div class="nav-bar">
-    <button class="nav-tab n-active" onclick="showSec('dashboard',this)">Dashboard</button>
-    <button class="nav-tab" onclick="showSec('analises',this)">Análises</button>
-    <button class="nav-tab" onclick="showSec('achados',this)">Achados</button>
-    <button class="nav-tab" onclick="showSec('relatorios',this)">Relatórios</button>
-    <button class="nav-tab" onclick="showSec('alertas',this)">Alertas</button>
-  </div>
-
-  <!-- ══ DASHBOARD ══ -->
-  <div class="sec s-active" id="sec-dashboard">
-
-    <!-- KPIs -->
-    <div class="kpi-strip" id="kpiStrip">
-      <div class="ld" style="grid-column:1/-1"><div class="sp"></div>Carregando indicadores...</div>
-    </div>
-
-    <!-- Main grid -->
-    <div class="main-grid">
-      <div class="left-col">
-
-        <!-- Gráfico Receitas vs Despesas -->
-        <div class="panel reveal" style="transition-delay:0.1s">
-          <div class="panel-header">
-            <div class="panel-title">
-              <div class="panel-title-dot"></div>
-              <span id="chartPanelTitle">Receitas vs. Despesas</span>
-            </div>
-            <div style="display:flex;gap:6px;">
-              <button class="ct-btn ct-active" id="ctBellevue" onclick="switchChartSource('bellevue')">Bellevue</button>
-              <button class="ct-btn" id="ctAmalpes"  onclick="switchChartSource('amalpes')">AMALPES</button>
-            </div>
-          </div>
-          <div class="panel-body">
-            <div class="chart-container">
-              <canvas id="revenueChart"></canvas>
-            </div>
-          </div>
-        </div>
-
-        <!-- Tabela de despesas -->
-        <div class="panel reveal" style="transition-delay:0.2s">
-          <div class="panel-header">
-            <div class="panel-title">
-              <div class="panel-title-dot" style="background:var(--red)"></div>
-              Despesas por Categoria
-            </div>
-            <span class="tag tag-gold" id="monthTag">Jan/2026</span>
-          </div>
-          <div class="panel-body" style="padding:0;">
-            <table class="expense-table">
-              <thead>
-                <tr>
-                  <th>Categoria</th>
-                  <th>Realizado</th>
-                  <th>Variação</th>
-                  <th>Orçamento</th>
-                </tr>
-              </thead>
-              <tbody id="expenseBody">
-                <tr><td colspan="4"><div class="ld"><div class="sp"></div>Carregando...</div></td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-      </div><!-- /left-col -->
-
-      <div class="right-col">
-
-        <!-- Alertas -->
-        <div class="panel reveal" style="transition-delay:0.15s">
-          <div class="panel-header">
-            <div class="panel-title">
-              <div class="panel-title-dot" style="background:var(--red)"></div>
-              Alertas Prioritários
-            </div>
-            <span class="tag tag-red" id="alertCountTag">—</span>
-          </div>
-          <div class="panel-body">
-            <div class="alert-list" id="alertList">
-              <div class="ld"><div class="sp"></div>Carregando...</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Pareceres / Relatórios -->
-        <div class="panel reveal" style="transition-delay:0.25s">
-          <div class="panel-header">
-            <div class="panel-title">
-              <div class="panel-title-dot" style="background:var(--blue)"></div>
-              Últimos Relatórios
-            </div>
-          </div>
-          <div class="panel-body">
-            <div class="parecer-list" id="parecerList">
-              <div class="ld"><div class="sp"></div>Carregando...</div>
-            </div>
-            <div class="responsavel-box" id="respBox" style="display:none">
-              <div class="resp-label">Responsável Técnico</div>
-              <div class="resp-nome" id="respNome">—</div>
-              <div class="resp-cargo">Especialista Sênior em Finanças Condominiais</div>
-              <div class="resp-role">Conselho Fiscal · <span id="respCondo">—</span></div>
-            </div>
-          </div>
-        </div>
-
-      </div><!-- /right-col -->
-    </div><!-- /main-grid -->
-
-    <!-- Timeline -->
-    <div class="bottom-strip reveal" style="transition-delay:0.3s" id="timelineStrip">
-      <div class="timeline-label">Próximos Eventos</div>
-      <div class="timeline-track" id="timelineTrack">
-        <div class="ld"><div class="sp"></div>Carregando...</div>
-      </div>
-      <div class="footer">
-        <div class="footer-left">
-          <span>🤖</span>
-          <span>Análise conduzida por agentes de IA supervisionados por <strong>especialista sênior em finanças condominiais</strong></span>
-        </div>
-        <div class="footer-right">Condolytics v2.4 &nbsp;·&nbsp; © 2025 Condolytics Tecnologia Fiscal</div>
-      </div>
-    </div>
-
-  </div><!-- /sec-dashboard -->
-
-  <!-- ══ ANÁLISES ══ -->
-  <div class="sec" id="sec-analises">
-    <div id="analiseContainer">
-      <div class="ld"><div class="sp"></div>Carregando análises...</div>
+  <!-- ═══════════════════════════════════════════════════════════════
+       SELETOR DE PERÍODO
+  ═══════════════════════════════════════════════════════════════ -->
+  <div class="month-bar">
+    <span class="month-bar-label">Período</span>
+    <div class="month-tabs">
+      <button class="m-tab" data-month="0">Jul 2025</button>
+      <button class="m-tab" data-month="1">Ago 2025</button>
+      <button class="m-tab" data-month="2">Set 2025</button>
+      <button class="m-tab" data-month="3">Out 2025</button>
+      <button class="m-tab" data-month="4">Nov 2025</button>
+      <button class="m-tab" data-month="5">Dez 2025</button>
+      <button class="m-tab m-active" data-month="6">Jan 2026</button>
     </div>
   </div>
 
-  <!-- ══ ACHADOS ══ -->
-  <div class="sec" id="sec-achados">
-    <!-- KPI resumo achados -->
-    <div class="kpi-strip" id="kpiAchados" style="padding-top:0;">
-      <div class="ld" style="grid-column:1/-1"><div class="sp"></div>Carregando...</div>
-    </div>
-    <div class="achado-list" id="achadoList">
-      <div class="ld"><div class="sp"></div>Carregando achados...</div>
-    </div>
-  </div>
+  <!-- ═══════════════════════════════════════════════════════════════
+       2. KPI STRIP
+  ═══════════════════════════════════════════════════════════════ -->
+  <div class="kpi-strip">
 
-  <!-- ══ RELATÓRIOS ══ -->
-  <div class="sec" id="sec-relatorios">
-    <div class="panel">
-      <div class="panel-header">
-        <div class="panel-title"><div class="panel-title-dot" style="background:var(--blue)"></div>Relatórios Disponíveis</div>
+    <!-- KPI 1: Inadimplência -->
+    <div class="kpi-card reveal" style="transition-delay:0.1s">
+      <div class="kpi-label">Taxa de Inadimplência</div>
+      <div class="kpi-value">
+        <span class="counter" data-target="7.3" data-decimals="1" data-suffix="%"></span>
       </div>
-      <div style="padding:0;">
-        <table class="rel-table">
-          <thead>
-            <tr>
-              <th>Título</th><th>Tipo</th><th>Período</th><th>Publicado em</th><th>Download</th>
-            </tr>
-          </thead>
-          <tbody id="relBody">
-            <tr><td colspan="5"><div class="ld"><div class="sp"></div>Carregando...</div></td></tr>
-          </tbody>
-        </table>
+      <div class="kpi-delta down" id="inadDelta">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+          <path d="M5 2L2 7h6L5 2z" transform="rotate(180,5,5)"/>
+        </svg>
+        <span class="mono" style="font-size:11px" id="inadDeltaText">−2,5 pp vs Nov/2025 · 6 unidades</span>
       </div>
     </div>
-  </div>
 
-  <!-- ══ ALERTAS (tabela completa) ══ -->
-  <div class="sec" id="sec-alertas">
-    <div class="panel">
-      <div class="panel-header">
-        <div class="panel-title"><div class="panel-title-dot" style="background:var(--red)"></div>Central de Alertas</div>
+    <!-- KPI 2: Saldo Conta Corrente -->
+    <div class="kpi-card reveal" style="transition-delay:0.2s">
+      <div class="kpi-label">Saldo — Conta Corrente</div>
+      <div class="kpi-value">
+        <span class="unit">R$</span>
+        <span class="counter" data-target="52160" data-decimals="0" data-format="brl"></span>
       </div>
-      <div style="padding:0;">
-        <table class="rel-table">
-          <thead>
-            <tr><th>Alerta</th><th>Tipo</th><th>Severidade</th><th>Data</th><th>Status</th></tr>
-          </thead>
-          <tbody id="alertTableBody">
-            <tr><td colspan="5"><div class="ld"><div class="sp"></div>Carregando...</div></td></tr>
-          </tbody>
-        </table>
+      <div class="kpi-delta warn">
+        <span style="font-size:10px">●</span>
+        <span class="mono" style="font-size:11px">Banco Itaú &nbsp;·&nbsp; atualizado hoje</span>
       </div>
     </div>
-  </div>
+
+    <!-- KPI 3: Fundo de Reserva com progress -->
+    <div class="kpi-card reveal" style="transition-delay:0.3s">
+      <div class="kpi-label">Fundo de Reserva</div>
+      <div class="kpi-value">
+        <span class="unit">R$</span>
+        <span class="counter" data-target="228578" data-decimals="0" data-format="brl"></span>
+      </div>
+      <div class="progress-wrap">
+        <div class="kpi-delta warn" style="margin-bottom:6px">
+          <span style="font-size:10px">▲</span>
+          <span class="mono" style="font-size:11px" id="reserveDeltaText">76,2% da meta · R$ 300.000</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="reserveProg" style="width:0"></div>
+        </div>
+        <div class="progress-label">
+          <span>0</span><span>Meta: R$ 380k</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI 4: Execução Orçamentária com radial -->
+    <div class="kpi-card reveal" style="transition-delay:0.4s">
+      <div class="kpi-label">Execução Orçamentária</div>
+      <div class="radial-wrap">
+        <svg class="radial-svg" width="56" height="56" viewBox="0 0 56 56">
+          <circle cx="28" cy="28" r="22" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="4"/>
+          <circle cx="28" cy="28" r="22" fill="none"
+            stroke="url(#arcGrad)" stroke-width="4"
+            stroke-linecap="round"
+            stroke-dasharray="138.2"
+            stroke-dashoffset="26.3"
+            transform="rotate(-90 28 28)"
+            id="arcCircle"/>
+          <defs>
+            <linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#C9A84C"/>
+              <stop offset="100%" stop-color="#E0C070"/>
+            </linearGradient>
+          </defs>
+          <text x="28" y="32" text-anchor="middle"
+            font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif"
+            font-size="12" font-weight="700" fill="#E8E6E0">81%</text>
+        </svg>
+        <div class="radial-info">
+          <div style="color:var(--text);font-size:11px;margin-bottom:4px" id="arcInfoMain">81% executado<br>em Dez/2025</div>
+          <div style="font-size:9px;color:var(--text-faint)" id="arcInfoSub">R$ 114.707 / R$ 142.443</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI 5: Alertas Ativos -->
+    <div class="kpi-card reveal" style="transition-delay:0.5s">
+      <div class="kpi-label">Alertas Ativos dos Agentes</div>
+      <div class="kpi-alerts-count">3</div>
+      <div style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap;" id="alertTagsDiv">
+        <span class="tag tag-red">1 crítico</span>
+        <span class="tag tag-gold">1 atenção</span>
+        <span class="tag tag-blue">1 info</span>
+      </div>
+    </div>
+
+  </div><!-- /kpi-strip -->
+
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       3. MAIN GRID
+  ═══════════════════════════════════════════════════════════════ -->
+  <div class="main-grid" style="margin-top:16px">
+
+    <!-- ─── COLUNA ESQUERDA (60%) ─── -->
+    <div class="left-col">
+
+      <!-- Gráfico Receitas vs Despesas -->
+      <div class="panel reveal" style="transition-delay:0.15s;flex:1;display:flex;flex-direction:column">
+        <div class="panel-header">
+          <div class="panel-title">
+            <div class="panel-title-dot"></div>
+            <span id="chartPanelTitle">Receitas vs. Despesas — Bellevue</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px">
+            <!-- Seletor de fonte -->
+            <div style="display:flex;gap:4px">
+              <button id="ctBellevue" class="ct-btn ct-active" onclick="switchChartSource('bellevue')">Bellevue</button>
+              <button id="ctAmalpes"  class="ct-btn"           onclick="switchChartSource('amalpes')">AMALPES</button>
+            </div>
+            <!-- Legenda -->
+            <div style="display:flex;gap:12px">
+              <div style="display:flex;align-items:center;gap:5px">
+                <div style="width:16px;height:2px;background:var(--gold);border-radius:1px"></div>
+                <span class="mono" style="font-size:9px;color:var(--text-dim)">RECEITAS</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:5px">
+                <div style="width:16px;height:2px;background:var(--red);border-radius:1px"></div>
+                <span class="mono" style="font-size:9px;color:var(--text-dim)">DESPESAS</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-body" style="flex:1;display:flex;flex-direction:column">
+          <div class="chart-container">
+            <canvas id="revenueChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabela de Despesas -->
+      <div class="panel reveal" style="transition-delay:0.25s">
+        <div class="panel-header">
+          <div class="panel-title">
+            <div class="panel-title-dot"></div>
+            Top 5 Categorias de Despesa — Mês Atual
+          </div>
+          <span class="tag tag-gold" id="monthTag">Dez/2025</span>
+        </div>
+        <div class="panel-body" style="padding:0">
+          <table class="expense-table">
+            <thead>
+              <tr>
+                <th style="padding-left:20px">Categoria</th>
+                <th>Valor</th>
+                <th>vs. mês ant.</th>
+                <th style="padding-right:20px">vs. orçamento</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr id="expRow0">
+                <td style="padding-left:20px"><span class="cat-name"><span class="cat-dot" style="background:#C9A84C"></span>Taxa Assoc. AMALPES</span></td>
+                <td>R$ 67.202</td>
+                <td><span class="var-chip var-neu">0,0%</span></td>
+                <td style="padding-right:20px"><div>100%</div><div class="budget-mini-bg"><div class="budget-mini-fill" style="width:100%;background:var(--gold)"></div></div></td>
+              </tr>
+              <tr id="expRow1">
+                <td style="padding-left:20px"><span class="cat-name"><span class="cat-dot" style="background:#5B9BD5"></span>Manutenções Gerais</span></td>
+                <td>R$ 23.158</td>
+                <td><span class="var-chip var-up">+36,2%</span></td>
+                <td style="padding-right:20px"><div>136%</div><div class="budget-mini-bg"><div class="budget-mini-fill" style="width:100%;background:var(--red)"></div></div></td>
+              </tr>
+              <tr id="expRow2">
+                <td style="padding-left:20px"><span class="cat-name"><span class="cat-dot" style="background:#E05C3A"></span>Consumo (Energ/Água)</span></td>
+                <td>R$ 15.117</td>
+                <td><span class="var-chip var-up">+68,0%</span></td>
+                <td style="padding-right:20px"><div>151%</div><div class="budget-mini-bg"><div class="budget-mini-fill" style="width:100%;background:var(--red)"></div></div></td>
+              </tr>
+              <tr id="expRow3">
+                <td style="padding-left:20px"><span class="cat-name"><span class="cat-dot" style="background:#4CAF7D"></span>Administração</span></td>
+                <td>R$ 7.198</td>
+                <td><span class="var-chip var-up">+5,4%</span></td>
+                <td style="padding-right:20px"><div>100%</div><div class="budget-mini-bg"><div class="budget-mini-fill" style="width:100%;background:var(--green)"></div></div></td>
+              </tr>
+              <tr id="expRow4">
+                <td style="padding-left:20px;border-bottom:none"><span class="cat-name"><span class="cat-dot" style="background:#9B7FD4"></span>Outros Serviços</span></td>
+                <td style="border-bottom:none">R$ 2.032</td>
+                <td style="border-bottom:none"><span class="var-chip var-down">−89,3%</span></td>
+                <td style="padding-right:20px;border-bottom:none"><div>20%</div><div class="budget-mini-bg"><div class="budget-mini-fill" style="width:20%;background:#9B7FD4"></div></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /left-col -->
+
+
+    <!-- ─── COLUNA DIREITA (40%) ─── -->
+    <div class="right-col">
+
+      <!-- Alertas dos Agentes de IA -->
+      <div class="panel reveal" style="transition-delay:0.2s;flex:1;display:flex;flex-direction:column">
+        <div class="panel-header">
+          <div class="panel-title">
+            <div class="panel-title-dot" style="background:var(--red)"></div>
+            Alertas dos Agentes — IA
+          </div>
+          <span class="tag tag-gold">3 ativos</span>
+        </div>
+        <div class="panel-body" style="flex:1">
+          <div class="alert-list">
+
+            <!-- Alerta crítico -->
+            <div class="alert-item crit">
+              <div class="alert-icon crit">🔴</div>
+              <div class="alert-body">
+                <div class="alert-desc">
+                  Contrato de limpeza <strong style="color:var(--red)">23% acima da média de mercado</strong> detectado via comparativo de 47 contratos similares em Ribeirão Preto.
+                </div>
+                <div class="alert-meta">
+                  <span class="alert-date">Detectado: 28 Fev 2025</span>
+                  <button class="btn-ver">Ver análise →</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Alerta atenção -->
+            <div class="alert-item warn">
+              <div class="alert-icon warn">⚠️</div>
+              <div class="alert-body">
+                <div class="alert-desc">
+                  Inadimplência da <strong style="color:var(--gold)">Unidade 47</strong> — 3º mês consecutivo sem pagamento. Valor acumulado: R$ 3.840.
+                </div>
+                <div class="alert-meta">
+                  <span class="alert-date">Detectado: 05 Mar 2025</span>
+                  <button class="btn-ver">Ver análise →</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Alerta informativo -->
+            <div class="alert-item info">
+              <div class="alert-icon info">ℹ️</div>
+              <div class="alert-body">
+                <div class="alert-desc">
+                  Fundo de reserva abaixo do mínimo recomendado pela <strong style="color:var(--blue)">ABNT NBR 5674</strong>. Déficit estimado: R$ 67.200 para atingir meta.
+                </div>
+                <div class="alert-meta">
+                  <span class="alert-date">Detectado: 01 Mar 2025</span>
+                  <button class="btn-ver">Ver análise →</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Últimos Pareceres Emitidos -->
+      <div class="panel reveal" style="transition-delay:0.3s">
+        <div class="panel-header">
+          <div class="panel-title">
+            <div class="panel-title-dot" style="background:var(--blue)"></div>
+            Últimos Pareceres Emitidos
+          </div>
+          <button class="btn-ver" style="font-size:10px">Ver todos →</button>
+        </div>
+        <div class="panel-body">
+          <div class="parecer-list">
+
+            <div class="parecer-item">
+              <div class="parecer-icon">📄</div>
+              <div class="parecer-info">
+                <div class="parecer-title">Relatório Preliminar de Auditoria — Exercício 2025</div>
+                <div class="parecer-date mono">01 Mar 2025 &nbsp;·&nbsp; <span class="tag tag-green" style="font-size:9px;padding:1px 6px">Entregue</span></div>
+              </div>
+              <a class="btn-dl" href="RPA_LesAlpes_Marco2026.docx" download title="Baixar Relatório Preliminar de Auditoria">⬇</a>
+            </div>
+
+            <div class="parecer-item">
+              <div class="parecer-icon">📄</div>
+              <div class="parecer-info">
+                <div class="parecer-title">Análise de Conformidade — Contratos Terceirizados</div>
+                <div class="parecer-date mono">15 Fev 2025 &nbsp;·&nbsp; <span class="tag tag-gold" style="font-size:9px;padding:1px 6px">Em análise</span></div>
+              </div>
+              <a class="btn-dl" href="Email_ValleCon_LesAlpes.docx" download title="Baixar e-mail / análise de contratos">⬇</a>
+            </div>
+
+            <div class="parecer-item">
+              <div class="parecer-icon">📄</div>
+              <div class="parecer-info">
+                <div class="parecer-title">Parecer Mensal do Conselho Fiscal — Jan/2025</div>
+                <div class="parecer-date mono">31 Jan 2025 &nbsp;·&nbsp; <span class="tag tag-green" style="font-size:9px;padding:1px 6px">Entregue</span></div>
+              </div>
+              <button class="btn-dl btn-dl-pending" title="Arquivo em preparação">⬇</button>
+            </div>
+
+          </div>
+
+          <!-- Assinatura do Responsável -->
+          <div style="margin-top:20px;padding:12px 14px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
+            <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-faint);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Responsável Técnico</div>
+            <div style="font-family:var(--font-sans);font-size:14px;font-weight:600;letter-spacing:-0.01em;color:var(--gold)">João Paulo L. Oliveira</div>
+            <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);margin-top:2px">Especialista Sênior em Finanças Condominiais</div>
+            <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);margin-top:5px;letter-spacing:0.06em;border-top:1px solid var(--border2);padding-top:7px">Conselho Fiscal · Bellevue</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /right-col -->
+
+  </div><!-- /main-grid -->
+
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       4. FAIXA INFERIOR — TIMELINE + RODAPÉ
+  ═══════════════════════════════════════════════════════════════ -->
+  <div class="bottom-strip reveal" style="transition-delay:0.35s">
+
+    <div class="timeline-label">Próximos Eventos</div>
+
+    <div class="timeline-track">
+
+      <div class="timeline-event">
+        <div class="t-dot past"></div>
+        <div class="t-info">
+          <div class="t-name">Assembleia Fev/2026</div>
+          <div class="t-date">Fev 2026 · Concluído</div>
+        </div>
+      </div>
+
+      <div class="timeline-event">
+        <div class="t-dot next"></div>
+        <div class="t-info">
+          <div class="t-name" style="color:var(--gold)">Reunião do Conselho Fiscal</div>
+          <div class="t-date mono" style="color:var(--gold)">16 Mar 2026</div>
+        </div>
+      </div>
+
+      <div class="timeline-event">
+        <div class="t-dot future"></div>
+        <div class="t-info">
+          <div class="t-name">Entrega Parecer Mensal</div>
+          <div class="t-date">28 Mar 2026</div>
+        </div>
+      </div>
+
+      <div class="timeline-event">
+        <div class="t-dot future"></div>
+        <div class="t-info">
+          <div class="t-name">Assembleia</div>
+          <div class="t-date">13 Abr 2026</div>
+        </div>
+      </div>
+
+    </div><!-- /timeline-track -->
+
+    <!-- Rodapé -->
+    <div class="footer">
+      <div class="footer-left">
+        <span>🤖</span>
+        <span>Análise conduzida por agentes de IA supervisionados por <strong>especialista sênior em finanças.</strong></span>
+        <span style="color:var(--border2)">·</span>
+        <strong>João Paulo L. Oliveira</strong>
+      </div>
+      <div class="footer-right">
+        Condolytics v2.4 &nbsp;·&nbsp; © 2025 Condolytics Tecnologia Fiscal
+      </div>
+    </div>
+
+  </div><!-- /bottom-strip -->
 
 </div><!-- /shell -->
 
-<!-- POPOVERS / MODAIS -->
+
+<!-- ═══ EXPENSE ROW POPOVER ═══ -->
 <div id="expPopover">
-  <div class="ep-header"><span class="ep-title" id="epTitle"></span><span class="ep-source" id="epSource"></span></div>
+  <div class="ep-header">
+    <span class="ep-title" id="epTitle"></span>
+    <span class="ep-source" id="epSource"></span>
+  </div>
   <div id="epBody"></div>
 </div>
 
+<!-- ═══ NOTIF POPOVER ═══ -->
 <div id="notifPopover">
   <div class="pop-header">
     <span class="pop-title">Alertas Ativos</span>
-    <span class="tag tag-red" id="popBadgeCount">0</span>
+    <span class="tag tag-red" id="popBadgeCount">3</span>
   </div>
-  <div class="pop-list" id="popList"></div>
-  <div class="pop-footer" onclick="showSec('alertas', document.querySelector('.nav-tab:nth-child(5)'))">Ver análise detalhada dos alertas →</div>
+  <div class="pop-list">
+
+    <div class="pop-item pop-crit" data-modal="0">
+      <div class="pop-icon">🔴</div>
+      <div class="pop-content">
+        <div class="pop-item-title">Contrato de Limpeza Acima do Mercado</div>
+        <div class="pop-item-desc">23% acima da média de 47 contratos — impacto anual R$ 23.292</div>
+        <div class="pop-item-date">28 Fev 2025</div>
+      </div>
+    </div>
+
+    <div class="pop-item pop-warn" data-modal="1">
+      <div class="pop-icon">⚠️</div>
+      <div class="pop-content">
+        <div class="pop-item-title">Inadimplência — Unidade 47</div>
+        <div class="pop-item-desc">3º mês consecutivo · R$ 3.840 acumulados sem pagamento</div>
+        <div class="pop-item-date">05 Mar 2025</div>
+      </div>
+    </div>
+
+    <div class="pop-item pop-info" data-modal="2">
+      <div class="pop-icon">ℹ️</div>
+      <div class="pop-content">
+        <div class="pop-item-title">Fundo de Reserva Abaixo da Meta</div>
+        <div class="pop-item-desc">ABNT NBR 5674 — déficit de R$ 67.200 para atingir a meta</div>
+        <div class="pop-item-date">01 Mar 2025</div>
+      </div>
+    </div>
+
+  </div>
+  <div class="pop-footer">Ver análise detalhada dos alertas →</div>
 </div>
 
+<!-- ═══ TOAST ═══ -->
 <div id="dlToast">⏳ Arquivo em preparação — disponível em breve</div>
+
+<!-- ═══ KPI TOOLTIP ═══ -->
 <div id="kpiTooltip" role="tooltip">
   <div class="tip-title" id="tipTitle"></div>
   <div class="tip-body"  id="tipBody"></div>
 </div>
 
+<!-- ═══ MODAL PRINCIPAL ═══ -->
 <div id="mainModal" role="dialog" aria-modal="true" aria-labelledby="modalH">
   <div class="modal-backdrop" id="modalBackdrop"></div>
   <div class="modal-panel">
@@ -806,590 +1425,1048 @@
   </div>
 </div>
 
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SCRIPTS
+═══════════════════════════════════════════════════════════════════ -->
 <script src="js/supabase.js"></script>
 <script>
-/* ─── SUPABASE DATA ─── */
-let usuario = null;
-let alertasData = [];
-let revenueChart = null;
-
-const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-
-/* Dados do gráfico: mantidos do argus original (dados reais Bellevue/AMALPES) */
-const chartSources = {
-  bellevue: {
-    title: 'Receitas vs. Despesas — Bellevue',
-    receitas: [124.6,135.8,131.4,125.3,118.7,142.4,147.8],
-    despesas: [125.0,131.6,108.8,123.5,115.0,114.7,121.5],
-    yMin:90, yMax:165
-  },
-  amalpes: {
-    title: 'Receitas vs. Despesas — AMALPES',
-    receitas: [185.3,null,183.7,183.7,null,184.2,184.7],
-    despesas: [158.5,null,176.7,164.1,null,176.8,164.9],
-    yMin:140, yMax:205
-  }
-};
-
-/* Eventos da timeline (fixos por enquanto) */
-const timelineEvents = [
-  { nome:'Entrega Parecer Jan/2025', data:'31 Jan 2025 · Concluído', tipo:'past' },
-  { nome:'Reunião do Conselho Fiscal', data:'15 Mar 2025 · Em 14 dias', tipo:'next', gold:true },
-  { nome:'Entrega Parecer Mensal', data:'28 Mar 2025', tipo:'future' },
-  { nome:'Resposta PBC List — ValleCon', data:'16 Mar 2025', tipo:'future' },
-  { nome:'Assembleia Geral Ordinária', data:'Mai 2025', tipo:'future' },
-  { nome:'Relatório Final de Auditoria', data:'Abr 2025', tipo:'future' }
-];
-
-/* Dados de despesas por categoria (reais Bellevue Jan/2026) */
-const expenseData = {
-  expenses:[
-    {cat:'Limpeza e Conservação', color:'#E05C3A', val:'R$ 10.379', varCls:'var-up',   varTxt:'+23% vs mercado · benchmark 47 contratos', bpct:91, bcol:'var(--red)',   bw:'91%',
-     bdHeader:'Limpeza · Jan/2026 — Total: R$10.379', bdSource:'Prestação de Contas Bellevue',
-     breakdown:[{item:'Limpeza Terceirizada (Contrato Vigente)',val:'R$ 10.379',pct:100}]},
-    {cat:'Manutenção Predial', color:'#C9A84C', val:'R$ 4.985', varCls:'var-neu', varTxt:'Dentro do previsto', bpct:55, bcol:'var(--gold)', bw:'55%',
-     bdHeader:'Manutenção · Jan/2026 — Total: R$4.985', bdSource:'Prestação de Contas Bellevue',
-     breakdown:[{item:'Elevadores (manutenção preventiva)',val:'R$ 2.800',pct:56.2},{item:'Áreas comuns e jardins',val:'R$ 2.185',pct:43.8}]},
-    {cat:'Utilidades (Energia e Água)', color:'#5B9BD5', val:'R$ 23.783', varCls:'var-up', varTxt:'+8% vs Dez/2025', bpct:78, bcol:'var(--blue)', bw:'78%',
-     bdHeader:'Utilidades · Jan/2026 — Total: R$23.783', bdSource:'Prestação de Contas Bellevue',
-     breakdown:[{item:'Energia Elétrica (CPFL + Consórcio)',val:'R$ 15.810',pct:66.5},{item:'Água e Esgoto (DAERP)',val:'R$ 7.963',pct:33.5},{item:'Gás (Ultragaz)',val:'R$ 10',pct:0.0}]},
-    {cat:'Administração', color:'#4CAF7D', val:'R$ 6.833', varCls:'var-down', varTxt:'−31% vs Jul/2025 · sem Hon. Adv.', bpct:69, bcol:'var(--green)', bw:'69%',
-     bdHeader:'Administração · Jan/2026 — Total: R$6.833', bdSource:'Prestação de Contas Bellevue',
-     breakdown:[{item:'Serv. Administrativos (Vallecon)',val:'R$ 4.554',pct:66.6},{item:'Remuneração Síndico (ACA)',val:'R$ 2.279',pct:33.4}]},
-    {cat:'Outros Serviços', color:'#9B7FD4', val:'R$ 2.471', varCls:'var-down', varTxt:'−70% vs Jul/2025', bpct:30, bcol:'var(--green)', bw:'30%',
-     bdHeader:'Outros Serviços · Jan/2026 — Total: R$2.471', bdSource:'Prestação de Contas Bellevue',
-     breakdown:[{item:'Investimentos (aprovados em assembleia)',val:'R$ 1.640',pct:66.4},{item:'Encargos e Impostos',val:'R$ 318',pct:12.9},{item:'Despesas Reembolsáveis',val:'R$ 299',pct:12.1},{item:'Pessoal',val:'R$ 213',pct:8.6}]}
-  ]
-};
-
-/* ─── INIT ─── */
+/* ─────────────────────────────────────────────────────────────────
+   AUTH GUARD — só perfil conselho ou admin acessa
+───────────────────────────────────────────────────────────────── */
 window.addEventListener('load', async () => {
-  usuario = await protegerPagina(['conselho','admin']);
+  const usuario = await protegerPagina(['conselho', 'admin']);
   if (!usuario) return;
-
   const nome = usuario.nome_completo || 'Conselheiro';
-  document.getElementById('hdrNome').textContent    = nome;
-  document.getElementById('hdrAvatar').textContent  = nome[0].toUpperCase();
-  document.getElementById('respNome').textContent   = nome;
-  document.getElementById('respBox').style.display  = 'block';
-
-  const condoNome = usuario.condominios?.nome || 'Condomínio';
-  document.getElementById('hdrCondoNome').textContent  = condoNome;
-  document.getElementById('hdrCondoPeriod').textContent = `Conselho Fiscal · Exercício 2025 · ${condoNome}`;
-  document.getElementById('respCondo').textContent     = condoNome;
-
-  await Promise.all([
-    carregarKPIs(),
-    carregarAlertas(),
-    carregarRelatorios(),
-    carregarAnalises(),
-    carregarAchados(),
-    carregarAlertasTabela()
-  ]);
-
-  initChart();
-  renderExpenseTable(expenseData);
-  renderTimeline();
-  initRevealObserver();
+  document.getElementById('userName').textContent  = nome;
+  document.getElementById('userAvatar').textContent = nome[0].toUpperCase();
 });
 
-/* ─── SEÇÕES ─── */
-function showSec(nome, el) {
-  document.querySelectorAll('.sec').forEach(s => s.classList.remove('s-active'));
-  document.querySelectorAll('.nav-tab').forEach(n => n.classList.remove('n-active'));
-  document.getElementById('sec-'+nome).classList.add('s-active');
-  if (el) el.classList.add('n-active');
-}
-
-/* ─── KPIs (Supabase) ─── */
-async function carregarKPIs() {
-  const { data: ind } = await db.from('indicadores_financeiros')
-    .select('*').order('periodo',{ascending:false}).limit(1);
-  const d = ind?.[0];
-
-  const { count: totalAchados } = await db.from('achados').select('*',{count:'exact',head:true});
-  const { data: abertos }       = await db.from('achados').select('valor_impacto').eq('status','aberto');
-  const { count: alertasCount } = await db.from('alertas').select('*',{count:'exact',head:true}).eq('lido',false);
-  const totalImpacto = abertos?.reduce((s,a)=>s+(a.valor_impacto||0),0) || 0;
-  const reservaPct   = d ? ((d.fundo_reserva/380000)*100).toFixed(1) : 0;
-  const orcPct       = d ? ((d.despesa_realizada/d.despesa_prevista)*100).toFixed(0) : 0;
-
-  document.getElementById('notifBadge').textContent    = alertasCount || 0;
-  document.getElementById('alertCountTag').textContent = (alertasCount||0)+' ativos';
-
-  document.getElementById('kpiStrip').innerHTML = `
-    <!-- KPI 1: Inadimplência -->
-    <div class="kpi-card reveal" style="transition-delay:0.1s" data-tip="0">
-      <div class="kpi-label">Taxa de Inadimplência</div>
-      <div class="kpi-value"><span class="counter" data-target="${d?.inadimplencia_pct||0}" data-decimals="1" data-suffix="%"></span></div>
-      <div class="kpi-delta ${(d?.inadimplencia_pct||0)<5?'up':'down'}">
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><path d="M5 2L2 7h6L5 2z" transform="${(d?.inadimplencia_pct||0)<5?'':'rotate(180,5,5)'}"/></svg>
-        <span class="mono" style="font-size:11px">${(d?.inadimplencia_pct||0)<3?'Dentro da meta':'Requer atenção'}</span>
-      </div>
-    </div>
-    <!-- KPI 2: Saldo CC -->
-    <div class="kpi-card reveal" style="transition-delay:0.2s" data-tip="1">
-      <div class="kpi-label">Saldo — Conta Corrente</div>
-      <div class="kpi-value"><span class="unit">R$</span><span class="counter" data-target="${d?.saldo_conta||0}" data-decimals="0" data-format="brl"></span></div>
-      <div class="kpi-delta up"><span class="mono" style="font-size:11px">Último mês registrado</span></div>
-    </div>
-    <!-- KPI 3: Fundo de Reserva -->
-    <div class="kpi-card reveal" style="transition-delay:0.3s" data-tip="2">
-      <div class="kpi-label">Fundo de Reserva</div>
-      <div class="kpi-value"><span class="unit">R$</span><span class="counter" data-target="${d?.fundo_reserva||0}" data-decimals="0" data-format="brl"></span></div>
-      <div class="progress-wrap">
-        <div class="progress-bar-bg"><div class="progress-bar-fill" id="reserveProg" style="width:0"></div></div>
-        <div class="progress-label"><span id="reserveDeltaText">${reservaPct}% da meta · R$ 380.000</span><span>Meta</span></div>
-      </div>
-    </div>
-    <!-- KPI 4: Execução Orçamentária -->
-    <div class="kpi-card reveal" style="transition-delay:0.4s" data-tip="3">
-      <div class="kpi-label">Execução Orçamentária</div>
-      <div class="radial-wrap">
-        <svg class="radial-svg" width="56" height="56" viewBox="0 0 56 56">
-          <circle cx="28" cy="28" r="22" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="4"/>
-          <circle id="arcCircle" cx="28" cy="28" r="22" fill="none" stroke="#C9A84C" stroke-width="4"
-            stroke-linecap="round" stroke-dasharray="138.2" stroke-dashoffset="138.2"
-            transform="rotate(-90 28 28)"/>
-          <text x="28" y="33" text-anchor="middle" font-family="var(--font-sans)" font-size="13" font-weight="700" fill="#E8E6E0">${orcPct}%</text>
-        </svg>
-        <div class="radial-info">
-          <div id="arcInfoMain" style="font-size:12px;color:var(--text);font-weight:600;">R$ ${Number(d?.despesa_realizada||0).toLocaleString('pt-BR')}</div>
-          <div id="arcInfoSub"  style="margin-top:3px;">do orçamento executado</div>
-        </div>
-      </div>
-    </div>
-    <!-- KPI 5: Achados -->
-    <div class="kpi-card reveal" style="transition-delay:0.5s" data-tip="4">
-      <div class="kpi-label">Achados Identificados</div>
-      <div class="kpi-alerts-count">${totalAchados||0}</div>
-      <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;" id="alertTagsDiv">
-        <span class="tag tag-red">Impacto R$${(totalImpacto/1000).toFixed(1)}k</span>
-        <span class="tag tag-gold">${alertasCount||0} alertas</span>
-      </div>
-    </div>
-  `;
-
-  // Animate after render
-  setTimeout(() => {
-    document.querySelectorAll('#kpiStrip .counter').forEach(animateCounter);
-    const pb = document.getElementById('reserveProg');
-    if (pb) { pb.style.transition='width 1.5s cubic-bezier(.4,0,.2,1)'; pb.style.width=reservaPct+'%'; }
-    setTimeout(()=>{
-      const arc = document.getElementById('arcCircle');
-      if (arc) { arc.style.transition='stroke-dashoffset 1.5s cubic-bezier(.4,0,.2,1)'; arc.style.strokeDashoffset=138.2*(1-orcPct/100); }
-    },200);
-    initKPITooltips();
-    initRevealObserver();
-  }, 100);
-}
-
-/* ─── ALERTAS (dashboard cards) ─── */
-async function carregarAlertas() {
-  const { data } = await db.from('alertas').select('*').eq('lido',false)
-    .order('created_at',{ascending:false}).limit(5);
-  alertasData = data || [];
-
-  const el = document.getElementById('alertList');
-  if (!alertasData.length) { el.innerHTML='<div class="empty-state">Nenhum alerta ativo.</div>'; return; }
-
-  const sevMap = {critico:'crit',atencao:'warn',informativo:'info'};
-  const emoMap = {critico:'🔴',atencao:'⚠️',informativo:'ℹ️'};
-
-  el.innerHTML = alertasData.map((a,i)=>`
-    <div class="alert-item ${sevMap[a.severidade]||'info'}" onclick="openAlertModal(${i})">
-      <div class="alert-icon ${sevMap[a.severidade]||'info'}">${emoMap[a.severidade]||'ℹ️'}</div>
-      <div class="alert-body">
-        <div class="alert-desc">${a.titulo}</div>
-        <div class="alert-meta">
-          <span class="alert-date">${new Date(a.created_at).toLocaleDateString('pt-BR')}</span>
-          <button class="btn-ver">Ver detalhes →</button>
-        </div>
-      </div>
-    </div>`).join('');
-
-  // Notif popover
-  const sevPMap = {critico:'pop-crit',atencao:'pop-warn',informativo:'pop-info'};
-  document.getElementById('popList').innerHTML = alertasData.map((a,i)=>`
-    <div class="pop-item ${sevPMap[a.severidade]||'pop-info'}" onclick="openAlertModal(${i})">
-      <div class="pop-icon">${emoMap[a.severidade]||'ℹ️'}</div>
-      <div class="pop-content">
-        <div class="pop-item-title">${a.titulo}</div>
-        <div class="pop-item-desc">${a.descricao.substring(0,70)}...</div>
-        <div class="pop-item-date">${new Date(a.created_at).toLocaleDateString('pt-BR')}</div>
-      </div>
-    </div>`).join('');
-
-  document.getElementById('popBadgeCount').textContent = alertasData.length;
-}
-
-/* ─── RELATÓRIOS ─── */
-async function carregarRelatorios() {
-  const { data } = await db.from('relatorios').select('*').eq('publicado',true)
-    .order('created_at',{ascending:false});
-
-  // Sidebar pareceres
-  const pl = document.getElementById('parecerList');
-  if (!data?.length) { pl.innerHTML='<div class="empty-state">Nenhum relatório publicado.</div>'; }
-  else {
-    const statusTag = (r) => r.url_pdf
-      ? '<span class="tag tag-green" style="font-size:9px;padding:1px 6px">Disponível</span>'
-      : '<span class="tag tag-gold" style="font-size:9px;padding:1px 6px">Em preparação</span>';
-    pl.innerHTML = data.slice(0,3).map(r=>`
-      <div class="parecer-item">
-        <div class="parecer-icon">📄</div>
-        <div class="parecer-info">
-          <div class="parecer-title">${r.titulo}</div>
-          <div class="parecer-date mono">${r.publicado_em?new Date(r.publicado_em).toLocaleDateString('pt-BR'):'—'} &nbsp;·&nbsp; ${statusTag(r)}</div>
-        </div>
-        ${r.url_pdf
-          ? `<a class="btn-dl" href="${r.url_pdf}" target="_blank" title="Baixar">⬇</a>`
-          : `<button class="btn-dl btn-dl-pending" onclick="showToast()" title="Em preparação">⬇</button>`}
-      </div>`).join('');
-  }
-
-  // Tabela relatórios (aba)
-  const tbody = document.getElementById('relBody');
-  if (!data?.length) { tbody.innerHTML='<tr><td colspan="5"><div class="empty-state">Nenhum relatório.</div></td></tr>'; return; }
-  tbody.innerHTML = data.map(r=>`
-    <tr>
-      <td style="color:var(--text)">${r.titulo}</td>
-      <td>${r.tipo}</td>
-      <td>${r.periodo||'—'}</td>
-      <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-faint)">
-        ${r.publicado_em?new Date(r.publicado_em).toLocaleDateString('pt-BR'):'—'}
-      </td>
-      <td>
-        ${r.url_pdf
-          ? `<a href="${r.url_pdf}" target="_blank" class="btn-ver">↓ Baixar</a>`
-          : '<span style="color:var(--text-faint);font-size:11px;">Em preparação</span>'}
-      </td>
-    </tr>`).join('');
-}
-
-/* ─── ANÁLISES ─── */
-async function carregarAnalises() {
-  const { data } = await db.from('analises').select('*').order('created_at',{ascending:false});
-  const ct = document.getElementById('analiseContainer');
-  if (!data?.length) { ct.innerHTML='<div class="empty-state" style="padding:60px">Nenhuma análise disponível.</div>'; return; }
-
-  const stsBadge = {em_andamento:'tag-gold',concluida:'tag-green',aprovada:'tag-green'};
-  ct.innerHTML = data.map(a=>`
-    <div class="analise-card reveal">
-      <div class="analise-header">
-        <div class="panel-title"><div class="panel-title-dot"></div>${a.titulo}</div>
-        <span class="tag ${stsBadge[a.status]||'tag-gold'}">${a.status.replace('_',' ')}</span>
-      </div>
-      <div class="analise-kv">
-        <div class="akv-item">
-          <div class="akv-label">Período</div>
-          <div class="akv-val" style="font-size:13px">${new Date(a.periodo_inicio).toLocaleDateString('pt-BR')} — ${new Date(a.periodo_fim).toLocaleDateString('pt-BR')}</div>
-        </div>
-        <div class="akv-item">
-          <div class="akv-label">Documentos Analisados</div>
-          <div class="akv-val">${a.total_documentos}</div>
-        </div>
-        <div class="akv-item">
-          <div class="akv-label">Valor de Irregularidades</div>
-          <div class="akv-val" style="color:var(--red)">R$ ${Number(a.valor_irregularidades).toLocaleString('pt-BR')}</div>
-        </div>
-      </div>
-      <div class="analise-resumo">${a.resumo_executivo||'—'}</div>
-    </div>`).join('');
-  initRevealObserver();
-}
-
-/* ─── ACHADOS ─── */
-async function carregarAchados() {
-  const { data } = await db.from('achados').select('*').order('valor_impacto',{ascending:false});
-
-  const criticos = data?.filter(a=>a.severidade==='critico').length||0;
-  const abertos  = data?.filter(a=>a.status==='aberto').length||0;
-  const total    = data?.reduce((s,a)=>s+(a.valor_impacto||0),0)||0;
-
-  document.getElementById('kpiAchados').innerHTML = `
-    <div class="kpi-card"><div class="kpi-label">Total de Achados</div><div class="kpi-value">${data?.length||0}</div><div class="kpi-delta warn"><span class="mono" style="font-size:11px">identificados nas análises</span></div></div>
-    <div class="kpi-card"><div class="kpi-label">Críticos</div><div class="kpi-value" style="color:var(--red)">${criticos}</div><div class="kpi-delta down"><span class="mono" style="font-size:11px">severidade crítica</span></div></div>
-    <div class="kpi-card"><div class="kpi-label">Em Aberto</div><div class="kpi-value" style="color:var(--red)">${abertos}</div><div class="kpi-delta down"><span class="mono" style="font-size:11px">aguardando resolução</span></div></div>
-    <div class="kpi-card"><div class="kpi-label">Impacto Total</div><div class="kpi-value"><span class="unit">R$</span>${(total/1000).toFixed(1)}k</div><div class="kpi-delta warn"><span class="mono" style="font-size:11px">valor recuperável</span></div></div>
-  `;
-
-  const sevMap = {critico:'crit',atencao:'warn',informativo:'info'};
-  const stsBadge = {aberto:'tag-red',em_tratativa:'tag-gold',resolvido:'tag-green'};
-  const sevBadge = {critico:'tag-red',atencao:'tag-gold',informativo:'tag-blue'};
-
-  const el = document.getElementById('achadoList');
-  if (!data?.length) { el.innerHTML='<div class="empty-state">Nenhum achado encontrado.</div>'; return; }
-  el.innerHTML = data.map(a=>`
-    <div class="achado-item ${sevMap[a.severidade]||'info'}">
-      <div style="flex:1">
-        <div class="achado-titulo">${a.titulo}</div>
-        <div class="achado-desc">${a.descricao}</div>
-        <div class="achado-meta">
-          <span class="tag ${sevBadge[a.severidade]||'tag-blue'}">${a.severidade}</span>
-          <span class="tag ${stsBadge[a.status]||'tag-gold'}">${a.status.replace('_',' ')}</span>
-          <span class="tag" style="background:var(--surface3);color:var(--text-dim)">${a.categoria}</span>
-        </div>
-      </div>
-      <div class="achado-impacto">
-        <div class="achado-impacto-val">R$${(a.valor_impacto/1000).toFixed(1)}k</div>
-        <div class="achado-impacto-label">impacto</div>
-      </div>
-    </div>`).join('');
-}
-
-/* ─── ALERTAS TABELA ─── */
-async function carregarAlertasTabela() {
-  const { data } = await db.from('alertas').select('*').order('created_at',{ascending:false});
-  const tbody = document.getElementById('alertTableBody');
-  if (!data?.length) { tbody.innerHTML='<tr><td colspan="5"><div class="empty-state">Nenhum alerta.</div></td></tr>'; return; }
-  const sevBadge={critico:'tag-red',atencao:'tag-gold',informativo:'tag-blue'};
-  tbody.innerHTML = data.map(a=>`
-    <tr>
-      <td style="color:var(--text)">${a.titulo}</td>
-      <td>${a.tipo}</td>
-      <td><span class="tag ${sevBadge[a.severidade]||'tag-blue'}">${a.severidade}</span></td>
-      <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-faint)">${new Date(a.created_at).toLocaleDateString('pt-BR')}</td>
-      <td><span class="tag ${a.lido?'tag-green':'tag-gold'}">${a.lido?'lido':'não lido'}</span></td>
-    </tr>`).join('');
-}
-
-/* ─── CHART ─── */
-function initChart() {
-  Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Helvetica Neue', Arial, sans-serif";
-  Chart.defaults.color = '#52504C';
-  const ctx = document.getElementById('revenueChart')?.getContext('2d');
-  if (!ctx) return;
-  const gradRec = ctx.createLinearGradient(0,0,0,240);
-  gradRec.addColorStop(0,'rgba(201,168,76,0.22)'); gradRec.addColorStop(1,'rgba(201,168,76,0)');
-  const gradDesp = ctx.createLinearGradient(0,0,0,240);
-  gradDesp.addColorStop(0,'rgba(224,92,58,0.18)'); gradDesp.addColorStop(1,'rgba(224,92,58,0)');
-
-  const src = chartSources.bellevue;
-  revenueChart = new Chart(ctx, {
-    type:'line',
-    data:{
-      labels:['Jul','Ago','Set','Out','Nov','Dez','Jan'],
-      datasets:[
-        {label:'Receitas',data:src.receitas,borderColor:'#C9A84C',backgroundColor:gradRec,borderWidth:2,pointBackgroundColor:'#C9A84C',pointBorderColor:'#0A0C0F',pointBorderWidth:2,pointRadius:4,pointHoverRadius:6,tension:0.4,fill:true,spanGaps:true},
-        {label:'Despesas',data:src.despesas,borderColor:'#E05C3A',backgroundColor:gradDesp,borderWidth:2,pointBackgroundColor:'#E05C3A',pointBorderColor:'#0A0C0F',pointBorderWidth:2,pointRadius:4,pointHoverRadius:6,tension:0.4,fill:true,spanGaps:true}
-      ]
-    },
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      animation:{duration:1800,easing:'easeInOutQuart'},
-      interaction:{mode:'index',intersect:false},
-      plugins:{
-        legend:{display:false},
-        tooltip:{backgroundColor:'#16191F',borderColor:'rgba(201,168,76,0.25)',borderWidth:1,titleColor:'#9A9690',bodyColor:'#E8E6E0',padding:12,cornerRadius:6,
-          callbacks:{label:c=>`  ${c.dataset.label}: R$ ${c.parsed.y?.toLocaleString('pt-BR')||'N/D'}k`}}
-      },
-      scales:{
-        x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{font:{size:10},color:'#52504C'},border:{display:false}},
-        y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:10},color:'#52504C',callback:v=>`R$ ${v}k`},border:{display:false},min:src.yMin,max:src.yMax}
-      }
+/* ─────────────────────────────────────────────────────────────────
+   STAGGERED REVEAL (Intersection Observer)
+───────────────────────────────────────────────────────────────── */
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      observer.unobserve(e.target);
     }
   });
+}, { threshold: 0.08 });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+
+/* ─────────────────────────────────────────────────────────────────
+   COUNTER ANIMATION
+───────────────────────────────────────────────────────────────── */
+function formatBRL(val) {
+  return val.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
-function switchChartSource(src) {
-  if (!revenueChart) return;
-  const d = chartSources[src];
-  document.getElementById('ctBellevue').classList.toggle('ct-active', src==='bellevue');
-  document.getElementById('ctAmalpes').classList.toggle('ct-active',  src==='amalpes');
-  revenueChart.data.datasets[0].data = d.receitas;
-  revenueChart.data.datasets[1].data = d.despesas;
-  revenueChart.options.scales.y.min  = d.yMin;
-  revenueChart.options.scales.y.max  = d.yMax;
-  document.getElementById('chartPanelTitle').textContent = d.title;
-  revenueChart.update('active');
-}
-
-/* ─── EXPENSE TABLE ─── */
-let _epDataset = null;
-function renderExpenseTable(d) {
-  _epDataset = d;
-  const tbody = document.getElementById('expenseBody');
-  if (!tbody) return;
-  tbody.innerHTML = d.expenses.map((r,i)=>`
-    <tr data-row-idx="${i}">
-      <td style="padding-left:20px"><span class="cat-name"><span class="cat-dot" style="background:${r.color}"></span>${r.cat}</span></td>
-      <td>${r.val}</td>
-      <td><span class="var-chip ${r.varCls}">${r.varTxt}</span></td>
-      <td style="padding-right:20px"><div>${r.bpct}%</div><div class="budget-mini-bg"><div class="budget-mini-fill" style="width:${r.bw};background:${r.bcol}"></div></div></td>
-    </tr>`).join('');
-  attachExpensePopover();
-}
-
-const expPop   = document.getElementById('expPopover');
-const epTitleEl= document.getElementById('epTitle');
-const epSrcEl  = document.getElementById('epSource');
-const epBodyEl = document.getElementById('epBody');
-
-function showExpPopover(rowEl, idx) {
-  if (!_epDataset||!expPop) return;
-  const r = _epDataset.expenses[idx]; if (!r) return;
-  clearTimeout(window._epHideTimer);
-  epTitleEl.textContent = r.bdHeader||r.cat;
-  epSrcEl.textContent   = r.bdSource||'';
-  if (!r.breakdown) { epBodyEl.innerHTML='<div class="ep-unavail">Detalhamento não disponível para este período.</div>'; }
-  else {
-    const maxP = Math.max(...r.breakdown.map(x=>x.pct),1);
-    epBodyEl.innerHTML = r.breakdown.map(item=>{
-      const bw = Math.max(4,Math.round((item.pct/maxP)*100));
-      return `<div class="ep-item"><div class="ep-item-label">${item.item}</div><div class="ep-bar-wrap"><div class="ep-bar-fill" style="width:${bw}%"></div></div><div class="ep-item-val">${item.val}</div></div>`;
-    }).join('');
-  }
-  const rect = rowEl.getBoundingClientRect();
-  const tableRect = rowEl.closest('table').getBoundingClientRect();
-  const popW = 310; let left = tableRect.right+12;
-  if (left+popW>window.innerWidth-8) left=tableRect.left-popW-12;
-  if (left<8) { left=Math.max(8,rect.left+rect.width/2-popW/2); if(left+popW>window.innerWidth-8)left=window.innerWidth-popW-8; }
-  expPop.style.left=left+'px'; expPop.style.top='-9999px'; expPop.classList.add('ep-visible');
-  const popH=expPop.offsetHeight;
-  let top=rect.top+rect.height/2-popH/2;
-  top=Math.max(8,Math.min(top,window.innerHeight-popH-8));
-  expPop.style.top=top+'px';
-}
-function hideExpPopover() { window._epHideTimer=setTimeout(()=>{if(expPop)expPop.classList.remove('ep-visible');},120); }
-function attachExpensePopover() {
-  const tbody=document.querySelector('#expenseBody');
-  if(!tbody)return;
-  tbody.onmouseover=e=>{const tr=e.target.closest('tr[data-row-idx]');if(tr)showExpPopover(tr,parseInt(tr.dataset.rowIdx));else clearTimeout(window._epHideTimer);};
-  tbody.onmouseleave=()=>hideExpPopover();
-  expPop.addEventListener('mouseenter',()=>clearTimeout(window._epHideTimer));
-  expPop.addEventListener('mouseleave',()=>hideExpPopover());
-}
-
-/* ─── TIMELINE ─── */
-function renderTimeline() {
-  const el = document.getElementById('timelineTrack');
-  el.innerHTML = timelineEvents.map(e=>`
-    <div class="timeline-event">
-      <div class="t-dot ${e.tipo}"></div>
-      <div class="t-info">
-        <div class="t-name" ${e.gold?'style="color:var(--gold)"':''}>${e.nome}</div>
-        <div class="t-date mono" ${e.gold?'style="color:var(--gold)"':''}>${e.data}</div>
-      </div>
-    </div>`).join('');
-}
-
-/* ─── MODAL (alertas) ─── */
-const mainModal  = document.getElementById('mainModal');
-const modalBadge = document.getElementById('modalBadge');
-const modalH2    = document.getElementById('modalH');
-const modalBody2 = document.getElementById('modalBody');
-
-function openAlertModal(idx) {
-  const a = alertasData[idx]; if (!a) return;
-  const sevMap = {critico:{cls:'crit',txt:'Crítico'},atencao:{cls:'warn',txt:'Atenção'},informativo:{cls:'info',txt:'Informativo'}};
-  const s = sevMap[a.severidade]||sevMap.informativo;
-  modalBadge.className=`modal-badge ${s.cls}`; modalBadge.textContent=s.txt;
-  modalH2.textContent=a.titulo;
-  modalBody2.innerHTML=`
-    <div class="modal-section">
-      <div class="modal-section-label">Descrição</div>
-      <div class="modal-section-text">${a.descricao}</div>
-    </div>
-    <div class="modal-divider"></div>
-    <div class="modal-section">
-      <div class="modal-section-label">Data de Detecção</div>
-      <div class="modal-section-text">${new Date(a.created_at).toLocaleDateString('pt-BR')}</div>
-    </div>
-    <div class="modal-divider"></div>
-    <div class="modal-rec">
-      <div class="modal-rec-label">Recomendação Condolytics</div>
-      <div class="modal-rec-text">Analisar o achado junto ao síndico e administradora, registrar posicionamento formal no livro de atas do conselho fiscal e acompanhar a resolução nas próximas reuniões.</div>
-    </div>`;
-  mainModal.classList.add('modal-open');
-}
-
-document.getElementById('modalClose').onclick  = ()=>mainModal.classList.remove('modal-open');
-document.getElementById('modalBackdrop').onclick=()=>mainModal.classList.remove('modal-open');
-document.addEventListener('keydown',e=>{ if(e.key==='Escape')mainModal.classList.remove('modal-open'); });
-
-/* ─── NOTIF POPOVER ─── */
-const notifBtn = document.getElementById('notifBtn');
-const notifPop = document.getElementById('notifPopover');
-notifBtn.addEventListener('click', e => {
-  e.stopPropagation();
-  const isOpen = notifPop.classList.contains('pop-open');
-  notifPop.classList.toggle('pop-open');
-  if (!isOpen) {
-    const rect = notifBtn.getBoundingClientRect();
-    notifPop.style.top  = (rect.bottom+8)+'px';
-    notifPop.style.right = (window.innerWidth-rect.right)+'px';
-  }
-});
-document.addEventListener('click', ()=>notifPop.classList.remove('pop-open'));
-notifPop.addEventListener('click',e=>e.stopPropagation());
-
-/* ─── COUNTER ANIMATION ─── */
-function formatBRL(v) { return v.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:0}); }
 function animateCounter(el) {
-  const target=parseFloat(el.dataset.target); const decimals=parseInt(el.dataset.decimals)||0;
-  const suffix=el.dataset.suffix||''; const isBRL=el.dataset.format==='brl';
-  const duration=1500; const start=performance.now();
+  const target   = parseFloat(el.dataset.target);
+  const decimals = parseInt(el.dataset.decimals) || 0;
+  const suffix   = el.dataset.suffix || '';
+  const isBRL    = el.dataset.format === 'brl';
+  const duration = 1500;
+  const start    = performance.now();
+
   function step(now) {
-    const p=Math.min((now-start)/duration,1); const ease=1-Math.pow(1-p,3); const val=ease*target;
-    el.textContent=isBRL?formatBRL(val):val.toFixed(decimals)+suffix;
-    if(p<1)requestAnimationFrame(step);
-    else el.textContent=isBRL?formatBRL(target):target.toFixed(decimals)+suffix;
+    const progress = Math.min((now - start) / duration, 1);
+    // Ease out cubic
+    const ease = 1 - Math.pow(1 - progress, 3);
+    const val  = ease * target;
+
+    el.textContent = isBRL
+      ? formatBRL(val)
+      : val.toFixed(decimals) + suffix;
+
+    if (progress < 1) requestAnimationFrame(step);
+    else el.textContent = isBRL ? formatBRL(target) : target.toFixed(decimals) + suffix;
   }
   requestAnimationFrame(step);
 }
 
-/* ─── REVEAL OBSERVER ─── */
-function initRevealObserver() {
-  const obs = new IntersectionObserver(entries=>{
-    entries.forEach(e=>{ if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target);} });
-  },{threshold:0.08});
-  document.querySelectorAll('.reveal:not(.visible)').forEach(el=>obs.observe(el));
-}
+// Trigger counters when KPI strip enters view
+const kpiObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.querySelectorAll('.counter').forEach(animateCounter);
 
-/* ─── KPI TOOLTIPS ─── */
-const kpiTips = [
-  {title:'Taxa de Inadimplência',text:'Percentual das unidades com cota condominial em atraso há mais de 30 dias. Meta recomendada: abaixo de 3%.'},
-  {title:'Saldo Conta Corrente', text:'Saldo disponível na conta corrente do condomínio no último mês registrado.'},
-  {title:'Fundo de Reserva',     text:'Reserva financeira acumulada. Meta aprovada em assembleia: R$ 380.000 conforme ABNT NBR 5674.'},
-  {title:'Execução Orçamentária',text:'Percentual do orçamento anual já executado. Indica alinhamento com a sazonalidade esperada.'},
-  {title:'Achados Identificados',text:'Total de achados identificados nas análises da Condolytics, classificados por severidade e impacto financeiro.'}
-];
-const tipEl=document.getElementById('kpiTooltip');
-const tipTitle=document.getElementById('tipTitle');
-const tipBody=document.getElementById('tipBody');
+      // Progress bar
+      const pb = document.getElementById('reserveProg');
+      if (pb) pb.style.width = '76.2%';
 
-function initKPITooltips() {
-  document.querySelectorAll('#kpiStrip .kpi-card').forEach((card,i)=>{
-    const data=kpiTips[i]; if(!data) return;
-    card.addEventListener('mouseenter',e=>{tipTitle.textContent=data.title;tipBody.textContent=data.text;posTip(e);tipEl.classList.add('tip-visible');});
-    card.addEventListener('mousemove',posTip);
-    card.addEventListener('mouseleave',()=>tipEl.classList.remove('tip-visible'));
+      // Radial arc: 73% = 0.73 × circumference(138.2) = 100.9
+      setTimeout(() => {
+        const arc = document.getElementById('arcCircle');
+        if (arc) {
+          arc.style.transition = 'stroke-dashoffset 1.5s cubic-bezier(.4,0,.2,1)';
+          arc.style.strokeDashoffset = 138.2 * (1 - 0.81);
+        }
+      }, 200);
+
+      kpiObs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.3 });
+
+const kpiStrip = document.querySelector('.kpi-strip');
+if (kpiStrip) kpiObs.observe(kpiStrip);
+
+
+/* ─────────────────────────────────────────────────────────────────
+   CHART.JS — Receitas vs Despesas (linha com gradiente)
+───────────────────────────────────────────────────────────────── */
+const ctx = document.getElementById('revenueChart').getContext('2d');
+
+// Gradient receitas (dourado)
+const gradRec = ctx.createLinearGradient(0, 0, 0, 240);
+gradRec.addColorStop(0, 'rgba(201,168,76,0.22)');
+gradRec.addColorStop(1, 'rgba(201,168,76,0)');
+
+// Gradient despesas (vermelho)
+const gradDesp = ctx.createLinearGradient(0, 0, 0, 240);
+gradDesp.addColorStop(0, 'rgba(224,92,58,0.18)');
+gradDesp.addColorStop(1, 'rgba(224,92,58,0)');
+
+// Dados reais em R$ mil — fonte: Prestação de Contas Bellevue & AMALPES
+const meses = ['Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez', 'Jan'];
+
+const chartSources = {
+  bellevue: {
+    title: 'Receitas vs. Despesas — Bellevue',
+    receitas: [124.6, 135.8, 131.4, 125.3, 118.7, 142.4, 147.8],
+    despesas: [125.0, 131.6, 108.8, 123.5, 115.0, 114.7, 121.5],
+    yMin: 90, yMax: 165
+  },
+  amalpes: {
+    title: 'Receitas vs. Despesas — AMALPES',
+    receitas: [185.3, null, 183.7, 183.7, null, 184.2, 184.7],  // Ago/Nov sem dados disponíveis
+    despesas: [158.5, null, 176.7, 164.1, null, 176.8, 164.9],
+    yMin: 140, yMax: 205
+  }
+};
+
+const receitas = chartSources.bellevue.receitas;
+const despesas = chartSources.bellevue.despesas;
+
+Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Helvetica Neue', Arial, sans-serif";
+Chart.defaults.color = '#52504C';
+
+const revenueChart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: meses,
+    datasets: [
+      {
+        label: 'Receitas',
+        data: receitas,
+        borderColor: '#C9A84C',
+        backgroundColor: gradRec,
+        borderWidth: 2,
+        pointBackgroundColor: '#C9A84C',
+        pointBorderColor: '#0A0C0F',
+        pointBorderWidth: 2,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        tension: 0.4,
+        fill: true,
+        spanGaps: true,
+      },
+      {
+        label: 'Despesas',
+        data: despesas,
+        borderColor: '#E05C3A',
+        backgroundColor: gradDesp,
+        borderWidth: 2,
+        pointBackgroundColor: '#E05C3A',
+        pointBorderColor: '#0A0C0F',
+        pointBorderWidth: 2,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        tension: 0.4,
+        fill: true,
+        spanGaps: true,
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: {
+      duration: 1800,
+      easing: 'easeInOutQuart',
+      // Linha se desenha da esquerda para direita
+      x: { from: 0 }
+    },
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#16191F',
+        borderColor: 'rgba(201,168,76,0.25)',
+        borderWidth: 1,
+        titleColor: '#9A9690',
+        titleFont: { family: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif", size: 10 },
+        bodyColor: '#E8E6E0',
+        bodyFont: { family: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif", size: 12 },
+        padding: 12,
+        cornerRadius: 6,
+        callbacks: {
+          label: ctx => `  ${ctx.dataset.label}: R$ ${ctx.parsed.y.toLocaleString('pt-BR')}k`
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
+        ticks: { font: { family: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', sans-serif", size: 10 }, color: '#52504C' },
+        border: { display: false }
+      },
+      y: {
+        grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
+        ticks: {
+          font: { family: "'IBM Plex Mono'", size: 10 },
+          color: '#52504C',
+          callback: v => `R$ ${v}k`
+        },
+        border: { display: false },
+        min: 90,
+        max: 160
+      }
+    }
+  }
+});
+
+/* ─────────────────────────────────────────────────────────────────
+   NOTIFICAÇÃO — clique no sino faz o badge piscar
+───────────────────────────────────────────────────────────────── */
+const notifBtn = document.querySelector('.notif-btn');
+if (notifBtn) {
+  notifBtn.addEventListener('click', () => {
+    const badge = notifBtn.querySelector('.notif-badge');
+    badge.style.animation = 'none';
+    badge.offsetHeight; // reflow
+    badge.style.animation = 'badgePop 0.3s ease';
   });
 }
-function posTip(e) {
-  const tw=tipEl.offsetWidth||230; const th=tipEl.offsetHeight||80;
-  let x=e.clientX+18; let y=e.clientY+18;
-  if(x+tw>window.innerWidth-16)x=e.clientX-tw-14;
-  if(y+th>window.innerHeight-16)y=e.clientY-th-14;
-  tipEl.style.left=x+'px'; tipEl.style.top=y+'px';
-}
 
-/* ─── TOAST ─── */
-function showToast() {
-  const t=document.getElementById('dlToast');
-  t.classList.add('toast-show');
-  setTimeout(()=>t.classList.remove('toast-show'),3000);
-}
-
-/* ─── BADGE ANIMATION ─── */
-const style=document.createElement('style');
-style.textContent=`@keyframes badgePop{0%{transform:scale(0.8);}60%{transform:scale(1.3);}100%{transform:scale(1);}}`;
+// Pequena animação de entrada para o badge
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes badgePop {
+    0%   { transform: scale(0.8); }
+    60%  { transform: scale(1.3); }
+    100% { transform: scale(1); }
+  }
+`;
 document.head.appendChild(style);
-notifBtn.addEventListener('click',()=>{
-  const b=notifBtn.querySelector('.notif-badge');
-  b.style.animation='none'; b.offsetHeight; b.style.animation='badgePop 0.3s ease';
+
+
+/* ─────────────────────────────────────────────────────────────────
+   KPI TOOLTIPS — explicações ao passar o mouse
+───────────────────────────────────────────────────────────────── */
+const kpiTips = [
+  {
+    title: 'Taxa de Inadimplência',
+    text:  'Percentual das unidades com cota condominial em atraso há mais de 30 dias em relação ao total de unidades pagantes. Meta recomendada: abaixo de 3%.'
+  },
+  {
+    title: 'Saldo Conta Corrente',
+    text:  'Saldo disponível na conta corrente do condomínio no Banco Itaú, atualizado via Open Finance. Não inclui o Fundo de Reserva separado.'
+  },
+  {
+    title: 'Fundo de Reserva',
+    text:  'Reserva financeira acumulada para cobrir despesas extraordinárias e manutenções não programadas. Meta aprovada em assembleia: R$ 380.000 (ABNT NBR 5674).'
+  },
+  {
+    title: 'Execução Orçamentária',
+    text:  'Percentual do orçamento anual aprovado em assembleia já executado no período. 73% indica execução alinhada com a sazonalidade esperada para o mês de fevereiro.'
+  },
+  {
+    title: 'Alertas Ativos dos Agentes',
+    text:  'Total de alertas identificados pelos agentes de IA em análise contínua das finanças do condomínio, classificados por criticidade: crítico, atenção e informativo.'
+  }
+];
+
+const tipEl    = document.getElementById('kpiTooltip');
+const tipTitle = document.getElementById('tipTitle');
+const tipBody  = document.getElementById('tipBody');
+
+function positionTip(e) {
+  const tw = tipEl.offsetWidth  || 230;
+  const th = tipEl.offsetHeight || 80;
+  let x = e.clientX + 18;
+  let y = e.clientY + 18;
+  if (x + tw > window.innerWidth  - 16) x = e.clientX - tw - 14;
+  if (y + th > window.innerHeight - 16) y = e.clientY - th - 14;
+  tipEl.style.left = x + 'px';
+  tipEl.style.top  = y + 'px';
+}
+
+document.querySelectorAll('.kpi-card').forEach((card, i) => {
+  const data = kpiTips[i];
+  if (!data) return;
+  card.addEventListener('mouseenter', e => {
+    tipTitle.textContent = data.title;
+    tipBody.textContent  = data.text;
+    positionTip(e);
+    tipEl.classList.add('tip-visible');
+  });
+  card.addEventListener('mousemove', positionTip);
+  card.addEventListener('mouseleave', () => tipEl.classList.remove('tip-visible'));
 });
+
+
+/* ─────────────────────────────────────────────────────────────────
+   MODAL — conteúdo por alerta
+───────────────────────────────────────────────────────────────── */
+const modalData = [
+  /* 0 — Crítico: Contrato de limpeza */
+  {
+    badgeClass: 'crit',
+    badgeText:  'Crítico',
+    title: 'Contrato de Limpeza 23% Acima do Mercado',
+    sections: [
+      {
+        label: 'Descrição do Alerta',
+        text:  'O agente de benchmarking detectou que o contrato vigente de <strong>limpeza terceirizada</strong> está 23% acima da média apurada em 47 contratos similares em Ribeirão Preto, para condomínios com porte equivalente (80–120 unidades). A cotação original data de 2022 e não passou por revisão competitiva desde então.'
+      }
+    ],
+    kv: [
+      { label: 'Valor atual',       val: 'R$ 10.379/mês' },
+      { label: 'Média de mercado',  val: 'R$  8.438/mês' },
+      { label: 'Diferença mensal',  val: 'R$  1.941'      },
+      { label: 'Impacto anual',     val: 'R$ 23.292'      }
+    ],
+    rec: 'Solicitar nova cotação com ao menos 3 fornecedores habilitados (CNPJ ativo, sem pendências trabalhistas) e encaminhar ao Conselho Fiscal e à administradora para renegociação ou substituição do prestador.',
+    date: 'Detectado: 28 Fev 2025 · Agente: Contract·Scan v1.2'
+  },
+  /* 1 — Atenção: Unidade 47 */
+  {
+    badgeClass: 'warn',
+    badgeText:  'Atenção',
+    title: 'Inadimplência Recorrente — Unidade 47',
+    sections: [
+      {
+        label: 'Descrição do Alerta',
+        text:  'A <strong>Unidade 47</strong> acumula 3 meses consecutivos sem pagamento da cota condominial, configurando inadimplência contumaz conforme o art. 1.336, §1º do Código Civil. O agente identificou ausência de registro de notificação formal no sistema da administradora ValleCon.'
+      }
+    ],
+    kv: [
+      { label: 'Valor acumulado', val: 'R$ 3.840'        },
+      { label: 'Período',         val: 'Dez/24 – Fev/25' },
+      { label: 'Multa (2%)',      val: 'R$ 76,80/mês'    },
+      { label: 'Juros (1%/mês)', val: 'R$ 38,40/mês'    }
+    ],
+    rec: 'Verificar junto à ValleCon se notificação extrajudicial foi emitida. Caso não haja resposta em 15 dias corridos, encaminhar para assessoria jurídica do condomínio para início de cobrança judicial.',
+    date: 'Detectado: 05 Mar 2025 · Agente: Default·Watch v2.0'
+  },
+  /* 2 — Informativo: Fundo de Reserva */
+  {
+    badgeClass: 'info',
+    badgeText:  'Informativo',
+    title: 'Fundo de Reserva Abaixo da Meta ABNT NBR 5674',
+    sections: [
+      {
+        label: 'Descrição do Alerta',
+        text:  'O fundo de reserva está abaixo do mínimo recomendado pela <strong>ABNT NBR 5674:2012</strong> para edifícios com mais de 15 anos de vida útil. A norma orienta reserva equivalente a 5–10% da receita anual para cobrir manutenções de médio e longo prazo sem comprometer o caixa operacional.'
+      }
+    ],
+    kv: [
+      { label: 'Saldo atual',   val: 'R$ 312.800' },
+      { label: 'Meta ABNT',     val: 'R$ 380.000' },
+      { label: 'Déficit',       val: 'R$  67.200' },
+      { label: 'Progresso',     val: '82,3%'       }
+    ],
+    rec: 'Propor em assembleia aumento gradual do rateio destinado ao Fundo de Reserva de R$ 50–100 por unidade/mês pelos próximos 12 meses, atingindo a meta sem impacto abrupto no orçamento das famílias.',
+    date: 'Detectado: 01 Mar 2025 · Agente: Reserve·Guard v1.5'
+  }
+];
+
+
+/* ─────────────────────────────────────────────────────────────────
+   MODAL — funções de abrir / fechar
+───────────────────────────────────────────────────────────────── */
+const mainModal  = document.getElementById('mainModal');
+const modalBadge = document.getElementById('modalBadge');
+const modalH     = document.getElementById('modalH');
+const modalBody2 = document.getElementById('modalBody');
+const modalClose2= document.getElementById('modalClose');
+const modalBdrop = document.getElementById('modalBackdrop');
+
+function openModal(index) {
+  const d = modalData[index];
+  if (!d) return;
+
+  modalBadge.className   = 'modal-badge ' + d.badgeClass;
+  modalBadge.textContent = d.badgeText;
+  modalH.textContent     = d.title;
+
+  let html = '';
+
+  d.sections.forEach(s => {
+    html += `<div class="modal-section">
+      <div class="modal-section-label">${s.label}</div>
+      <div class="modal-section-text">${s.text}</div>
+    </div>`;
+  });
+
+  if (d.kv && d.kv.length) {
+    html += `<div class="modal-divider"></div>
+    <div class="modal-section">
+      <div class="modal-section-label">Dados Apurados</div>
+      <div class="modal-kv">`;
+    d.kv.forEach(item => {
+      html += `<div class="modal-kv-item">
+        <div class="modal-kv-label">${item.label}</div>
+        <div class="modal-kv-val">${item.val}</div>
+      </div>`;
+    });
+    html += `</div></div>`;
+  }
+
+  if (d.rec) {
+    html += `<div class="modal-divider"></div>
+    <div class="modal-rec">
+      <div class="modal-rec-label">⟶ Recomendação</div>
+      <div class="modal-rec-text">${d.rec}</div>
+    </div>`;
+  }
+
+  if (d.date) {
+    html += `<div style="margin-top:14px;font-family:var(--font-mono);font-size:9px;color:var(--text-faint);letter-spacing:0.06em">${d.date}</div>`;
+  }
+
+  modalBody2.innerHTML = html;
+  mainModal.classList.add('modal-open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  mainModal.classList.remove('modal-open');
+  document.body.style.overflow = '';
+}
+
+modalClose2.addEventListener('click', closeModal);
+modalBdrop.addEventListener('click', closeModal);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+
+/* ─────────────────────────────────────────────────────────────────
+   ALERT ITEMS — clicar em qualquer lugar do alerta abre o modal
+───────────────────────────────────────────────────────────────── */
+document.querySelectorAll('.alert-item').forEach((item, i) => {
+  item.addEventListener('click', () => openModal(i));
+});
+
+/* ─────────────────────────────────────────────────────────────────
+   BTN-VER dentro dos alertas — stopPropagation para evitar duplo disparo
+───────────────────────────────────────────────────────────────── */
+document.querySelectorAll('.alert-item .btn-ver').forEach((btn, i) => {
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    openModal(i);
+  });
+});
+
+
+/* ─────────────────────────────────────────────────────────────────
+   TOAST — botão de parecer sem arquivo real
+───────────────────────────────────────────────────────────────── */
+const dlToast = document.getElementById('dlToast');
+let toastTimer = null;
+
+function showToast(msg) {
+  if (!dlToast) return;
+  dlToast.textContent = msg;
+  dlToast.classList.add('toast-show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => dlToast.classList.remove('toast-show'), 3000);
+}
+
+document.querySelectorAll('.btn-dl-pending').forEach(btn => {
+  btn.addEventListener('click', () => {
+    showToast('⏳ Arquivo em preparação — disponível em breve');
+  });
+});
+
+
+/* ─────────────────────────────────────────────────────────────────
+   NOTIF POPOVER — sininho no canto superior direito
+───────────────────────────────────────────────────────────────── */
+const notifPopover  = document.getElementById('notifPopover');
+const popBadgeCount = document.getElementById('popBadgeCount');
+
+// Substituímos o listener original do badge (mantém animação + abre popover)
+const notifBtnOrig = document.querySelector('.notif-btn');
+if (notifBtnOrig) {
+  notifBtnOrig.addEventListener('click', e => {
+    e.stopPropagation();
+    const rect = notifBtnOrig.getBoundingClientRect();
+    notifPopover.style.top   = (rect.bottom + 8) + 'px';
+    notifPopover.style.right = (window.innerWidth - rect.right) + 'px';
+    notifPopover.classList.toggle('pop-open');
+  });
+}
+
+// Fechar ao clicar fora
+document.addEventListener('click', () => notifPopover.classList.remove('pop-open'));
+notifPopover.addEventListener('click', e => e.stopPropagation());
+
+// Itens do popover abrem modal correspondente
+document.querySelectorAll('#notifPopover .pop-item').forEach(item => {
+  item.addEventListener('click', () => {
+    notifPopover.classList.remove('pop-open');
+    openModal(parseInt(item.dataset.modal));
+  });
+});
+
+// Footer do popover
+document.querySelector('.pop-footer').addEventListener('click', () => {
+  notifPopover.classList.remove('pop-open');
+  document.querySelector('.alert-list').scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+
+
+/* ─────────────────────────────────────────────────────────────────
+   MONTH TABS — dados por período
+───────────────────────────────────────────────────────────────── */
+const monthDataSet = [
+  /* 0 — Jul 2025 */
+  {
+    label:'Jul 2025', expenseTag:'Jul/2025',
+    inad:{target:15.9,deltaText:'referência · 13 unidades inadimplentes'},
+    saldo:{target:28663},
+    reserva:{target:161695,pct:53.9,meta:'300.000'},
+    orc:{pct:100,main:'100% executado<br>em Jul/2025',sub:'R$ 124.965 / R$ 124.592'},
+    alertas:{count:3,badge:'3',tags:'<span class="tag tag-red">1 crítico</span><span class="tag tag-gold">1 atenção</span><span class="tag tag-blue">1 info</span>'},
+    expenses:[
+      {cat:'Taxa Assoc. AMALPES',color:'#C9A84C',val:'R$ 67.202',varCls:'var-neu',varTxt:'referência',bpct:100,bcol:'var(--gold)',bw:'100%',
+       bdHeader:'AMALPES · Jul/2025 — Total: R$158.497',bdSource:'Prestação de Contas AMALPES',
+       breakdown:[
+         {item:'Pessoal Terceirizados (Vig.+Limp.)',val:'R$ 71.120',pct:44.9},
+         {item:'Despesas com Manutenções',val:'R$ 27.803',pct:17.5},
+         {item:'Pessoal CLT',val:'R$ 16.836',pct:10.6},
+         {item:'Encargos e Impostos',val:'R$ 10.955',pct:6.9},
+         {item:'Despesas Financeiras',val:'R$ 10.860',pct:6.8}
+       ]},
+      {cat:'Manutenções Gerais',color:'#5B9BD5',val:'R$ 21.592',varCls:'var-neu',varTxt:'referência',bpct:100,bcol:'var(--gold)',bw:'100%',
+       bdHeader:'Manutenções · Jul/2025 — Total: R$21.592',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Elevadores Atlas Schindler',val:'R$ 5.366',pct:24.9},
+         {item:'Seguro Predial (Allianz)',val:'R$ 3.013',pct:14.0},
+         {item:'Relógio de Ponto (Star Acesso)',val:'R$ 2.860',pct:13.2},
+         {item:'Manutenção de Portas (CR Esquadrias)',val:'R$ 1.300',pct:6.0},
+         {item:'Manutenção Piscina',val:'R$ 1.250',pct:5.8}
+       ]},
+      {cat:'Consumo (Energ/Água)',color:'#E05C3A',val:'R$ 18.122',varCls:'var-neu',varTxt:'referência',bpct:100,bcol:'var(--gold)',bw:'100%',
+       bdHeader:'Consumo · Jul/2025 — Total: R$18.122',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Energia Elétrica (CPFL + Consórcio)',val:'R$ 10.075',pct:55.6},
+         {item:'Água e Esgoto (SAAE)',val:'R$ 8.047',pct:44.4}
+       ]},
+      {cat:'Administração',color:'#4CAF7D',val:'R$ 9.893',varCls:'var-neu',varTxt:'referência',bpct:100,bcol:'var(--green)',bw:'100%',
+       bdHeader:'Administração · Jul/2025 — Total: R$9.893',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Remuneração Síndico (ACA Serviços)',val:'R$ 4.554',pct:46.0},
+         {item:'Serv. Administrativos (Vallecon)',val:'R$ 2.279',pct:23.0},
+         {item:'Assessoria Técnica (Endoanálise)',val:'R$ 2.159',pct:21.8},
+         {item:'Honorários Advocatícios',val:'R$ 840',pct:8.5},
+         {item:'Impressões e Correspondências',val:'R$ 62',pct:0.6}
+       ]},
+      {cat:'Outros Serviços',color:'#9B7FD4',val:'R$ 8.156',varCls:'var-neu',varTxt:'referência',bpct:95,bcol:'var(--gold)',bw:'95%',
+       bdHeader:'Outros Serviços · Jul/2025 — Total: R$8.156',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Investimentos (aprovados em assembleia)',val:'R$ 1.550',pct:19.0},
+         {item:'Desp. Reembolsáveis (Hon. Acordos)',val:'R$ 793',pct:9.7},
+         {item:'Sistema Monitoramento Reservatório',val:'R$ 366',pct:4.5},
+         {item:'Decorações e Outros',val:'R$ 5.446',pct:66.8},
+         {item:'Tarifas Bancárias (SICOOB)',val:'R$ 1',pct:0.0}
+       ]}
+    ]
+  },
+  /* 1 — Ago 2025 */
+  {
+    label:'Ago 2025', expenseTag:'Ago/2025',
+    inad:{target:11.0,deltaText:'−4,9 pp vs Jul/2025 · 9 unidades'},
+    saldo:{target:26194},
+    reserva:{target:205880,pct:68.6,meta:'300.000'},
+    orc:{pct:97,main:'97% executado<br>em Ago/2025',sub:'R$ 131.575 / R$ 135.799'},
+    alertas:{count:3,badge:'3',tags:'<span class="tag tag-red">1 crítico</span><span class="tag tag-gold">1 atenção</span><span class="tag tag-blue">1 info</span>'},
+    expenses:[
+      {cat:'Taxa Assoc. AMALPES',color:'#C9A84C',val:'R$ 67.202',varCls:'var-neu',varTxt:'+0,0%',bpct:100,bcol:'var(--gold)',bw:'100%',
+       bdHeader:'AMALPES · Ago/2025',bdSource:null,
+       breakdown:null},
+      {cat:'Manutenções Gerais',color:'#5B9BD5',val:'R$ 24.586',varCls:'var-up',varTxt:'+13,9%',bpct:120,bcol:'var(--red)',bw:'100%',
+       bdHeader:'Manutenções · Ago/2025 — Total: R$24.586',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Elevadores Atlas Schindler',val:'R$ 5.916',pct:24.1},
+         {item:'Seguro Predial (Allianz)',val:'R$ 3.013',pct:12.3},
+         {item:'Relógio de Ponto (Star Acesso)',val:'R$ 2.860',pct:11.6},
+         {item:'Manutenções Hidráulicas',val:'R$ 2.325',pct:9.5},
+         {item:'Manutenção de Portas (CR Esquadrias)',val:'R$ 1.781',pct:7.2}
+       ]},
+      {cat:'Consumo (Energ/Água)',color:'#E05C3A',val:'R$ 17.773',varCls:'var-down',varTxt:'−2,0%',bpct:98,bcol:'var(--green)',bw:'98%',
+       bdHeader:'Consumo · Ago/2025 — Total: R$17.773',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Energia Elétrica (CPFL + Consórcio)',val:'R$ 10.630',pct:59.8},
+         {item:'Água e Esgoto (SAAE)',val:'R$ 7.143',pct:40.2}
+       ]},
+      {cat:'Administração',color:'#4CAF7D',val:'R$ 6.992',varCls:'var-down',varTxt:'−29,3%',bpct:71,bcol:'var(--green)',bw:'71%',
+       bdHeader:'Administração · Ago/2025 — Total: R$6.992',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Remuneração Síndico (ACA Serviços)',val:'R$ 4.554',pct:65.1},
+         {item:'Serv. Administrativos (Vallecon)',val:'R$ 2.279',pct:32.6},
+         {item:'Combustível/Lubrificantes',val:'R$ 141',pct:2.0},
+         {item:'Impressões (Vallecon)',val:'R$ 18',pct:0.3}
+       ]},
+      {cat:'Outros Serviços',color:'#9B7FD4',val:'R$ 15.022',varCls:'var-up',varTxt:'+84,2%',bpct:100,bcol:'var(--gold)',bw:'100%',
+       bdHeader:'Outros Serviços · Ago/2025 — Total: R$15.022',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Investimentos / Reforma Salão',val:'R$ 13.500',pct:89.9},
+         {item:'Sistema Monitoramento Reservatório',val:'R$ 367',pct:2.4},
+         {item:'Desp. Reembolsáveis',val:'R$ 543',pct:3.6},
+         {item:'Tarifas Bancárias (SICOOB)',val:'R$ 1',pct:0.0},
+         {item:'Outros',val:'R$ 611',pct:4.1}
+       ]}
+    ]
+  },
+  /* 2 — Set 2025 */
+  {
+    label:'Set 2025', expenseTag:'Set/2025',
+    inad:{target:8.5,deltaText:'−2,5 pp vs Ago/2025 · 7 unidades'},
+    saldo:{target:41653},
+    reserva:{target:212967,pct:71.0,meta:'300.000'},
+    orc:{pct:83,main:'83% executado<br>em Set/2025',sub:'R$ 108.825 / R$ 131.371'},
+    alertas:{count:3,badge:'3',tags:'<span class="tag tag-red">1 crítico</span><span class="tag tag-gold">1 atenção</span><span class="tag tag-blue">1 info</span>'},
+    expenses:[
+      {cat:'Taxa Assoc. AMALPES',color:'#C9A84C',val:'R$ 67.202',varCls:'var-neu',varTxt:'+0,0%',bpct:100,bcol:'var(--gold)',bw:'100%',
+       bdHeader:'AMALPES · Set/2025 — Total: R$176.743',bdSource:'Prestação de Contas AMALPES',
+       breakdown:[
+         {item:'Pessoal Terceirizados (Vig.+Limp.)',val:'R$ 74.041',pct:41.9},
+         {item:'Despesas com Manutenções',val:'R$ 22.109',pct:12.5},
+         {item:'Pessoal CLT',val:'R$ 16.546',pct:9.4},
+         {item:'Encargos e Impostos',val:'R$ 15.313',pct:8.7},
+         {item:'Impostos e Taxas (IPTU etc.)',val:'R$ 14.167',pct:8.0}
+       ]},
+      {cat:'Manutenções Gerais',color:'#5B9BD5',val:'R$ 22.949',varCls:'var-down',varTxt:'−6,7%',bpct:93,bcol:'var(--green)',bw:'93%',
+       bdHeader:'Manutenções · Set/2025 — Total: R$22.949',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Elevadores Atlas Schindler',val:'R$ 5.916',pct:25.8},
+         {item:'Seguro Predial (Allianz)',val:'R$ 3.013',pct:13.1},
+         {item:'Relógio de Ponto (Star Acesso)',val:'R$ 2.860',pct:12.5},
+         {item:'Piscina + Aquecedores (Full Tech)',val:'R$ 1.968',pct:8.6},
+         {item:'Pintura Áreas Comuns',val:'R$ 1.890',pct:8.2}
+       ]},
+      {cat:'Consumo (Energ/Água)',color:'#E05C3A',val:'R$ 9.748',varCls:'var-down',varTxt:'−45,1%',bpct:55,bcol:'var(--green)',bw:'55%',
+       bdHeader:'Consumo · Set/2025 — Total: R$9.748',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Água e Esgoto (SAAE)',val:'R$ 7.963',pct:81.7},
+         {item:'Energia Elétrica (CPFL + Consórcio)',val:'R$ 1.780',pct:18.3},
+         {item:'Gás (Ultragaz)',val:'R$ 5',pct:0.1}
+       ]},
+      {cat:'Administração',color:'#4CAF7D',val:'R$ 6.945',varCls:'var-down',varTxt:'−0,7%',bpct:99,bcol:'var(--green)',bw:'99%',
+       bdHeader:'Administração · Set/2025 — Total: R$6.945',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Remuneração Síndico (ACA Serviços)',val:'R$ 4.554',pct:65.6},
+         {item:'Serv. Administrativos (Vallecon)',val:'R$ 2.279',pct:32.8},
+         {item:'Impressões (Vallecon)',val:'R$ 96',pct:1.4},
+         {item:'Entrega Correspondências',val:'R$ 17',pct:0.2}
+       ]},
+      {cat:'Outros Serviços',color:'#9B7FD4',val:'R$ 1.982',varCls:'var-down',varTxt:'−79,6%',bpct:25,bcol:'var(--green)',bw:'25%',
+       bdHeader:'Outros Serviços · Set/2025 — Total: R$1.982',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Desp. Reembolsáveis (Hon. Acordos)',val:'R$ 793',pct:40.0},
+         {item:'Sistema Monitoramento Reservatório',val:'R$ 367',pct:18.5},
+         {item:'Outros',val:'R$ 821',pct:41.4},
+         {item:'Tarifas Bancárias (SICOOB)',val:'R$ 1',pct:0.1}
+       ]}
+    ]
+  },
+  /* 3 — Out 2025 */
+  {
+    label:'Out 2025', expenseTag:'Out/2025',
+    inad:{target:7.3,deltaText:'−1,2 pp vs Set/2025 · 6 unidades'},
+    saldo:{target:36392},
+    reserva:{target:220070,pct:73.4,meta:'300.000'},
+    orc:{pct:99,main:'99% executado<br>em Out/2025',sub:'R$ 123.502 / R$ 125.344'},
+    alertas:{count:3,badge:'3',tags:'<span class="tag tag-red">1 crítico</span><span class="tag tag-gold">1 atenção</span><span class="tag tag-blue">1 info</span>'},
+    expenses:[
+      {cat:'Taxa Assoc. AMALPES',color:'#C9A84C',val:'R$ 67.202',varCls:'var-neu',varTxt:'+0,0%',bpct:100,bcol:'var(--gold)',bw:'100%',
+       bdHeader:'AMALPES · Out/2025 — Total: R$164.092',bdSource:'Prestação de Contas AMALPES',
+       breakdown:[
+         {item:'Pessoal Terceirizados (Vig.+Limp.)',val:'R$ 75.591',pct:46.1},
+         {item:'Despesas com Manutenções',val:'R$ 22.150',pct:13.5},
+         {item:'Encargos e Impostos',val:'R$ 15.399',pct:9.4},
+         {item:'Despesas de Consumo',val:'R$ 10.304',pct:6.3},
+         {item:'Administração AMALPES',val:'R$ 9.556',pct:5.8}
+       ]},
+      {cat:'Manutenções Gerais',color:'#5B9BD5',val:'R$ 26.155',varCls:'var-up',varTxt:'+13,9%',bpct:106,bcol:'var(--gold)',bw:'100%',
+       bdHeader:'Manutenções · Out/2025 — Total: R$26.155',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Elevadores Atlas Schindler',val:'R$ 5.916',pct:22.6},
+         {item:'Seguro Predial (Allianz)',val:'R$ 3.013',pct:11.5},
+         {item:'Relógio de Ponto (Star Acesso)',val:'R$ 2.860',pct:10.9},
+         {item:'Manutenção Piscina (Full Tech)',val:'R$ 2.545',pct:9.7},
+         {item:'Materiais de Construção (Dep. Irajá)',val:'R$ 519',pct:2.0}
+       ]},
+      {cat:'Consumo (Energ/Água)',color:'#E05C3A',val:'R$ 19.285',varCls:'var-up',varTxt:'+97,8%',bpct:160,bcol:'var(--red)',bw:'100%',
+       bdHeader:'Consumo · Out/2025 — Total: R$19.285',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Energia Elétrica (CPFL + Consórcio)',val:'R$ 10.348',pct:53.7},
+         {item:'Água e Esgoto (SAAE)',val:'R$ 8.893',pct:46.1},
+         {item:'Gás (Ultragaz)',val:'R$ 15',pct:0.1}
+       ]},
+      {cat:'Administração',color:'#4CAF7D',val:'R$ 8.711',varCls:'var-up',varTxt:'+25,4%',bpct:100,bcol:'var(--green)',bw:'100%',
+       bdHeader:'Administração · Out/2025 — Total: R$8.711',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Remuneração Síndico (ACA Serviços)',val:'R$ 4.554',pct:52.3},
+         {item:'Serv. Administrativos (Vallecon)',val:'R$ 2.279',pct:26.2},
+         {item:'Honorários Advocatícios',val:'R$ 1.844',pct:21.2},
+         {item:'Impressões e Correspondências',val:'R$ 34',pct:0.4}
+       ]},
+      {cat:'Outros Serviços',color:'#9B7FD4',val:'R$ 2.149',varCls:'var-up',varTxt:'+8,4%',bpct:27,bcol:'var(--green)',bw:'27%',
+       bdHeader:'Outros Serviços · Out/2025 — Total: R$2.149',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Sistema Monitoramento Reservatório',val:'R$ 1.000',pct:46.5},
+         {item:'Desp. Reembolsáveis',val:'R$ 1.067',pct:49.6},
+         {item:'Outros',val:'R$ 81',pct:3.8},
+         {item:'Tarifas Bancárias (SICOOB)',val:'R$ 1',pct:0.1}
+       ]}
+    ]
+  },
+  /* 4 — Nov 2025 */
+  {
+    label:'Nov 2025', expenseTag:'Nov/2025',
+    inad:{target:9.8,deltaText:'+2,5 pp vs Out/2025 · 8 unidades'},
+    saldo:{target:33659},
+    reserva:{target:226503,pct:75.5,meta:'300.000'},
+    orc:{pct:97,main:'97% executado<br>em Nov/2025',sub:'R$ 115.007 / R$ 118.707'},
+    alertas:{count:3,badge:'3',tags:'<span class="tag tag-red">1 crítico</span><span class="tag tag-gold">1 atenção</span><span class="tag tag-blue">1 info</span>'},
+    expenses:[
+      {cat:'Taxa Assoc. AMALPES',color:'#C9A84C',val:'R$ 67.202',varCls:'var-neu',varTxt:'+0,0%',bpct:100,bcol:'var(--gold)',bw:'100%',
+       bdHeader:'AMALPES · Nov/2025',bdSource:null,
+       breakdown:null},
+      {cat:'Manutenções Gerais',color:'#5B9BD5',val:'R$ 19.219',varCls:'var-down',varTxt:'−26,5%',bpct:96,bcol:'var(--green)',bw:'96%',
+       bdHeader:'Manutenções · Nov/2025 — Total: R$19.219',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Elevadores Atlas Schindler',val:'R$ 5.916',pct:30.8},
+         {item:'Manutenção Piscina (Full Tech)',val:'R$ 2.545',pct:13.2},
+         {item:'Relógio de Ponto (Star Acesso)',val:'R$ 2.860',pct:14.9},
+         {item:'Material de Pintura e Construção',val:'R$ 1.559',pct:8.1},
+         {item:'Manutenções Hidráulicas',val:'R$ 1.080',pct:5.6}
+       ]},
+      {cat:'Consumo (Energ/Água)',color:'#E05C3A',val:'R$ 19.219',varCls:'var-down',varTxt:'−0,3%',bpct:99,bcol:'var(--green)',bw:'99%',
+       bdHeader:'Consumo · Nov/2025 — Total: R$19.219',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Energia Elétrica (CPFL + Consórcio)',val:'R$ 10.697',pct:55.7},
+         {item:'Água e Esgoto (SAAE)',val:'R$ 7.963',pct:41.4},
+         {item:'Gás (Ultragaz)',val:'R$ 284',pct:1.5},
+         {item:'Sistema Mon. nível água',val:'R$ 275',pct:1.4}
+       ]},
+      {cat:'Administração',color:'#4CAF7D',val:'R$ 7.022',varCls:'var-down',varTxt:'−19,4%',bpct:81,bcol:'var(--green)',bw:'81%',
+       bdHeader:'Administração · Nov/2025 — Total: R$7.022',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Remuneração Síndico (ACA Serviços)',val:'R$ 4.554',pct:64.9},
+         {item:'Serv. Administrativos (Vallecon)',val:'R$ 2.279',pct:32.5},
+         {item:'Honorários Advocatícios',val:'R$ 189',pct:2.7}
+       ]},
+      {cat:'Outros Serviços',color:'#9B7FD4',val:'R$ 2.347',varCls:'var-up',varTxt:'+9,2%',bpct:30,bcol:'var(--green)',bw:'30%',
+       bdHeader:'Outros Serviços · Nov/2025 — Total: R$2.347',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Sistema Monitoramento Reservatório',val:'R$ 1.366',pct:58.2},
+         {item:'Desp. Reembolsáveis (Hon. Acordos)',val:'R$ 346',pct:14.7},
+         {item:'Outros',val:'R$ 634',pct:27.0},
+         {item:'Tarifas Bancárias (SICOOB)',val:'R$ 1',pct:0.0}
+       ]}
+    ]
+  },
+  /* 5 — Dez 2025 (padrão) */
+  {
+    label:'Dez 2025', expenseTag:'Dez/2025',
+    inad:{target:7.3,deltaText:'−2,5 pp vs Nov/2025 · 6 unidades'},
+    saldo:{target:52160},
+    reserva:{target:228578,pct:76.2,meta:'300.000'},
+    orc:{pct:81,main:'81% executado<br>em Dez/2025',sub:'R$ 114.707 / R$ 142.443'},
+    alertas:{count:3,badge:'3',tags:'<span class="tag tag-red">1 crítico</span><span class="tag tag-gold">1 atenção</span><span class="tag tag-blue">1 info</span>'},
+    expenses:[
+      {cat:'Taxa Assoc. AMALPES',color:'#C9A84C',val:'R$ 67.202',varCls:'var-neu',varTxt:'+0,0%',bpct:100,bcol:'var(--gold)',bw:'100%',
+       bdHeader:'AMALPES · Dez/2025 — Total: R$176.754',bdSource:'Prestação de Contas AMALPES',
+       breakdown:[
+         {item:'Pessoal Terceirizados (Vig.+Limp.)',val:'R$ 75.612',pct:42.8},
+         {item:'Despesas com Manutenções',val:'R$ 30.261',pct:17.1},
+         {item:'Encargos e Impostos',val:'R$ 18.555',pct:10.5},
+         {item:'Pessoal CLT + 13º Salário',val:'R$ 16.239',pct:9.2},
+         {item:'Despesas de Consumo',val:'R$ 5.880',pct:3.3}
+       ]},
+      {cat:'Manutenções Gerais',color:'#5B9BD5',val:'R$ 23.158',varCls:'var-up',varTxt:'+20,5%',bpct:136,bcol:'var(--red)',bw:'100%',
+       bdHeader:'Manutenções · Dez/2025 — Total: R$23.158',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Elevadores Atlas Schindler',val:'R$ 6.220',pct:26.9},
+         {item:'Relógio de Ponto (Star Acesso)',val:'R$ 2.860',pct:12.4},
+         {item:'Manutenções Hidráulicas (DF Hidráulica)',val:'R$ 1.825',pct:7.9},
+         {item:'Manutenção SPDA (para-raios)',val:'R$ 1.500',pct:6.5},
+         {item:'Manutenção de Portas (CR Esquadrias)',val:'R$ 1.243',pct:5.4}
+       ]},
+      {cat:'Consumo (Energ/Água)',color:'#E05C3A',val:'R$ 15.117',varCls:'var-down',varTxt:'−21,5%',bpct:151,bcol:'var(--red)',bw:'100%',
+       bdHeader:'Consumo · Dez/2025 — Total: R$15.117',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Energia Elétrica (CPFL + Consórcio)',val:'R$ 8.794',pct:58.2},
+         {item:'Água e Esgoto (SAAE)',val:'R$ 6.324',pct:41.8},
+         {item:'Gás (Ultragaz)',val:'R$ 6',pct:0.0}
+       ]},
+      {cat:'Administração',color:'#4CAF7D',val:'R$ 7.198',varCls:'var-up',varTxt:'+2,5%',bpct:100,bcol:'var(--green)',bw:'100%',
+       bdHeader:'Administração · Dez/2025 — Total: R$7.198',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Remuneração Síndico (ACA Serviços)',val:'R$ 4.554',pct:63.3},
+         {item:'Serv. Administrativos (Vallecon)',val:'R$ 2.279',pct:31.7},
+         {item:'Combustível/Lubrificantes',val:'R$ 365',pct:5.1}
+       ]},
+      {cat:'Outros Serviços',color:'#9B7FD4',val:'R$ 2.032',varCls:'var-down',varTxt:'−13,4%',bpct:20,bcol:'var(--green)',bw:'20%',
+       bdHeader:'Outros Serviços · Dez/2025 — Total: R$2.032',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Sistema Monitoramento Reservatório',val:'R$ 1.000',pct:49.2},
+         {item:'Outros (diversos)',val:'R$ 640',pct:31.5},
+         {item:'Desp. Reembolsáveis (Hon. Acordos)',val:'R$ 391',pct:19.2},
+         {item:'Tarifas Bancárias (SICOOB)',val:'R$ 1',pct:0.1}
+       ]}
+    ]
+  },
+  /* 6 — Jan 2026 */
+  {
+    label:'Jan 2026', expenseTag:'Jan/2026',
+    inad:{target:7.0,deltaText:'−8,9 pp vs Jul/2025 · 7 unidades inadimplentes'},
+    saldo:{target:70830},
+    reserva:{target:236208,pct:78.7,meta:'300.000'},
+    orc:{pct:99,main:'99% executado<br>em Jan/2026',sub:'R$ 121.512 / R$ 122.800'},
+    alertas:{count:2,badge:'2',tags:'<span class="tag tag-gold">1 atenção</span><span class="tag tag-blue">1 info</span>'},
+    expenses:[
+      {cat:'Taxa Assoc. AMALPES',color:'#C9A84C',val:'R$ 67.202',varCls:'var-neu',varTxt:'mensal fixo · total AMALPES R$164.937',bpct:100,bcol:'var(--gold)',bw:'100%',
+       bdHeader:'AMALPES · Jan/2026 — Total: R$164.937',bdSource:'Prestação de Contas AMALPES',
+       breakdown:[
+         {item:'Pessoal Terceirizados (Vig.+Limp.)',val:'R$ 79.070',pct:47.9},
+         {item:'Despesas com Manutenções',val:'R$ 30.261',pct:18.4},
+         {item:'Encargos e Impostos',val:'R$ 16.917',pct:10.3},
+         {item:'Pessoal CLT (Zeladores)',val:'R$ 14.191',pct:8.6},
+         {item:'Despesas de Consumo',val:'R$ 8.403',pct:5.1}
+       ]},
+      {cat:'Manutenções Gerais',color:'#5B9BD5',val:'R$ 21.223',varCls:'var-neu',varTxt:'−1,7% vs Jul/2025',bpct:98,bcol:'var(--gold)',bw:'98%',
+       bdHeader:'Manutenções · Jan/2026 — Total: R$21.223',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Elevadores (Atlas Schindler)',val:'R$ 5.745',pct:27.1},
+         {item:'Manutenções Hidráulicas',val:'R$ 3.080',pct:14.5},
+         {item:'Relógio de Ponto (Star Acesso)',val:'R$ 2.934',pct:13.8},
+         {item:'Manutenção Piscina',val:'R$ 1.311',pct:6.2},
+         {item:'Material de Limpeza',val:'R$ 1.310',pct:6.2}
+       ]},
+      {cat:'Consumo (Energ/Água)',color:'#E05C3A',val:'R$ 23.783',varCls:'var-up',varTxt:'+31,2% vs Jul/2025 · verão',bpct:131,bcol:'var(--red)',bw:'100%',
+       bdHeader:'Consumo · Jan/2026 — Total: R$23.783',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Energia Elétrica (CPFL + Consórcio)',val:'R$ 15.810',pct:66.5},
+         {item:'Água e Esgoto (DAERP)',val:'R$ 7.963',pct:33.5},
+         {item:'Gás (Ultragaz)',val:'R$ 10',pct:0.0}
+       ]},
+      {cat:'Administração',color:'#4CAF7D',val:'R$ 6.833',varCls:'var-down',varTxt:'−31% vs Jul/2025 · sem Hon. Adv.',bpct:69,bcol:'var(--green)',bw:'69%',
+       bdHeader:'Administração · Jan/2026 — Total: R$6.833',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Serv. Administrativos (Vallecon)',val:'R$ 4.554',pct:66.6},
+         {item:'Remuneração Síndico (ACA)',val:'R$ 2.279',pct:33.4}
+       ]},
+      {cat:'Outros Serviços',color:'#9B7FD4',val:'R$ 2.471',varCls:'var-down',varTxt:'−70% vs Jul/2025 · sem Hon. Adv.',bpct:30,bcol:'var(--green)',bw:'30%',
+       bdHeader:'Outros Serviços · Jan/2026 — Total: R$2.471',bdSource:'Prestação de Contas Bellevue',
+       breakdown:[
+         {item:'Investimentos (aprovados em assembleia)',val:'R$ 1.640',pct:66.4},
+         {item:'Encargos e Impostos',val:'R$ 318',pct:12.9},
+         {item:'Despesas Reembolsáveis',val:'R$ 299',pct:12.1},
+         {item:'Pessoal',val:'R$ 213',pct:8.6}
+       ]}
+    ]
+  }
+]
+
+/* ─── Troca fonte do gráfico: Bellevue ↔ AMALPES ─────────────── */
+function switchChartSource(src) {
+  const d = chartSources[src];
+  document.getElementById('ctBellevue').classList.toggle('ct-active', src === 'bellevue');
+  document.getElementById('ctAmalpes').classList.toggle('ct-active', src === 'amalpes');
+  revenueChart.data.datasets[0].data = d.receitas;
+  revenueChart.data.datasets[1].data = d.despesas;
+  revenueChart.options.scales.y.min = d.yMin;
+  revenueChart.options.scales.y.max = d.yMax;
+  document.getElementById('chartPanelTitle').textContent = d.title;
+  revenueChart.update('active');
+}
+
+function renderExpenseTable(d) {
+  const tbody = document.querySelector('.expense-table tbody');
+  if (!tbody || !d.expenses) return;
+  const rows = d.expenses;
+  tbody.innerHTML = rows.map((r, i) => {
+    const lastRow = i === rows.length - 1;
+    const nb = lastRow ? ';border-bottom:none' : '';
+    return `<tr data-row-idx="${i}">
+      <td style="padding-left:20px${nb}"><span class="cat-name"><span class="cat-dot" style="background:${r.color}"></span>${r.cat}</span></td>
+      <td style="${nb ? nb.slice(1) : ''}">${r.val}</td>
+      <td style="${nb ? nb.slice(1) : ''}"><span class="var-chip ${r.varCls}">${r.varTxt}</span></td>
+      <td style="padding-right:20px${nb}"><div>${r.bpct}%</div><div class="budget-mini-bg"><div class="budget-mini-fill" style="width:${r.bw};background:${r.bcol}"></div></div></td>
+    </tr>`;
+  }).join('');
+  attachExpensePopover(d);
+}
+
+function applyMonth(index) {
+  const d = monthDataSet[index];
+
+  // Tabs highlight
+  document.querySelectorAll('.m-tab').forEach((t, i) => {
+    t.classList.toggle('m-active', i === index);
+  });
+
+  // KPI 1: Inadimplência
+  const inadCounter = document.querySelector('.kpi-card:nth-child(1) .counter');
+  if (inadCounter) { inadCounter.dataset.target = d.inad.target; animateCounter(inadCounter); }
+  const inadText = document.getElementById('inadDeltaText');
+  if (inadText) inadText.textContent = d.inad.deltaText;
+
+  // KPI 2: Saldo CC
+  const saldoCounter = document.querySelector('.kpi-card:nth-child(2) .counter');
+  if (saldoCounter) { saldoCounter.dataset.target = d.saldo.target; animateCounter(saldoCounter); }
+
+  // KPI 3: Fundo de Reserva
+  const reservaCounter = document.querySelector('.kpi-card:nth-child(3) .counter');
+  if (reservaCounter) { reservaCounter.dataset.target = d.reserva.target; animateCounter(reservaCounter); }
+  const pb = document.getElementById('reserveProg');
+  if (pb) {
+    pb.style.transition = 'none'; pb.style.width = '0';
+    pb.offsetHeight; // reflow
+    pb.style.transition = 'width 1.2s cubic-bezier(.4,0,.2,1)';
+    pb.style.width = d.reserva.pct + '%';
+  }
+  const resDelta = document.getElementById('reserveDeltaText');
+  if (resDelta) resDelta.textContent = d.reserva.pct.toFixed(1).replace('.', ',') + '% da meta \u00b7 R$ ' + (d.reserva.meta || '300.000');
+
+  // KPI 4: Execução Orçamentária
+  const arc = document.getElementById('arcCircle');
+  if (arc) {
+    arc.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)';
+    arc.style.strokeDashoffset = (138.2 * (1 - d.orc.pct / 100)).toFixed(1);
+  }
+  const arcText = document.querySelector('#arcCircle ~ defs ~ text, .radial-svg text');
+  if (arcText) arcText.textContent = d.orc.pct + '%';
+  const arcMain = document.getElementById('arcInfoMain');
+  if (arcMain) arcMain.innerHTML = d.orc.main;
+  const arcSub  = document.getElementById('arcInfoSub');
+  if (arcSub)  arcSub.textContent = d.orc.sub;
+
+  // KPI 5: Alertas
+  const alertCount = document.querySelector('.kpi-alerts-count');
+  if (alertCount) alertCount.textContent = d.alertas.count;
+  const alertTags = document.getElementById('alertTagsDiv');
+  if (alertTags) alertTags.innerHTML = d.alertas.tags;
+
+  // Notif badge
+  const notifBadge = document.querySelector('.notif-badge');
+  if (notifBadge) notifBadge.textContent = d.alertas.badge;
+  if (popBadgeCount) { popBadgeCount.textContent = d.alertas.badge; }
+
+  // Expense table month tag
+  const mTag = document.getElementById('monthTag');
+  if (mTag) mTag.textContent = d.expenseTag;
+
+  // Expense table
+  renderExpenseTable(d);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   EXPENSE ROW POPOVER LOGIC
+───────────────────────────────────────────────────────────────── */
+const expPop   = document.getElementById('expPopover');
+const epTitleEl = document.getElementById('epTitle');
+const epSourceEl = document.getElementById('epSource');
+const epBodyEl  = document.getElementById('epBody');
+let _epDataset = null;
+
+function showExpPopover(rowEl, rowIdx) {
+  if (!_epDataset || !expPop) return;
+  const r = _epDataset.expenses[rowIdx];
+  if (!r) return;
+
+  clearTimeout(window._epHideTimer);
+
+  epTitleEl.textContent  = r.bdHeader || r.cat;
+  epSourceEl.textContent = r.bdSource || '';
+
+  if (!r.breakdown) {
+    epBodyEl.innerHTML = '<div class="ep-unavail">Prestação de contas não<br>disponibilizada para este período.</div>';
+  } else {
+    const maxPct = Math.max(...r.breakdown.map(x => x.pct), 1);
+    epBodyEl.innerHTML = r.breakdown.map(item => {
+      const bw = Math.max(4, Math.round((item.pct / maxPct) * 100));
+      return `<div class="ep-item">
+        <div class="ep-item-label">${item.item}</div>
+        <div class="ep-bar-wrap"><div class="ep-bar-fill" style="width:${bw}%"></div></div>
+        <div class="ep-item-val">${item.val}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Position popover to the RIGHT of the expense table section
+  const rect = rowEl.getBoundingClientRect();
+  const tableRect = rowEl.closest('table').getBoundingClientRect();
+  const popW = 310;
+  // Try to place right of table; fall back left of table; fall back above row
+  let left = tableRect.right + 12;
+  if (left + popW > window.innerWidth - 8) {
+    left = tableRect.left - popW - 12;
+  }
+  if (left < 8) {
+    // Last resort: centered above the row
+    left = Math.max(8, rect.left + rect.width / 2 - popW / 2);
+    if (left + popW > window.innerWidth - 8) left = window.innerWidth - popW - 8;
+  }
+  expPop.style.left = left + 'px';
+  expPop.style.top  = '-9999px';
+  expPop.classList.add('ep-visible');
+  const popH = expPop.offsetHeight;
+  // Vertically align with the hovered row, keep in viewport
+  let top = rect.top + rect.height / 2 - popH / 2;
+  top = Math.max(8, Math.min(top, window.innerHeight - popH - 8));
+  expPop.style.top = top + 'px';
+}
+
+function hideExpPopover() {
+  window._epHideTimer = setTimeout(() => {
+    if (expPop) expPop.classList.remove('ep-visible');
+  }, 120);
+}
+
+function attachExpensePopover(d) {
+  _epDataset = d;
+  const tbody = document.querySelector('.expense-table tbody');
+  if (!tbody) return;
+  tbody.onmouseover = (e) => {
+    const tr = e.target.closest('tr[data-row-idx]');
+    if (tr) showExpPopover(tr, parseInt(tr.dataset.rowIdx));
+    else clearTimeout(window._epHideTimer);
+  };
+  tbody.onmouseleave = () => hideExpPopover();
+  // Keep popover alive when mouse is over it
+  expPop.addEventListener('mouseenter', () => clearTimeout(window._epHideTimer));
+  expPop.addEventListener('mouseleave', () => hideExpPopover());
+}
+
+// Tab click handlers
+document.querySelectorAll('.m-tab').forEach((tab, i) => {
+  tab.addEventListener('click', () => applyMonth(i));
+});
+
+// Initialise default month (Dez 2025)
+applyMonth(6);
 </script>
+
+
 </body>
 </html>
