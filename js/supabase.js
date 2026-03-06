@@ -33,9 +33,13 @@ async function logout() {
 
 // Retorna o usuário logado
 async function getUsuarioLogado() {
-  // getSession() lê do localStorage sem chamada de rede — evita falha por timing
-  const { data: { session } } = await db.auth.getSession();
-  if (!session?.user) return null;
+  console.log('[Condolytics] getUsuarioLogado chamado');
+  const { data: { session }, error: sessErr } = await db.auth.getSession();
+  console.log('[Condolytics] session:', session, 'erro:', sessErr);
+  if (!session?.user) {
+    console.warn('[Condolytics] Sem sessão — redirecionando para index');
+    return null;
+  }
 
   const { data, error } = await db
     .from('usuarios')
@@ -43,6 +47,7 @@ async function getUsuarioLogado() {
     .eq('id', session.user.id)
     .single();
 
+  console.log('[Condolytics] usuario da tabela:', data, 'erro:', error);
   if (error) return null;
   return data;
 }
