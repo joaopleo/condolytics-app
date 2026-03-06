@@ -1123,6 +1123,11 @@ function applyMonth(index) {
   const arcSub=document.getElementById('arcInfoSub');   if(arcSub)  arcSub.textContent=d.orc.sub;
 
   renderExpenseTable(index);
+  // mantém toggle Bellevue/AMALPES visualmente correto ao trocar mês
+  const dtB = document.getElementById('dtBellevue');
+  const dtA = document.getElementById('dtAmalpes');
+  if (dtB) dtB.classList.toggle('ct-active', _expSource === 'bellevue');
+  if (dtA) dtA.classList.toggle('ct-active',  _expSource === 'amalpes');
 }
 
 document.querySelectorAll('.m-tab').forEach((tab,i) => tab.addEventListener('click', () => applyMonth(i)));
