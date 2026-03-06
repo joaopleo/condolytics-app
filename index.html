@@ -1450,11 +1450,21 @@ async function fazerLogin() {
 
     if (userError || !userData) throw new Error('perfil');
 
-    /* 3. Redirecionar conforme perfil */
+    /* 3. Confirmar sessão persistida antes de redirecionar */
     const destino = PERFIL_REDIRECT[userData.perfil];
     if (!destino) throw new Error('perfil');
 
     btn.innerHTML = '<span style="opacity:0.7">Redirecionando...</span>';
+
+    /* Aguarda até getSession() confirmar a sessão no localStorage (máx 3s) */
+    let tentativas = 0;
+    while (tentativas < 30) {
+      const { data: { session } } = await db.auth.getSession();
+      if (session?.access_token) break;
+      await new Promise(r => setTimeout(r, 100));
+      tentativas++;
+    }
+
     window.location.href = destino;
 
   } catch (e) {
