@@ -160,11 +160,10 @@
     /* ── MAIN LAYOUT: 3 colunas ── */
     /* Coluna A: gráfico (flex-grow)  |  Coluna B: tabela despesas (fixed ~340px)  |  Coluna C: direita (fixed ~320px) */
     .main-layout {
-      display: grid;
-      grid-template-columns: 1fr 340px 320px;
+      display: flex;
+      flex-direction: column;
       gap: 16px;
       margin-top: 16px;
-      align-items: start;
     }
 
     /* ── PANELS ── */
@@ -180,7 +179,7 @@
     .ct-btn:hover:not(.ct-active) { border-color:rgba(201,168,76,0.2);color:var(--text); }
 
     /* Chart */
-    .chart-container { position:relative;height:300px; }
+    .chart-container { position:relative;height:340px; }
 
     /* Expense table */
     .expense-table { width:100%;border-collapse:collapse; }
@@ -200,8 +199,8 @@
     .budget-mini-bg   { height:2px;background:var(--border2);border-radius:1px;overflow:hidden;margin-top:4px; }
     .budget-mini-fill { height:100%;border-radius:1px; }
 
-    /* ── COLUNA C (direita): empilhada ── */
-    .right-col { display:flex;flex-direction:column;gap:16px; }
+    /* ── Coluna única — right-col agora é transparente ── */
+    .right-col { display:contents; }
 
     /* Alertas */
     .alert-list { display:flex;flex-direction:column;gap:10px; }
@@ -370,9 +369,8 @@
     #dlToast.toast-show { opacity:1;transform:translateX(-50%) translateY(0); }
 
     /* Responsive fallback */
-    @media (max-width:1400px) { .main-layout { grid-template-columns: 1fr 320px 300px; } }
-    @media (max-width:1200px) { .main-layout { grid-template-columns: 1fr 300px; } .right-col-wrap { display:contents; } }
-    @media (max-width:900px)  { .main-layout { grid-template-columns: 1fr; } .kpi-strip { grid-template-columns: repeat(2,1fr); } }
+    @media (max-width:900px)  { .kpi-strip { grid-template-columns: repeat(2,1fr); } }
+    @media (max-width:640px)  { .kpi-strip { grid-template-columns: 1fr 1fr; } }
   </style>
 </head>
 <body>
@@ -519,9 +517,6 @@
   <!-- MAIN LAYOUT — 3 colunas -->
   <div class="main-layout">
 
-    <!-- ── COLUNA A: Gráfico ── -->
-    <div style="display:flex;flex-direction:column;gap:16px">
-
       <div class="panel reveal" style="transition-delay:0.1s">
         <div class="panel-header">
           <div class="panel-title">
@@ -561,7 +556,7 @@
           </div>
           <span class="tag tag-red">Impacto estimado: R$ 23.292/ano</span>
         </div>
-        <div class="panel-body" style="padding:20px 22px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="panel-body" style="padding:20px 22px;display:grid;grid-template-columns:repeat(2,1fr);gap:14px">
 
           <div style="background:var(--surface2);border-radius:8px;padding:14px 16px;border-left:3px solid var(--red)">
             <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--red);margin-bottom:6px">Crítico · Contratos</div>
@@ -586,10 +581,7 @@
         </div>
       </div>
 
-    </div><!-- /coluna A -->
-
-
-    <!-- ── COLUNA B: Tabela de Despesas ── -->
+    <!-- ── Tabela de Despesas ── -->
     <div class="panel reveal" style="transition-delay:0.15s">
       <div class="panel-header">
         <div class="panel-title">
@@ -603,7 +595,9 @@
           <thead>
             <tr>
               <th style="padding-left:22px">Categoria</th>
-              <th style="padding-right:22px">Valor &nbsp; / &nbsp; Orç.</th>
+              <th>Valor</th>
+              <th>vs. Orçamento</th>
+              <th style="padding-right:22px;width:200px">Execução</th>
             </tr>
           </thead>
           <tbody id="expenseBody">
@@ -611,11 +605,9 @@
           </tbody>
         </table>
       </div>
-    </div><!-- /coluna B -->
 
-
-    <!-- ── COLUNA C: Alertas + Pareceres ── -->
-    <div class="right-col">
+    <!-- ── Alertas + Pareceres ── -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
 
       <!-- Alertas -->
       <div class="panel reveal" style="transition-delay:0.2s">
@@ -716,7 +708,7 @@
         </div>
       </div>
 
-    </div><!-- /coluna C -->
+    </div><!-- /alertas+pareceres -->
 
   </div><!-- /main-layout -->
 
@@ -972,17 +964,28 @@ function renderExpenseTable(monthIdx) {
   const d = monthDataSet[monthIdx];
   document.getElementById('monthTag').textContent = d.tag;
   const tbody = document.getElementById('expenseBody');
-  tbody.innerHTML = d.expenses.map((r,i) => `
-    <tr data-row-idx="${i}" style="${i===d.expenses.length-1?'border-bottom:none':''}">
-      <td style="padding-left:22px;${i===d.expenses.length-1?'border-bottom:none':''}">
+  const last = d.expenses.length - 1;
+  tbody.innerHTML = d.expenses.map((r,i) => {
+    const isLast = i === last;
+    const bdStyle = isLast ? 'border-bottom:none' : '';
+    return `
+    <tr data-row-idx="${i}">
+      <td style="padding-left:22px;width:38%;${bdStyle}">
         <span class="cat-name"><span class="cat-dot" style="background:${r.color}"></span>${r.cat}</span>
       </td>
-      <td style="padding-right:22px;${i===d.expenses.length-1?'border-bottom:none':''}">
-        <div style="font-family:var(--font-mono);font-size:12px;color:var(--text);text-align:right;margin-bottom:5px">${r.val}</div>
-        <div class="budget-mini-bg"><div class="budget-mini-fill" style="width:${r.bw};background:${r.bcol}"></div></div>
-        <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-faint);text-align:right;margin-top:3px">${r.bpct}% do orç.</div>
+      <td style="text-align:right;font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--text);${bdStyle}">
+        ${r.val}
       </td>
-    </tr>`).join('');
+      <td style="text-align:right;${bdStyle}">
+        <span class="var-chip ${r.bpct>110?'var-up':r.bpct<90?'var-down':'var-neu'}">${r.bpct}%</span>
+      </td>
+      <td style="padding-right:22px;width:220px;${bdStyle}">
+        <div class="budget-mini-bg" style="height:4px;margin-top:0">
+          <div class="budget-mini-fill" style="width:${Math.min(r.bpct,100)}%;background:${r.bcol};height:4px"></div>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
   _epDataset = d;
   attachExpensePopover();
 }
