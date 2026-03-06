@@ -1038,7 +1038,7 @@
 <script>
 /* ── AUTH GUARD ── */
 window.addEventListener('load', async () => {
-  const usuario = await protegerPagina(['sindico', 'admin']);
+  const usuario = await protegerPagina(['conselho', 'admin']);
   if (!usuario) return;
   const nome = usuario.nome_completo || 'Síndico';
   document.getElementById('userName').textContent   = nome;
