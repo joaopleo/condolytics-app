@@ -1412,8 +1412,8 @@ document.getElementById('loginSenha').addEventListener('keydown', e => {
 });
 
 /* ── Supabase config ── */
-const SUPABASE_URL = 'https://mritzsidaqngexgijoqc.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1yaXR6c2lkYXFuZ2V4Z2lqb3FjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1MDIwMDcsImV4cCI6MjA4ODA3ODAwN30.LQraFLGnnNLQQ8hD3cSj47ERkwIja4xlukM-8gLQmHs';
+const SUPABASE_URL = 'https://SEU_PROJECT.supabase.co';
+const SUPABASE_KEY = 'SUA_ANON_KEY';
 
 const PERFIL_REDIRECT = {
   sindico:   'sindico.html',
@@ -1435,7 +1435,7 @@ async function fazerLogin() {
   btn.innerHTML = '<span style="opacity:0.6">Autenticando...</span>';
 
   try {
-    /* 1. Autenticar via Supabase Auth */
+    /* 1. Autenticar via Supabase Auth REST */
     const authRes = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
@@ -1447,7 +1447,21 @@ async function fazerLogin() {
       throw new Error('credenciais');
     }
 
-    /* 2. Buscar perfil do usuário na tabela `usuarios` */
+    /* 2. Persistir sessão no localStorage no formato que o SDK Supabase espera.
+          Sem isso, as outras páginas não reconhecem o usuário autenticado. */
+    const projectRef = SUPABASE_URL.replace('https://', '').split('.')[0];
+    const storageKey = `sb-${projectRef}-auth-token`;
+    const session = {
+      access_token:  authData.access_token,
+      refresh_token: authData.refresh_token,
+      expires_at:    Math.floor(Date.now() / 1000) + (authData.expires_in ?? 3600),
+      expires_in:    authData.expires_in ?? 3600,
+      token_type:    'bearer',
+      user:          authData.user,
+    };
+    localStorage.setItem(storageKey, JSON.stringify(session));
+
+    /* 3. Buscar perfil do usuário na tabela `usuarios` */
     const profileRes = await fetch(
       `${SUPABASE_URL}/rest/v1/usuarios?select=perfil&email=eq.${encodeURIComponent(email)}&limit=1`,
       { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${authData.access_token}` } }
@@ -1455,7 +1469,7 @@ async function fazerLogin() {
     const profileData = await profileRes.json();
     const perfil = profileData?.[0]?.perfil;
 
-    /* 3. Redirecionar conforme perfil */
+    /* 4. Redirecionar conforme perfil */
     const destino = PERFIL_REDIRECT[perfil];
     if (destino) {
       btn.innerHTML = '<span style="opacity:0.7">Redirecionando...</span>';
