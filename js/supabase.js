@@ -33,13 +33,14 @@ async function logout() {
 
 // Retorna o usuário logado
 async function getUsuarioLogado() {
-  const { data: { user } } = await db.auth.getUser();
-  if (!user) return null;
+  // getSession() lê do localStorage sem chamada de rede — evita falha por timing
+  const { data: { session } } = await db.auth.getSession();
+  if (!session?.user) return null;
 
   const { data, error } = await db
     .from('usuarios')
     .select('*, condominios(*)')
-    .eq('id', user.id)
+    .eq('id', session.user.id)
     .single();
 
   if (error) return null;
