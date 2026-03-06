@@ -1411,10 +1411,17 @@ document.getElementById('loginSenha').addEventListener('keydown', e => {
   if (e.key === 'Enter') fazerLogin();
 });
 
+/* ── Supabase config ── */
 const SUPABASE_URL = 'https://mritzsidaqngexgijoqc.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1yaXR6c2lkYXFuZ2V4Z2lqb3FjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1MDIwMDcsImV4cCI6MjA4ODA3ODAwN30.LQraFLGnnNLQQ8hD3cSj47ERkwIja4xlukM-8gLQmHs';
-   
-function fazerLogin() {
+
+const PERFIL_REDIRECT = {
+  sindico:   'sindico.html',
+  conselho:  'conselho.html',
+  condomino: 'condomino.html',
+};
+
+async function fazerLogin() {
   const email = document.getElementById('loginEmail').value.trim();
   const senha = document.getElementById('loginSenha').value;
   const btn   = document.getElementById('btnModalLogin');
@@ -1425,17 +1432,47 @@ function fazerLogin() {
   if (!senha)  { erro.textContent = 'Informe sua senha.'; erro.classList.add('show'); return; }
 
   btn.disabled = true;
-  btn.innerHTML = '<span style="opacity:0.7">Autenticando...</span>';
+  btn.innerHTML = '<span style="opacity:0.6">Autenticando...</span>';
 
-  // Simula autenticação — substituir por Supabase Auth
-  setTimeout(() => {
-    // window.location.href = <url baseada no perfil retornado pelo Supabase>
-    // Demo: mostra erro simulado
-    erro.textContent = 'Email ou senha incorretos. Verifique seus dados.';
+  try {
+    /* 1. Autenticar via Supabase Auth */
+    const authRes = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+      body: JSON.stringify({ email, password: senha })
+    });
+    const authData = await authRes.json();
+
+    if (!authRes.ok || !authData.access_token) {
+      throw new Error('credenciais');
+    }
+
+    /* 2. Buscar perfil do usuário na tabela `usuarios` */
+    const profileRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/usuarios?select=perfil&email=eq.${encodeURIComponent(email)}&limit=1`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${authData.access_token}` } }
+    );
+    const profileData = await profileRes.json();
+    const perfil = profileData?.[0]?.perfil;
+
+    /* 3. Redirecionar conforme perfil */
+    const destino = PERFIL_REDIRECT[perfil];
+    if (destino) {
+      btn.innerHTML = '<span style="opacity:0.7">Redirecionando...</span>';
+      window.location.href = destino;
+    } else {
+      throw new Error('perfil');
+    }
+
+  } catch (e) {
+    const msg = e.message === 'perfil'
+      ? 'Perfil não reconhecido. Entre em contato com o administrador.'
+      : 'Email ou senha incorretos. Verifique seus dados.';
+    erro.textContent = msg;
     erro.classList.add('show');
     btn.disabled = false;
     btn.innerHTML = `Entrar <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
-  }, 1200);
+  }
 }
 
 /* ═══════════════════════════════════
