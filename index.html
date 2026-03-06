@@ -112,7 +112,7 @@ button { cursor: pointer; font-family: var(--font-sans); }
 }
 .nav-link:hover { color: var(--text); }
 
-/* Login dropdown */
+/* Login button */
 .nav-login-wrap { position: relative; }
 .btn-login {
   display: flex; align-items: center; gap: 8px;
@@ -123,46 +123,14 @@ button { cursor: pointer; font-family: var(--font-sans); }
   transition: all 0.2s;
 }
 .btn-login:hover { background: rgba(201,168,76,0.22); border-color: rgba(201,168,76,0.35); }
-.btn-login svg { width: 12px; height: 12px; transition: transform 0.2s; }
-.btn-login.open svg { transform: rotate(180deg); }
 
-.login-dropdown {
-  position: absolute; top: calc(100% + 10px); right: 0;
-  width: 220px; background: #13161C;
-  border: 1px solid rgba(201,168,76,0.2); border-radius: 12px;
-  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
-  opacity: 0; pointer-events: none; transform: translateY(-8px) scale(0.97);
-  transition: opacity 0.2s ease, transform 0.2s ease;
-  overflow: hidden;
-}
-.login-dropdown.open { opacity: 1; pointer-events: all; transform: translateY(0) scale(1); }
-.dd-label {
-  padding: 11px 16px 8px;
-  font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.14em;
-  text-transform: uppercase; color: var(--text-faint);
-}
-.dd-item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 11px 16px; cursor: pointer;
-  transition: background 0.15s; border-left: 2px solid transparent;
-}
-.dd-item:hover { background: rgba(255,255,255,0.03); border-left-color: var(--gold); }
-.dd-icon {
-  width: 30px; height: 30px; border-radius: 7px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 13px; flex-shrink: 0;
-}
-.dd-info { flex: 1; }
-.dd-title { font-size: 12.5px; font-weight: 500; color: var(--text); }
-.dd-sub   { font-family: var(--font-mono); font-size: 9px; color: var(--text-faint); margin-top: 1px; }
-.dd-sep   { height: 1px; background: var(--border2); margin: 4px 0; }
-
-/* Mobile menu */
+/* Bonequinho mobile — oculto no desktop */
 .nav-mobile-btn {
   display: none; width: 40px; height: 40px; align-items: center; justify-content: center;
   background: var(--surface); border: 1px solid var(--border2); border-radius: 8px;
-  color: var(--text-dim);
+  color: var(--text-dim); transition: border-color 0.2s, color 0.2s;
 }
+.nav-mobile-btn:hover { border-color: var(--border); color: var(--text); }
 
 
 /* ════════════════════════════
@@ -737,6 +705,7 @@ footer {
   /* Header */
   .nav-inner       { height: 60px; }
   .nav-links       { display: none; }
+  .btn-login       { display: none; }
   .nav-mobile-btn  { display: flex; }
 
   /* Hero */
@@ -900,40 +869,12 @@ footer {
       <a href="#depoimentos"  class="nav-link">Depoimentos</a>
     </nav>
 
+    <!-- Entrar — desktop only -->
     <div class="nav-login-wrap">
-      <button class="btn-login" id="btnLogin" onclick="toggleDropdown()">
-        Entrar
-        <svg viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-      </button>
-      <div class="login-dropdown" id="loginDropdown">
-        <div class="dd-label">Acessar como</div>
-        <div class="dd-item" onclick="abrirLogin('sindico')">
-          <div class="dd-icon" style="background:rgba(76,175,125,0.15)">🏢</div>
-          <div class="dd-info">
-            <div class="dd-title">Síndico</div>
-            <div class="dd-sub">Gestão completa</div>
-          </div>
-        </div>
-        <div class="dd-sep"></div>
-        <div class="dd-item" onclick="abrirLogin('conselho')">
-          <div class="dd-icon" style="background:rgba(201,168,76,0.15)">⚖️</div>
-          <div class="dd-info">
-            <div class="dd-title">Conselho Fiscal</div>
-            <div class="dd-sub">Auditoria e pareceres</div>
-          </div>
-        </div>
-        <div class="dd-sep"></div>
-        <div class="dd-item" onclick="abrirLogin('condomino')">
-          <div class="dd-icon" style="background:rgba(91,155,213,0.15)">🔑</div>
-          <div class="dd-info">
-            <div class="dd-title">Condômino</div>
-            <div class="dd-sub">Portal do morador</div>
-          </div>
-        </div>
-      </div>
+      <button class="btn-login" id="btnLogin" onclick="abrirLogin()">Entrar</button>
     </div>
-
-    <button class="nav-mobile-btn" onclick="abrirLogin('sindico')">
+    <!-- Bonequinho — mobile only -->
+    <button class="nav-mobile-btn" id="btnMobile" onclick="abrirLogin()">
       <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
         <circle cx="10" cy="7" r="3.5" stroke="currentColor" stroke-width="1.5"/>
         <path d="M3 18c0-3.87 3.13-7 7-7s7 3.13 7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -1390,12 +1331,20 @@ footer {
   <div class="modal-box">
     <div class="modal-top">
       <div>
-        <div class="modal-profile" id="modalProfileBadge">
-          <span id="modalProfileIcon">🏢</span>
-          <span id="modalProfileLabel" style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-faint)">Síndico</span>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <svg width="28" height="28" viewBox="0 0 44 44" fill="none">
+            <polygon points="22,2 39,11.5 39,32.5 22,42 5,32.5 5,11.5" fill="#0A0C0F" stroke="#C9A84C" stroke-width="2"/>
+            <rect x="9"  y="26" width="4" height="9"  rx="0.5" fill="#C9A84C"/>
+            <rect x="14" y="20" width="4" height="15" rx="0.5" fill="#C9A84C"/>
+            <rect x="19" y="13" width="4" height="22" rx="0.5" fill="#C9A84C"/>
+            <rect x="24" y="20" width="4" height="15" rx="0.5" fill="#C9A84C"/>
+            <rect x="29" y="26" width="4" height="9"  rx="0.5" fill="#C9A84C"/>
+            <line x1="8" y1="35.5" x2="36" y2="35.5" stroke="#C9A84C" stroke-width="1.2"/>
+          </svg>
+          <span style="font-family:var(--font-sans);font-size:16px;font-weight:700;color:var(--text)">Condo<span style="color:var(--gold);font-weight:300">lytics</span></span>
         </div>
         <div class="modal-title">Acesso à plataforma</div>
-        <div class="modal-sub" id="modalSub">Portal do Síndico</div>
+        <div class="modal-sub">Entre com seu email e senha cadastrados</div>
       </div>
       <button class="modal-close" onclick="fecharLogin()">✕</button>
     </div>
@@ -1433,54 +1382,14 @@ window.addEventListener('scroll', () => {
 });
 
 /* ═══════════════════════════════════
-   DROPDOWN LOGIN
-═══════════════════════════════════ */
-let _dropOpen = false;
-
-function toggleDropdown() {
-  _dropOpen = !_dropOpen;
-  document.getElementById('loginDropdown').classList.toggle('open', _dropOpen);
-  document.getElementById('btnLogin').classList.toggle('open', _dropOpen);
-}
-
-document.addEventListener('click', e => {
-  const wrap = document.querySelector('.nav-login-wrap');
-  if (!wrap.contains(e.target)) {
-    _dropOpen = false;
-    document.getElementById('loginDropdown').classList.remove('open');
-    document.getElementById('btnLogin').classList.remove('open');
-  }
-});
-
-/* ═══════════════════════════════════
    MODAL LOGIN
 ═══════════════════════════════════ */
-const perfilConfig = {
-  sindico:   { icon:'🏢', label:'Síndico',        sub:'Portal do Síndico',         redir:'sindico.html',   bg:'rgba(76,175,125,0.12)',  color:'var(--green)' },
-  conselho:  { icon:'⚖️', label:'Conselho Fiscal', sub:'Acesso Restrito · Conselho',redir:'conselho.html',  bg:'rgba(201,168,76,0.12)', color:'var(--gold)'  },
-  condomino: { icon:'🔑', label:'Condômino',       sub:'Portal do Morador',         redir:'condomino.html', bg:'rgba(91,155,213,0.12)', color:'var(--blue)'  },
-};
-let _perfilAtivo = 'sindico';
-
-function abrirLogin(perfil) {
-  _perfilAtivo = perfil;
-  const cfg = perfilConfig[perfil];
-  const badge = document.getElementById('modalProfileBadge');
-  badge.style.background = cfg.bg;
-  badge.style.border = '1px solid ' + cfg.color.replace('var(--', 'rgba(').replace(')', ',0.2)');
-  document.getElementById('modalProfileIcon').textContent  = cfg.icon;
-  document.getElementById('modalProfileLabel').textContent = cfg.label;
-  document.getElementById('modalProfileLabel').style.color = cfg.color;
-  document.getElementById('modalSub').textContent = cfg.sub;
+function abrirLogin() {
   document.getElementById('modalErro').classList.remove('show');
   document.getElementById('loginEmail').value = '';
   document.getElementById('loginSenha').value = '';
   document.getElementById('modalLogin').classList.add('open');
   document.body.style.overflow = 'hidden';
-  // Fecha dropdown se aberto
-  _dropOpen = false;
-  document.getElementById('loginDropdown').classList.remove('open');
-  document.getElementById('btnLogin').classList.remove('open');
   setTimeout(() => document.getElementById('loginEmail').focus(), 300);
 }
 
@@ -1494,11 +1403,7 @@ document.getElementById('modalLogin').addEventListener('click', e => {
 });
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    fecharLogin();
-    _dropOpen = false;
-    document.getElementById('loginDropdown').classList.remove('open');
-  }
+  if (e.key === 'Escape') fecharLogin();
 });
 
 // Login com Enter
@@ -1521,7 +1426,7 @@ function fazerLogin() {
 
   // Simula autenticação — substituir por Supabase Auth
   setTimeout(() => {
-    // window.location.href = perfilConfig[_perfilAtivo].redir;
+    // window.location.href = <url baseada no perfil retornado pelo Supabase>
     // Demo: mostra erro simulado
     erro.textContent = 'Email ou senha incorretos. Verifique seus dados.';
     erro.classList.add('show');
