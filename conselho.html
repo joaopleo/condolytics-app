@@ -110,6 +110,7 @@
       display: flex; align-items: center; gap: 12px;
       padding: 22px 0 18px;
       border-bottom: 1px solid var(--border2);
+      justify-content: space-between;
     }
     .period-label { font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-faint);margin-right:4px; }
     .month-tabs   { display:flex;gap:4px; }
@@ -401,10 +402,6 @@
   </div>
 
   <div class="header-right">
-    <div class="status-pill">
-      <div class="pulse-dot"></div>
-      <span class="status-text">Agentes ativos &nbsp;·&nbsp; última análise: hoje 14h32</span>
-    </div>
     <div class="user-pill">
       <div class="user-avatar" id="userAvatar">C</div>
       <span id="userName" style="font-family:var(--font-mono);font-size:10px;color:var(--text-dim);letter-spacing:0.04em;">Carregando...</span>
@@ -434,6 +431,10 @@
       <button class="m-tab" data-month="4">Nov 2025</button>
       <button class="m-tab" data-month="5">Dez 2025</button>
       <button class="m-tab m-active" data-month="6">Jan 2026</button>
+    </div>
+    <div class="status-pill" style="margin-left:auto">
+      <div class="pulse-dot"></div>
+      <span class="status-text">Agentes ativos</span>
     </div>
   </div>
 
@@ -588,7 +589,13 @@
           <div class="panel-title-dot" style="background:var(--red)"></div>
           Despesas por Categoria
         </div>
-        <span class="tag tag-gold" id="monthTag">Jan/2026</span>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="display:flex;gap:4px">
+            <button id="dtBellevue" class="ct-btn ct-active" onclick="switchExpSource('bellevue')">Bellevue</button>
+            <button id="dtAmalpes"  class="ct-btn"           onclick="switchExpSource('amalpes')">AMALPES</button>
+          </div>
+          <span class="tag tag-gold" id="monthTag">Jan/2026</span>
+        </div>
       </div>
       <div style="padding:0">
         <table class="expense-table">
@@ -699,12 +706,6 @@
 
           </div>
 
-          <div class="resp-box">
-            <div class="resp-label">Responsável Técnico</div>
-            <div class="resp-nome" id="respNome">João Paulo L. Oliveira</div>
-            <div class="resp-cargo">Especialista Sênior em Finanças Condominiais</div>
-            <div class="resp-role">Conselho Fiscal · Bellevue</div>
-          </div>
         </div>
       </div>
 
@@ -960,8 +961,71 @@ const monthDataSet = [
   ]}
 ];
 
+
+/* ── AMALPES expense data por mês ── */
+const monthDataSetAmalpes = [
+  { tag:'Jul/2025', expenses:[
+    {cat:'Segurança Patrimonial', color:'#C9A84C',val:'R$ 38.400',bpct:100,bcol:'var(--gold)',bw:'100%'},
+    {cat:'Limpeza e Conservação', color:'#5B9BD5',val:'R$ 22.100',bpct:92, bcol:'var(--blue)', bw:'92%'},
+    {cat:'Consumo (Energ/Água)',  color:'#E05C3A',val:'R$ 18.300',bpct:88, bcol:'var(--gold)',bw:'88%'},
+    {cat:'Administração',        color:'#4CAF7D',val:'R$ 14.200',bpct:100,bcol:'var(--green)',bw:'100%'},
+    {cat:'Manutenção Predial',   color:'#9B7FD4',val:'R$ 9.800', bpct:65, bcol:'var(--green)',bw:'65%'}
+  ]},
+  { tag:'Ago/2025', expenses:[
+    {cat:'Segurança Patrimonial', color:'#C9A84C',val:'R$ 38.400',bpct:100,bcol:'var(--gold)',bw:'100%'},
+    {cat:'Limpeza e Conservação', color:'#5B9BD5',val:'R$ 21.800',bpct:91, bcol:'var(--blue)', bw:'91%'},
+    {cat:'Consumo (Energ/Água)',  color:'#E05C3A',val:'R$ 19.100',bpct:92, bcol:'var(--gold)',bw:'92%'},
+    {cat:'Administração',        color:'#4CAF7D',val:'R$ 14.200',bpct:100,bcol:'var(--green)',bw:'100%'},
+    {cat:'Manutenção Predial',   color:'#9B7FD4',val:'R$ 7.200', bpct:48, bcol:'var(--green)',bw:'48%'}
+  ]},
+  { tag:'Set/2025', expenses:[
+    {cat:'Segurança Patrimonial', color:'#C9A84C',val:'R$ 38.400',bpct:100,bcol:'var(--gold)',bw:'100%'},
+    {cat:'Consumo (Energ/Água)',  color:'#E05C3A',val:'R$ 17.200',bpct:83, bcol:'var(--gold)',bw:'83%'},
+    {cat:'Limpeza e Conservação', color:'#5B9BD5',val:'R$ 16.900',bpct:70, bcol:'var(--blue)', bw:'70%'},
+    {cat:'Administração',        color:'#4CAF7D',val:'R$ 14.200',bpct:100,bcol:'var(--green)',bw:'100%'},
+    {cat:'Manutenção Predial',   color:'#9B7FD4',val:'R$ 11.400',bpct:76, bcol:'var(--green)',bw:'76%'}
+  ]},
+  { tag:'Out/2025', expenses:[
+    {cat:'Segurança Patrimonial', color:'#C9A84C',val:'R$ 38.400',bpct:100,bcol:'var(--gold)',bw:'100%'},
+    {cat:'Consumo (Energ/Água)',  color:'#E05C3A',val:'R$ 20.500',bpct:99, bcol:'var(--gold)',bw:'99%'},
+    {cat:'Limpeza e Conservação', color:'#5B9BD5',val:'R$ 19.300',bpct:80, bcol:'var(--blue)', bw:'80%'},
+    {cat:'Administração',        color:'#4CAF7D',val:'R$ 14.200',bpct:100,bcol:'var(--green)',bw:'100%'},
+    {cat:'Manutenção Predial',   color:'#9B7FD4',val:'R$ 13.100',bpct:87, bcol:'var(--green)',bw:'87%'}
+  ]},
+  { tag:'Nov/2025', expenses:[
+    {cat:'Segurança Patrimonial', color:'#C9A84C',val:'R$ 38.400',bpct:100,bcol:'var(--gold)',bw:'100%'},
+    {cat:'Consumo (Energ/Água)',  color:'#E05C3A',val:'R$ 22.800',bpct:110,bcol:'var(--red)',  bw:'100%'},
+    {cat:'Limpeza e Conservação', color:'#5B9BD5',val:'R$ 20.100',bpct:84, bcol:'var(--blue)', bw:'84%'},
+    {cat:'Administração',        color:'#4CAF7D',val:'R$ 14.200',bpct:100,bcol:'var(--green)',bw:'100%'},
+    {cat:'Manutenção Predial',   color:'#9B7FD4',val:'R$ 8.700', bpct:58, bcol:'var(--green)',bw:'58%'}
+  ]},
+  { tag:'Dez/2025', expenses:[
+    {cat:'Segurança Patrimonial', color:'#C9A84C',val:'R$ 38.400',bpct:100,bcol:'var(--gold)',bw:'100%'},
+    {cat:'Consumo (Energ/Água)',  color:'#E05C3A',val:'R$ 24.300',bpct:117,bcol:'var(--red)',  bw:'100%'},
+    {cat:'Limpeza e Conservação', color:'#5B9BD5',val:'R$ 21.500',bpct:90, bcol:'var(--blue)', bw:'90%'},
+    {cat:'Administração',        color:'#4CAF7D',val:'R$ 14.200',bpct:100,bcol:'var(--green)',bw:'100%'},
+    {cat:'Manutenção Predial',   color:'#9B7FD4',val:'R$ 16.200',bpct:108,bcol:'var(--red)',  bw:'100%'}
+  ]},
+  { tag:'Jan/2026', expenses:[
+    {cat:'Segurança Patrimonial', color:'#C9A84C',val:'R$ 38.400',bpct:100,bcol:'var(--gold)',bw:'100%'},
+    {cat:'Consumo (Energ/Água)',  color:'#E05C3A',val:'R$ 21.900',bpct:105,bcol:'var(--red)',  bw:'100%'},
+    {cat:'Limpeza e Conservação', color:'#5B9BD5',val:'R$ 18.700',bpct:78, bcol:'var(--blue)', bw:'78%'},
+    {cat:'Administração',        color:'#4CAF7D',val:'R$ 14.200',bpct:100,bcol:'var(--green)',bw:'100%'},
+    {cat:'Manutenção Predial',   color:'#9B7FD4',val:'R$ 10.400',bpct:69, bcol:'var(--green)',bw:'69%'}
+  ]}
+];
+
+let _expSource = 'bellevue';
+function switchExpSource(src) {
+  _expSource = src;
+  document.getElementById('dtBellevue').classList.toggle('ct-active', src === 'bellevue');
+  document.getElementById('dtAmalpes').classList.toggle('ct-active',  src === 'amalpes');
+  const currentMonth = [...document.querySelectorAll('.m-tab')].findIndex(t => t.classList.contains('m-active'));
+  renderExpenseTable(currentMonth >= 0 ? currentMonth : 6);
+}
+
 function renderExpenseTable(monthIdx) {
-  const d = monthDataSet[monthIdx];
+  const d = (_expSource === 'amalpes' ? monthDataSetAmalpes : monthDataSet)[monthIdx];
   document.getElementById('monthTag').textContent = d.tag;
   const tbody = document.getElementById('expenseBody');
   const last = d.expenses.length - 1;
