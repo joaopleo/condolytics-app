@@ -1411,6 +1411,9 @@ document.getElementById('loginSenha').addEventListener('keydown', e => {
   if (e.key === 'Enter') fazerLogin();
 });
 
+const SUPABASE_URL = 'https://SEU_PROJECT.supabase.co';
+const SUPABASE_KEY = 'SUA_ANON_KEY';
+   
 function fazerLogin() {
   const email = document.getElementById('loginEmail').value.trim();
   const senha = document.getElementById('loginSenha').value;
