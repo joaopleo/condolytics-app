@@ -673,7 +673,6 @@ function mostrarSecao(nome, el) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('sec-'+nome).classList.add('active');
   el.classList.add('active');
-  sincronizarBottomNav(nome);
   if (nome === 'calendario') calInit();
   atualizarTitulo(nome);
   fecharMenu();
