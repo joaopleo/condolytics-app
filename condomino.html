@@ -82,6 +82,180 @@
   .section{display:none;}
   .section.active{display:block;}
 
+
+  /* ══════════════════════════════════
+     CALENDÁRIO CONDOMINIAL
+  ══════════════════════════════════ */
+  .cal-wrap { padding: 0 0 40px; }
+
+  /* Cabeçalho de navegação */
+  .cal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .cal-nav-btn {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: var(--surface); border: 1px solid rgba(255,255,255,0.06);
+    color: var(--gray-l); cursor: pointer; display: flex;
+    align-items: center; justify-content: center; transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .cal-nav-btn:hover { border-color: var(--amber); color: var(--amber-l); }
+  .cal-nav-btn svg { width: 16px; height: 16px; }
+  .cal-month-label {
+    font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 600;
+    color: var(--off-white); letter-spacing: -0.01em; text-align: center;
+    flex: 1;
+  }
+  .cal-month-label span {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    color: var(--amber); letter-spacing: 0.12em; display: block;
+    text-transform: uppercase; margin-top: 2px; font-weight: 400;
+  }
+
+  /* Legenda */
+  .cal-legend {
+    display: flex; flex-wrap: wrap; gap: 8px 16px;
+    margin-bottom: 20px; padding: 12px 16px;
+    background: var(--surface); border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.04);
+  }
+  .cal-legend-item {
+    display: flex; align-items: center; gap: 6px;
+    font-family: 'DM Mono', monospace; font-size: 9px;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--gray-l);
+  }
+  .cal-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+
+  /* Grade dias da semana */
+  .cal-grid { width: 100%; }
+  .cal-weekdays {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    margin-bottom: 4px;
+  }
+  .cal-wd {
+    font-family: 'DM Mono', monospace; font-size: 9px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--gray); text-align: center; padding: 6px 0;
+  }
+  .cal-wd.we { color: rgba(184,135,42,0.5); }
+
+  /* Células */
+  .cal-days {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+  }
+  .cal-cell {
+    aspect-ratio: 1; border-radius: 8px; padding: 4px;
+    display: flex; flex-direction: column; align-items: center;
+    position: relative; cursor: default;
+    background: transparent; transition: background 0.12s;
+    min-height: 48px;
+  }
+  .cal-cell.has-event { cursor: pointer; }
+  .cal-cell.has-event:hover { background: rgba(255,255,255,0.03); }
+  .cal-cell.today .cal-dn {
+    background: var(--amber); color: var(--bg);
+    border-radius: 50%; width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cal-cell.other-month { opacity: 0.2; pointer-events: none; }
+  .cal-cell.weekend .cal-dn { color: rgba(184,135,42,0.6); }
+  .cal-dn {
+    font-size: 12px; font-weight: 500; color: var(--gray-l);
+    line-height: 1; margin-bottom: 3px; width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cal-dots {
+    display: flex; flex-wrap: wrap; gap: 2px;
+    justify-content: center; max-width: 100%;
+  }
+  .cal-evt-dot {
+    width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
+  }
+
+  /* Painel de eventos do dia */
+  .cal-event-panel {
+    margin-top: 16px; padding: 14px 16px;
+    background: var(--surface); border-radius: 12px;
+    border: 1px solid rgba(184,135,42,0.15);
+    display: none;
+  }
+  .cal-event-panel.show { display: block; }
+  .cal-event-panel-title {
+    font-family: 'DM Mono', monospace; font-size: 9px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--amber); margin-bottom: 10px;
+  }
+  .cal-event-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .cal-event-item:last-child { border-bottom: none; }
+  .cal-event-color {
+    width: 3px; border-radius: 2px; align-self: stretch;
+    flex-shrink: 0; min-height: 16px; margin-top: 2px;
+  }
+  .cal-event-text { font-size: 13px; color: var(--off-white); line-height: 1.4; }
+  .cal-event-cat {
+    font-family: 'DM Mono', monospace; font-size: 8px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--gray); margin-top: 2px;
+  }
+
+  /* Lista próximos eventos */
+  .cal-upcoming { margin-top: 24px; }
+  .cal-upcoming-title {
+    font-family: 'DM Mono', monospace; font-size: 9px;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--gray); margin-bottom: 12px; padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .cal-upcoming-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .cal-upcoming-item:last-child { border-bottom: none; }
+  .cal-upcoming-date {
+    text-align: center; flex-shrink: 0; width: 40px;
+  }
+  .cal-upcoming-date-day {
+    font-size: 18px; font-weight: 600; color: var(--off-white);
+    line-height: 1;
+  }
+  .cal-upcoming-date-mon {
+    font-family: 'DM Mono', monospace; font-size: 9px;
+    text-transform: uppercase; color: var(--amber); letter-spacing: 0.1em;
+  }
+  .cal-upcoming-bar {
+    width: 3px; height: 36px; border-radius: 2px; flex-shrink: 0;
+  }
+  .cal-upcoming-info { flex: 1; }
+  .cal-upcoming-name { font-size: 13px; color: var(--off-white); font-weight: 500; }
+  .cal-upcoming-cat {
+    font-family: 'DM Mono', monospace; font-size: 9px;
+    color: var(--gray); text-transform: uppercase; letter-spacing: 0.06em;
+    margin-top: 2px;
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .cal-cell { min-height: 38px; border-radius: 6px; padding: 3px; }
+    .cal-dn { font-size: 11px; width: 20px; height: 20px; }
+    .cal-cell.today .cal-dn { width: 20px; height: 20px; }
+    .cal-evt-dot { width: 4px; height: 4px; }
+    .cal-month-label { font-size: 15px; }
+    .cal-legend { gap: 6px 12px; }
+    .cal-legend-item { font-size: 8px; }
+  }
+  @media (max-width: 400px) {
+    .cal-cell { min-height: 32px; padding: 2px; }
+    .cal-dn { font-size: 10px; width: 18px; height: 18px; }
+    .cal-days { gap: 2px; }
+  }
+
   /* ── BOTTOM NAV (mobile) ── */
   .bottom-nav{display:none;}
 
@@ -292,6 +466,16 @@
       </svg>
       Relatórios
     </button>
+    <button class="nav-item" onclick="mostrarSecao('calendario',this)">
+      <svg viewBox="0 0 16 16" fill="none">
+        <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+        <path d="M5 1v4M11 1v4M2 7h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+        <circle cx="5.5" cy="10.5" r="0.8" fill="currentColor"/>
+        <circle cx="8" cy="10.5" r="0.8" fill="currentColor"/>
+        <circle cx="10.5" cy="10.5" r="0.8" fill="currentColor"/>
+      </svg>
+      Calendário
+    </button>
   </nav>
   <div class="sidebar-footer">
     <div class="user-info">
@@ -430,6 +614,55 @@
       </div>
     </section>
 
+
+    <!-- CALENDÁRIO -->
+    <section class="section" id="sec-calendario">
+      <div class="cal-wrap">
+
+        <div class="cal-header">
+          <button class="cal-nav-btn" onclick="calNavegar(-1)" title="Mês anterior">
+            <svg viewBox="0 0 16 16" fill="none"><path d="M10 3L6 8l4 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="cal-month-label" id="calMesLabel">—<span id="calAnoLabel">2026</span></div>
+          <button class="cal-nav-btn" onclick="calNavegar(1)" title="Próximo mês">
+            <svg viewBox="0 0 16 16" fill="none"><path d="M6 3l4 5-4 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <div class="cal-legend">
+          <div class="cal-legend-item"><span class="cal-dot" style="background:#3B7DD8"></span>Boleto / Vencimento</div>
+          <div class="cal-legend-item"><span class="cal-dot" style="background:#B8872A"></span>Reunião do Conselho</div>
+          <div class="cal-legend-item"><span class="cal-dot" style="background:#7C5CBF"></span>Assembleia Geral</div>
+          <div class="cal-legend-item"><span class="cal-dot" style="background:#4CAF82"></span>Manutenção</div>
+          <div class="cal-legend-item"><span class="cal-dot" style="background:#E05C3A"></span>Feriado</div>
+        </div>
+
+        <div class="cal-grid">
+          <div class="cal-weekdays">
+            <div class="cal-wd we">Dom</div>
+            <div class="cal-wd">Seg</div>
+            <div class="cal-wd">Ter</div>
+            <div class="cal-wd">Qua</div>
+            <div class="cal-wd">Qui</div>
+            <div class="cal-wd">Sex</div>
+            <div class="cal-wd we">Sáb</div>
+          </div>
+          <div class="cal-days" id="calDays"></div>
+        </div>
+
+        <div class="cal-event-panel" id="calEventPanel">
+          <div class="cal-event-panel-title" id="calEventPanelTitle">Eventos do dia</div>
+          <div id="calEventList"></div>
+        </div>
+
+        <div class="cal-upcoming">
+          <div class="cal-upcoming-title">Próximos eventos</div>
+          <div id="calUpcomingList"></div>
+        </div>
+
+      </div>
+    </section>
+
   </div><!-- /content -->
 
 </main>
@@ -465,6 +698,16 @@
       <rect x="3" y="2" width="14" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
     </svg>
     <span>Relatórios</span>
+  </button>
+  <button class="bottom-nav-item" id="bn-calendario" onclick="mostrarSecaoMobile('calendario')">
+    <svg viewBox="0 0 20 20" fill="none">
+      <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M7 2v4M13 2v4M3 9h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="7" cy="13" r="1" fill="currentColor"/>
+      <circle cx="10" cy="13" r="1" fill="currentColor"/>
+      <circle cx="13" cy="13" r="1" fill="currentColor"/>
+    </svg>
+    <span>Agenda</span>
   </button>
 </nav>
 
@@ -509,6 +752,7 @@ function mostrarSecao(nome, el) {
   document.getElementById('sec-'+nome).classList.add('active');
   el.classList.add('active');
   sincronizarBottomNav(nome);
+  if (nome === 'calendario') calInit();
   atualizarTitulo(nome);
   fecharMenu();
 }
@@ -521,6 +765,7 @@ function mostrarSecaoMobile(nome) {
   document.getElementById('sec-'+nome).classList.add('active');
   document.getElementById('bn-'+nome).classList.add('active');
   atualizarTitulo(nome);
+  if (nome === 'calendario') calInit();
 }
 
 function sincronizarBottomNav(nome) {
@@ -534,7 +779,8 @@ function atualizarTitulo(nome) {
     dashboard:  'Visão <span>Geral</span>',
     financeiro: 'Extrato <span>Financeiro</span>',
     documentos: 'Documentos <span>do Condomínio</span>',
-    relatorios: 'Relatórios <span>Condolytics</span>'
+    relatorios: 'Relatórios <span>Condolytics</span>',
+    calendario: 'Calendário <span>Condominial</span>'
   };
   document.getElementById('pageTitle').innerHTML = titulos[nome] || nome;
 }
@@ -720,6 +966,214 @@ async function carregarRelatorios() {
       </div>
     </div>`).join('');
 }
+
+/* ══════════════════════════════════
+   CALENDÁRIO CONDOMINIAL 2026
+══════════════════════════════════ */
+const CAL_CORES = {
+  boleto:    '#3B7DD8',
+  conselho:  '#B8872A',
+  assembleia:'#7C5CBF',
+  manutencao:'#4CAF82',
+  feriado:   '#E05C3A',
+};
+
+const CAL_EVENTOS = {
+  '2026-01-01': [{ t:'Confraternização Universal',          cat:'feriado'    }],
+  '2026-01-15': [{ t:'Reunião Conselho Fiscal — Jan',       cat:'conselho'   }],
+  '2026-01-20': [{ t:'Prazo: Boleto Condominial',           cat:'boleto'     }],
+  '2026-01-28': [{ t:'Relatório Mensal — Dez/25',           cat:'conselho'   }],
+  '2026-02-17': [{ t:'Carnaval — Suspensão de Atividades',  cat:'feriado'    }],
+  '2026-02-18': [{ t:'Carnaval — Suspensão de Atividades',  cat:'feriado'    }],
+  '2026-02-20': [{ t:'Prazo: Boleto Condominial',           cat:'boleto'     }],
+  '2026-03-05': [{ t:'Reunião Conselho Fiscal — Mar',       cat:'conselho'   }],
+  '2026-03-20': [{ t:'Prazo: Boleto Condominial',           cat:'boleto'     }],
+  '2026-03-25': [{ t:'Manutenção: Bombas e Cisternas',      cat:'manutencao' }],
+  '2026-04-02': [{ t:'Quinta-feira Santa',                  cat:'feriado'    }],
+  '2026-04-03': [{ t:'Sexta-feira Santa',                   cat:'feriado'    }],
+  '2026-04-16': [{ t:'Reunião Conselho Fiscal — Abr',       cat:'conselho'   }],
+  '2026-04-20': [{ t:'Prazo: Boleto Condominial',           cat:'boleto'     },
+                 { t:'Assembleia Geral — 1ª do Ano',        cat:'assembleia' }],
+  '2026-04-21': [{ t:'Tiradentes',                          cat:'feriado'    }],
+  '2026-05-01': [{ t:'Dia do Trabalho',                     cat:'feriado'    }],
+  '2026-05-15': [{ t:'Manutenção: Caixas d'Água',          cat:'manutencao' }],
+  '2026-05-20': [{ t:'Prazo: Boleto Condominial',           cat:'boleto'     }],
+  '2026-06-04': [{ t:'Corpus Christi',                      cat:'feriado'    }],
+  '2026-06-11': [{ t:'Reunião Conselho Fiscal — Jun',       cat:'conselho'   }],
+  '2026-06-20': [{ t:'Prazo: Boleto Condominial',           cat:'boleto'     }],
+  '2026-06-28': [{ t:'Relatório Semestral — S1',            cat:'conselho'   }],
+  '2026-07-09': [{ t:'Reunião Conselho Fiscal — Jul',       cat:'conselho'   }],
+  '2026-07-20': [{ t:'Prazo: Boleto Condominial',           cat:'boleto'     },
+                 { t:'Assembleia Geral — 2ª do Ano',        cat:'assembleia' }],
+  '2026-07-25': [{ t:'Manutenção: Extintores e SPDA',       cat:'manutencao' }],
+  '2026-08-13': [{ t:'Reunião Conselho Fiscal — Ago',       cat:'conselho'   }],
+  '2026-08-20': [{ t:'Prazo: Boleto Condominial',           cat:'boleto'     }],
+  '2026-09-07': [{ t:'Independência do Brasil',             cat:'feriado'    }],
+  '2026-09-20': [{ t:'Prazo: Boleto Condominial',           cat:'boleto'     },
+                 { t:'Assembleia Geral — 3ª do Ano',        cat:'assembleia' }],
+  '2026-09-25': [{ t:'Manutenção: Para-Raios e Elevadores', cat:'manutencao' }],
+  '2026-10-12': [{ t:'Nossa Sra. Aparecida',                cat:'feriado'    }],
+  '2026-10-15': [{ t:'Reunião Conselho Fiscal — Out',       cat:'conselho'   }],
+  '2026-10-20': [{ t:'Prazo: Boleto Condominial',           cat:'boleto'     }],
+  '2026-10-28': [{ t:'Relatório Trimestral — T3',           cat:'conselho'   }],
+  '2026-11-02': [{ t:'Finados',                             cat:'feriado'    }],
+  '2026-11-15': [{ t:'Proclamação da República',            cat:'feriado'    }],
+  '2026-11-20': [{ t:'Prazo: Boleto Condominial',           cat:'boleto'     },
+                 { t:'Consciência Negra',                   cat:'feriado'    }],
+  '2026-11-20': [{ t:'Assembleia Geral Ordinária — AGO',   cat:'assembleia' },
+                 { t:'Prazo: Boleto Condominial',           cat:'boleto'     }],
+  '2026-11-25': [{ t:'Manutenção: Fachada e Impermeab.',    cat:'manutencao' }],
+  '2026-12-10': [{ t:'Reunião Conselho Fiscal — Dez',       cat:'conselho'   }],
+  '2026-12-20': [{ t:'Prazo: Boleto Condominial',           cat:'boleto'     },
+                 { t:'Assembleia Geral — 4ª do Ano',        cat:'assembleia' }],
+  '2026-12-22': [{ t:'Manutenção: Revisão Geral Fim de Ano',cat:'manutencao' }],
+  '2026-12-25': [{ t:'Natal',                               cat:'feriado'    }],
+  '2026-12-30': [{ t:'Relatório Anual do Conselho Fiscal',  cat:'conselho'   }],
+};
+
+const MESES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                    'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const MESES_SHORT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const CAT_LABELS = {
+  boleto:'Boleto / Vencimento', conselho:'Reunião do Conselho',
+  assembleia:'Assembleia Geral', manutencao:'Manutenção', feriado:'Feriado'
+};
+
+let _calAno = 2026, _calMes = 0; // 0 = Janeiro
+
+function calInit() {
+  const hoje = new Date();
+  _calAno = hoje.getFullYear();
+  _calMes = hoje.getMonth();
+  // Se o ano atual não for 2026, iniciar em janeiro 2026
+  if (_calAno < 2026) { _calAno = 2026; _calMes = 0; }
+  if (_calAno > 2026) { _calAno = 2026; _calMes = 11; }
+  calRenderizar();
+  calRenderizarProximos();
+}
+
+function calNavegar(delta) {
+  _calMes += delta;
+  if (_calMes < 0)  { _calMes = 11; _calAno--; }
+  if (_calMes > 11) { _calMes = 0;  _calAno++; }
+  calRenderizar();
+  document.getElementById('calEventPanel').classList.remove('show');
+}
+
+function calRenderizar() {
+  document.getElementById('calMesLabel').childNodes[0].textContent = MESES_FULL[_calMes] + ' ';
+  document.getElementById('calAnoLabel').textContent = _calAno;
+
+  const hoje = new Date();
+  const primeiroDia = new Date(_calAno, _calMes, 1).getDay(); // 0=Dom
+  const totalDias   = new Date(_calAno, _calMes + 1, 0).getDate();
+
+  // Dias do mês anterior para completar a grade
+  const diasAntMes = new Date(_calAno, _calMes, 0).getDate();
+
+  let html = '';
+
+  // Células vazias antes do dia 1
+  for (let i = 0; i < primeiroDia; i++) {
+    const d = diasAntMes - primeiroDia + 1 + i;
+    html += `<div class="cal-cell other-month"><span class="cal-dn">${d}</span></div>`;
+  }
+
+  // Dias do mês
+  for (let d = 1; d <= totalDias; d++) {
+    const chave = `${_calAno}-${String(_calMes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const eventos = CAL_EVENTOS[chave] || [];
+    const dow = new Date(_calAno, _calMes, d).getDay();
+    const isWeekend = dow === 0 || dow === 6;
+    const isHoje = d === hoje.getDate() && _calMes === hoje.getMonth() && _calAno === hoje.getFullYear();
+
+    let classes = 'cal-cell';
+    if (eventos.length) classes += ' has-event';
+    if (isWeekend) classes += ' weekend';
+    if (isHoje) classes += ' today';
+
+    const dots = eventos.map(e =>
+      `<span class="cal-evt-dot" style="background:${CAL_CORES[e.cat]}"></span>`
+    ).join('');
+
+    const onclick = eventos.length
+      ? `onclick="calMostrarEventos('${chave}', ${d})"`
+      : '';
+
+    html += `<div class="${classes}" ${onclick}>
+      <span class="cal-dn">${d}</span>
+      <div class="cal-dots">${dots}</div>
+    </div>`;
+  }
+
+  // Células após o último dia
+  const totalCelulas = primeiroDia + totalDias;
+  const resto = totalCelulas % 7 === 0 ? 0 : 7 - (totalCelulas % 7);
+  for (let i = 1; i <= resto; i++) {
+    html += `<div class="cal-cell other-month"><span class="cal-dn">${i}</span></div>`;
+  }
+
+  document.getElementById('calDays').innerHTML = html;
+}
+
+function calMostrarEventos(chave, dia) {
+  const eventos = CAL_EVENTOS[chave] || [];
+  if (!eventos.length) return;
+
+  const panel = document.getElementById('calEventPanel');
+  const title = document.getElementById('calEventPanelTitle');
+  const list  = document.getElementById('calEventList');
+
+  title.textContent = `${dia} de ${MESES_FULL[_calMes]} de ${_calAno}`;
+  list.innerHTML = eventos.map(e => `
+    <div class="cal-event-item">
+      <div class="cal-event-color" style="background:${CAL_CORES[e.cat]}"></div>
+      <div>
+        <div class="cal-event-text">${e.t}</div>
+        <div class="cal-event-cat">${CAT_LABELS[e.cat]}</div>
+      </div>
+    </div>
+  `).join('');
+
+  panel.classList.add('show');
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function calRenderizarProximos() {
+  const hoje = new Date();
+  hoje.setHours(0,0,0,0);
+
+  const proximos = Object.entries(CAL_EVENTOS)
+    .filter(([chave]) => new Date(chave + 'T00:00:00') >= hoje)
+    .sort(([a],[b]) => a.localeCompare(b))
+    .slice(0, 8);
+
+  const container = document.getElementById('calUpcomingList');
+  if (!proximos.length) {
+    container.innerHTML = '<div style="color:var(--gray);font-size:13px;padding:8px 0">Nenhum evento próximo.</div>';
+    return;
+  }
+
+  container.innerHTML = proximos.map(([chave, eventos]) => {
+    const data = new Date(chave + 'T00:00:00');
+    const dia  = data.getDate();
+    const mes  = MESES_SHORT[data.getMonth()];
+    return eventos.map(e => `
+      <div class="cal-upcoming-item">
+        <div class="cal-upcoming-date">
+          <div class="cal-upcoming-date-day">${dia}</div>
+          <div class="cal-upcoming-date-mon">${mes}</div>
+        </div>
+        <div class="cal-upcoming-bar" style="background:${CAL_CORES[e.cat]}"></div>
+        <div class="cal-upcoming-info">
+          <div class="cal-upcoming-name">${e.t}</div>
+          <div class="cal-upcoming-cat">${CAT_LABELS[e.cat]}</div>
+        </div>
+      </div>
+    `).join('');
+  }).join('');
+}
+
 </script>
 </body>
 </html>
