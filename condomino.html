@@ -139,6 +139,20 @@
   .m-card-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray);}
   .m-card-val{font-size:13px;color:var(--off-white);}
 
+
+  /* ── BADGES ── */
+  .badge{display:inline-block;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;padding:3px 8px;border-radius:4px;font-weight:500;}
+  .badge-green{background:rgba(76,175,130,0.12);color:var(--green);border:1px solid rgba(76,175,130,0.2);}
+  .badge-amber{background:rgba(184,135,42,0.12);color:var(--amber-l);border:1px solid rgba(184,135,42,0.2);}
+  .badge-red{background:rgba(224,92,58,0.12);color:var(--red);border:1px solid rgba(224,92,58,0.2);}
+  .badge-gray{background:rgba(107,114,128,0.12);color:var(--gray-l);border:1px solid rgba(107,114,128,0.2);}
+
+  /* ── CARD-ROW (mobile financeiro/docs/relatórios) ── */
+  .card-row{background:var(--surface2);border:1px solid rgba(255,255,255,0.05);border-radius:10px;padding:14px 16px;margin-bottom:8px;}
+  .card-row-title{font-size:13px;font-weight:500;color:var(--off-white);margin-bottom:8px;}
+  .card-row-meta{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;}
+  .card-row-field{font-size:12px;color:var(--gray);}
+  .card-row-field strong{font-weight:600;}
   /* ── LOADING ── */
   .loading{display:flex;align-items:center;gap:10px;padding:32px 16px;color:var(--gray);font-size:13px;}
   .spinner{width:16px;height:16px;border:2px solid rgba(184,135,42,0.2);border-top-color:var(--amber);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0;}
@@ -302,15 +316,15 @@
     margin-top: 2px;
   }
 
-  /* ── Layout desktop: split ── */
+  /* ── Layout desktop: split (grade à esq, lista à dir) ── */
   @media (min-width: 641px) {
-    .cal-wrap { display: grid; grid-template-columns: 280px 1fr; gap: 0; align-items: start; }
-    .cal-upcoming { margin-top: 0; border-right: 1px solid rgba(255,255,255,0.05); padding-right: 24px; }
-    .cal-desktop-right { padding-left: 28px; }
+    .cal-wrap { display: grid; grid-template-columns: 1fr 280px; gap: 0; align-items: start; }
+    .cal-desktop-right { padding-right: 28px; border-right: 1px solid rgba(255,255,255,0.05); order: -1; }
+    .cal-upcoming { margin-top: 0; padding-left: 28px; }
     .cal-legend { margin-bottom: 16px; }
   }
   @media (min-width: 900px) {
-    .cal-wrap { grid-template-columns: 300px 1fr; }
+    .cal-wrap { grid-template-columns: 1fr 300px; }
   }
 
   /* ── Células ── */
@@ -349,9 +363,9 @@
 
   /* Mobile: grade oculta, só lista */
   @media (max-width: 640px) {
-    .cal-desktop-right { display: none; }
+    .cal-desktop-right { display: block; padding-right: 0; border-right: none; }
     .cal-wrap { display: block; }
-    .cal-upcoming { border-right: none; padding-right: 0; }
+    .cal-upcoming { padding-left: 0; margin-top: 24px; }
 
     /* Sidebar: oculta por padrão, abre via JS */
     .sidebar { transform: translateX(-100%); }
@@ -586,13 +600,7 @@
     <section class="section" id="sec-calendario">
       <div class="cal-wrap">
 
-        <!-- COLUNA ESQUERDA: lista próximos eventos -->
-        <div class="cal-upcoming">
-          <div class="cal-upcoming-title">Próximos eventos</div>
-          <div id="calUpcomingList"></div>
-        </div>
-
-        <!-- COLUNA DIREITA: grade mensal (só desktop) -->
+        <!-- GRADE (desktop: coluna direita / mobile: acima da lista) -->
         <div class="cal-desktop-right">
           <div class="cal-legend">
             <div class="cal-legend-item"><span class="cal-dot" style="background:#3B7DD8"></span>Boleto / Vencimento</div>
@@ -622,6 +630,12 @@
             <div class="cal-event-panel-title" id="calEventPanelTitle">Eventos do dia</div>
             <div id="calEventList"></div>
           </div>
+        </div>
+
+        <!-- LISTA próximos eventos (desktop: coluna esquerda) -->
+        <div class="cal-upcoming">
+          <div class="cal-upcoming-title">Próximos eventos</div>
+          <div id="calUpcomingList"></div>
         </div>
 
       </div>
