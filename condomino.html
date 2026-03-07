@@ -289,9 +289,22 @@
     .cal-desktop-right { display: none; }
     .cal-wrap { display: block; }
     .cal-upcoming { border-right: none; padding-right: 0; }
-  }
 
-  
+    /* Sidebar: oculta por padrão, abre via JS */
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .overlay { position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:40;opacity:0;pointer-events:none;transition:opacity 0.3s; }
+    .overlay.show { opacity:1;pointer-events:all; }
+
+    /* Hambúrguer visível */
+    .btn-menu { display: flex; }
+
+    /* Main sem margem lateral */
+    .main { margin-left: 0; }
+
+    /* Topbar */
+    .topbar { padding: 0 16px; }
+    .content { padding: 16px; }
   }
 </style>
 </head>
