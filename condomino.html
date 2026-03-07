@@ -16,7 +16,6 @@
     --red:#E05C3A;--green:#4CAF82;
     --sidebar:220px;
     --topbar-h:64px;
-    --bottomnav-h:64px;
   }
   *{margin:0;padding:0;box-sizing:border-box;}
   body{
@@ -292,166 +291,7 @@
     .cal-upcoming { border-right: none; padding-right: 0; }
   }
 
-  /* ── BOTTOM NAV (mobile) ── */
-  .bottom-nav{display:none;}
-
-  /* ── OVERLAY (mobile sidebar) ── */
-  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:45;backdrop-filter:blur(2px);}
-  .overlay.show{display:block;}
-
-  /* ── KPI GRID ── */
-  .kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;}
-  .kpi-card{background:var(--surface);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px;position:relative;overflow:hidden;transition:border-color 0.2s;}
-  .kpi-card:hover{border-color:rgba(184,135,42,0.2);}
-  .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--amber),transparent);}
-  .kpi-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray);margin-bottom:12px;}
-  .kpi-value{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:600;color:var(--amber-l);line-height:1;margin-bottom:8px;}
-  .kpi-value.red{color:var(--red);}
-  .kpi-value.green{color:var(--green);}
-  .kpi-sub{font-size:11px;color:var(--gray);line-height:1.4;}
-
-  /* ── PANEL ── */
-  .panel{background:var(--surface);border:1px solid rgba(255,255,255,0.06);border-radius:12px;overflow:hidden;margin-bottom:20px;}
-  .panel-header{padding:18px 22px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;}
-  .panel-title{font-size:12px;font-weight:600;letter-spacing:0.08em;color:var(--off-white);text-transform:uppercase;}
-  .panel-tag{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.12em;color:var(--amber);padding:4px 10px;background:var(--amber-p);border-radius:20px;white-space:nowrap;}
-  .panel-body{padding:22px;}
-
-  /* ── TABLE ── */
-  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
-  .data-table{width:100%;border-collapse:collapse;min-width:500px;}
-  .data-table th{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray);padding:10px 16px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.05);}
-  .data-table td{padding:13px 16px;font-size:12.5px;color:var(--gray-l);border-bottom:1px solid rgba(255,255,255,0.03);}
-  .data-table tr:last-child td{border-bottom:none;}
-  .data-table tr:hover td{background:rgba(255,255,255,0.02);color:var(--off-white);}
-
-  /* ── BADGES ── */
-  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:500;letter-spacing:0.05em;}
-  .badge-green{background:rgba(76,175,130,0.12);color:var(--green);}
-  .badge-amber{background:var(--amber-p);color:var(--amber-l);}
-  .badge-red{background:rgba(224,92,58,0.1);color:var(--red);}
-  .badge-gray{background:rgba(255,255,255,0.06);color:var(--gray-l);}
-
-  /* ── LOADING / EMPTY ── */
-  .loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--gray);font-size:13px;gap:10px;}
-  .spinner{width:16px;height:16px;border:2px solid rgba(184,135,42,0.2);border-top-color:var(--amber);border-radius:50%;animation:spin 0.7s linear infinite;}
-  @keyframes spin{to{transform:rotate(360deg);}}
-  .empty{text-align:center;padding:40px;color:var(--gray);font-size:13px;}
-
-  /* ── HERO ── */
-  .hero{background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%);border:1px solid rgba(184,135,42,0.12);border-radius:16px;padding:36px 40px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden;}
-  .hero::before{content:'';position:absolute;right:-40px;top:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(184,135,42,0.06) 0%,transparent 70%);}
-  .hero-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;color:var(--off-white);margin-bottom:8px;line-height:1.2;}
-  .hero-title em{font-style:italic;color:var(--amber-l);}
-  .hero-sub{font-size:13px;color:var(--gray);font-weight:300;line-height:1.6;max-width:500px;}
-  .hero-badge{flex-shrink:0;padding:16px 24px;background:var(--amber-p);border:1px solid rgba(184,135,42,0.2);border-radius:12px;text-align:center;margin-left:24px;}
-  .hero-badge-val{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:600;color:var(--amber-l);line-height:1;margin-bottom:4px;}
-  .hero-badge-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.15em;color:var(--amber);text-transform:uppercase;}
-
-  /* ── SAÚDE GRID ── */
-  .saude-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:20px;}
-  .saude-item{background:var(--surface2);border-radius:10px;padding:20px;}
-  .saude-titulo{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--gray-l);margin-bottom:12px;}
-  .saude-valor{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;line-height:1;margin-bottom:6px;}
-  .saude-desc{font-size:11px;color:var(--gray);line-height:1.5;}
-  .progress-bar{height:6px;background:rgba(255,255,255,0.06);border-radius:3px;margin-top:12px;overflow:hidden;}
-  .progress-fill{height:100%;border-radius:3px;transition:width 1s ease;}
-
-  /* ── MOBILE CARD LIST (alternative to table on mobile) ── */
-  .card-list{display:none;flex-direction:column;gap:10px;padding:16px;}
-  .card-row{background:var(--surface2);border-radius:10px;padding:16px;}
-  .card-row-title{font-size:13px;font-weight:500;color:var(--off-white);margin-bottom:10px;line-height:1.3;}
-  .card-row-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
-  .card-row-field{font-size:11px;color:var(--gray);}
-  .card-row-field strong{color:var(--gray-l);font-weight:500;}
-
-  /* ══════════════════════════════════
-     RESPONSIVE — TABLET (≤900px)
-  ══════════════════════════════════ */
-  @media (max-width: 900px) {
-    .kpi-grid{grid-template-columns:repeat(2,1fr);}
-    .saude-grid{grid-template-columns:1fr;}
-    .hero{flex-direction:column;align-items:flex-start;padding:28px;}
-    .hero-badge{margin-left:0;margin-top:20px;width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;}
-    .hero-title{font-size:22px;}
-  }
-
-  /* ══════════════════════════════════
-     RESPONSIVE — MOBILE (≤640px)
-  ══════════════════════════════════ */
-  @media (max-width: 640px) {
-    /* Sidebar vira drawer */
-    .sidebar{
-      transform:translateX(-100%);
-      width:280px;
-      box-shadow:4px 0 24px rgba(0,0,0,0.4);
-    }
-    .sidebar.open{transform:translateX(0);}
-
-    /* Main ocupa tela toda */
-    .main{margin-left:0;}
-
-    /* Topbar mobile */
-    .topbar{padding:0 16px;height:56px;}
-    .btn-menu{display:flex;}
-    .page-title{font-size:16px;}
-    .status-badge{display:none;}
-
-    /* Content mobile */
-    .content{padding:16px;padding-bottom:calc(var(--bottomnav-h) + 16px);}
-
-    /* KPIs: 1 coluna */
-    .kpi-grid{grid-template-columns:1fr;gap:12px;margin-bottom:20px;}
-    .kpi-card{padding:16px;display:flex;align-items:center;gap:16px;}
-    .kpi-card::before{width:3px;height:100%;top:0;left:0;right:auto;background:var(--amber);}
-    .kpi-label{margin-bottom:4px;font-size:8px;}
-    .kpi-value{font-size:28px;margin-bottom:0;}
-    .kpi-sub{font-size:10px;display:none;}
-    .kpi-card-text{flex:1;}
-
-    /* Hero mobile */
-    .hero{padding:20px;border-radius:12px;margin-bottom:16px;}
-    .hero-title{font-size:18px;margin-bottom:6px;}
-    .hero-sub{font-size:12px;}
-    .hero-badge{flex-direction:row;gap:12px;align-items:center;}
-    .hero-badge-val{font-size:28px;}
-
-    /* Saúde */
-    .saude-grid{gap:12px;margin-bottom:16px;}
-    .saude-item{padding:14px;}
-    .saude-valor{font-size:26px;}
-
-    /* Panel */
-    .panel{border-radius:10px;}
-    .panel-header{padding:14px 16px;}
-    .panel-title{font-size:11px;}
-    .panel-body{padding:16px;}
-
-    /* Tabelas: esconde e mostra card list */
-    .table-wrap{display:none;}
-    .card-list{display:flex;}
-
-    /* Bottom nav aparece */
-    .bottom-nav{
-      display:flex;
-      position:fixed;bottom:0;left:0;right:0;
-      height:var(--bottomnav-h);
-      background:var(--surface);
-      border-top:1px solid rgba(255,255,255,0.08);
-      z-index:50;
-    }
-    .bottom-nav-item{
-      flex:1;display:flex;flex-direction:column;
-      align-items:center;justify-content:center;gap:4px;
-      background:none;border:none;cursor:pointer;
-      color:var(--gray);transition:color 0.15s;
-      font-family:'Outfit',sans-serif;font-size:10px;
-      padding:8px 4px;
-    }
-    .bottom-nav-item svg{width:20px;height:20px;opacity:0.6;}
-    .bottom-nav-item.active{color:var(--amber-l);}
-    .bottom-nav-item.active svg{opacity:1;}
-    .bottom-nav-item span{font-size:9px;letter-spacing:0.04em;}
+  
   }
 </style>
 </head>
@@ -700,49 +540,7 @@
 
 </main>
 
-<!-- BOTTOM NAV (mobile only) -->
-<nav class="bottom-nav">
-  <button class="bottom-nav-item active" id="bn-dashboard" onclick="mostrarSecaoMobile('dashboard')">
-    <svg viewBox="0 0 20 20" fill="none">
-      <rect x="2" y="2" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
-      <rect x="11" y="2" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
-      <rect x="2" y="11" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
-      <rect x="11" y="11" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
-    </svg>
-    <span>Geral</span>
-  </button>
-  <button class="bottom-nav-item" id="bn-financeiro" onclick="mostrarSecaoMobile('financeiro')">
-    <svg viewBox="0 0 20 20" fill="none">
-      <path d="M3 15L7 10l4 2.5 4-6.5 3 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M3 18h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-    </svg>
-    <span>Finanças</span>
-  </button>
-  <button class="bottom-nav-item" id="bn-documentos" onclick="mostrarSecaoMobile('documentos')">
-    <svg viewBox="0 0 20 20" fill="none">
-      <rect x="4" y="2" width="12" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
-      <path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-    </svg>
-    <span>Docs</span>
-  </button>
-  <button class="bottom-nav-item" id="bn-relatorios" onclick="mostrarSecaoMobile('relatorios')">
-    <svg viewBox="0 0 20 20" fill="none">
-      <path d="M5 5h10M5 9h10M5 13h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <rect x="3" y="2" width="14" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
-    </svg>
-    <span>Relatórios</span>
-  </button>
-  <button class="bottom-nav-item" id="bn-calendario" onclick="mostrarSecaoMobile('calendario')">
-    <svg viewBox="0 0 20 20" fill="none">
-      <rect x="3" y="4" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/>
-      <path d="M7 2v4M13 2v4M3 9h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <circle cx="7" cy="13" r="1" fill="currentColor"/>
-      <circle cx="10" cy="13" r="1" fill="currentColor"/>
-      <circle cx="13" cy="13" r="1" fill="currentColor"/>
-    </svg>
-    <span>Agenda</span>
-  </button>
-</nav>
+
 
 <script src="js/supabase.js"></script>
 <script>
@@ -791,21 +589,7 @@ function mostrarSecao(nome, el) {
 }
 
 // ── Navegação mobile (bottom nav) ──
-function mostrarSecaoMobile(nome) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.bottom-nav-item').forEach(n => n.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('sec-'+nome).classList.add('active');
-  document.getElementById('bn-'+nome).classList.add('active');
-  atualizarTitulo(nome);
-  if (nome === 'calendario') calInit();
-}
 
-function sincronizarBottomNav(nome) {
-  document.querySelectorAll('.bottom-nav-item').forEach(n => n.classList.remove('active'));
-  const bn = document.getElementById('bn-'+nome);
-  if (bn) bn.classList.add('active');
-}
 
 function atualizarTitulo(nome) {
   const titulos = {
