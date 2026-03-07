@@ -240,20 +240,56 @@
     margin-top: 2px;
   }
 
-  /* Responsive */
-  @media (max-width: 640px) {
-    .cal-cell { min-height: 38px; border-radius: 6px; padding: 3px; }
-    .cal-dn { font-size: 11px; width: 20px; height: 20px; }
-    .cal-cell.today .cal-dn { width: 20px; height: 20px; }
-    .cal-evt-dot { width: 4px; height: 4px; }
-    .cal-month-label { font-size: 15px; }
-    .cal-legend { gap: 6px 12px; }
-    .cal-legend-item { font-size: 8px; }
+  /* ── Layout desktop: split ── */
+  @media (min-width: 641px) {
+    .cal-wrap { display: grid; grid-template-columns: 280px 1fr; gap: 0; align-items: start; }
+    .cal-upcoming { margin-top: 0; border-right: 1px solid rgba(255,255,255,0.05); padding-right: 24px; }
+    .cal-desktop-right { padding-left: 28px; }
+    .cal-legend { margin-bottom: 16px; }
   }
-  @media (max-width: 400px) {
-    .cal-cell { min-height: 32px; padding: 2px; }
-    .cal-dn { font-size: 10px; width: 18px; height: 18px; }
-    .cal-days { gap: 2px; }
+  @media (min-width: 900px) {
+    .cal-wrap { grid-template-columns: 300px 1fr; }
+  }
+
+  /* ── Células ── */
+  .cal-grid { width: 100%; }
+  .cal-weekdays { display: grid; grid-template-columns: repeat(7,1fr); margin-bottom: 4px; }
+  .cal-wd { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--gray); text-align:center; padding:6px 0; }
+  .cal-wd.we { color:rgba(184,135,42,0.5); }
+  .cal-days { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
+  .cal-cell { aspect-ratio:1; border-radius:8px; padding:4px; display:flex; flex-direction:column; align-items:center; position:relative; cursor:default; background:transparent; transition:background 0.12s; min-height:48px; }
+  .cal-cell.has-event { cursor:pointer; }
+  .cal-cell.has-event:hover { background:rgba(255,255,255,0.03); }
+  .cal-cell.today .cal-dn { background:var(--amber); color:var(--bg); border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; }
+  .cal-cell.other-month { opacity:0.2; pointer-events:none; }
+  .cal-cell.weekend .cal-dn { color:rgba(184,135,42,0.6); }
+  .cal-dn { font-size:12px; font-weight:500; color:var(--gray-l); line-height:1; margin-bottom:3px; width:24px; height:24px; display:flex; align-items:center; justify-content:center; }
+  .cal-dots { display:flex; flex-wrap:wrap; gap:2px; justify-content:center; max-width:100%; }
+  .cal-evt-dot { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+
+  /* Painel evento do dia */
+  .cal-event-panel { margin-top:16px; padding:14px 16px; background:var(--surface); border-radius:12px; border:1px solid rgba(184,135,42,0.15); display:none; }
+  .cal-event-panel.show { display:block; }
+  .cal-event-panel-title { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:var(--amber); margin-bottom:10px; }
+  .cal-event-item { display:flex; align-items:flex-start; gap:10px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+  .cal-event-item:last-child { border-bottom:none; }
+  .cal-event-color { width:3px; border-radius:2px; align-self:stretch; flex-shrink:0; min-height:16px; margin-top:2px; }
+  .cal-event-text { font-size:13px; color:var(--off-white); line-height:1.4; }
+  .cal-event-cat { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:0.08em; text-transform:uppercase; color:var(--gray); margin-top:2px; }
+
+  /* Nav mês desktop */
+  .cal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .cal-nav-btn { width:32px; height:32px; border-radius:8px; background:var(--surface); border:1px solid rgba(255,255,255,0.06); color:var(--gray-l); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; }
+  .cal-nav-btn:hover { border-color:var(--amber); color:var(--amber-l); }
+  .cal-nav-btn svg { width:14px; height:14px; }
+  .cal-month-label { font-size:16px; font-weight:600; color:var(--off-white); letter-spacing:-0.01em; text-align:center; flex:1; }
+  .cal-month-label span { font-family:'DM Mono',monospace; font-size:10px; color:var(--amber); letter-spacing:0.12em; display:block; text-transform:uppercase; margin-top:1px; font-weight:400; }
+
+  /* Mobile: grade oculta, só lista */
+  @media (max-width: 640px) {
+    .cal-desktop-right { display: none; }
+    .cal-wrap { display: block; }
+    .cal-upcoming { border-right: none; padding-right: 0; }
   }
 
   /* ── BOTTOM NAV (mobile) ── */
@@ -619,45 +655,42 @@
     <section class="section" id="sec-calendario">
       <div class="cal-wrap">
 
-        <div class="cal-header">
-          <button class="cal-nav-btn" onclick="calNavegar(-1)" title="Mês anterior">
-            <svg viewBox="0 0 16 16" fill="none"><path d="M10 3L6 8l4 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-          <div class="cal-month-label" id="calMesLabel">—<span id="calAnoLabel">2026</span></div>
-          <button class="cal-nav-btn" onclick="calNavegar(1)" title="Próximo mês">
-            <svg viewBox="0 0 16 16" fill="none"><path d="M6 3l4 5-4 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-        </div>
-
-        <div class="cal-legend">
-          <div class="cal-legend-item"><span class="cal-dot" style="background:#3B7DD8"></span>Boleto / Vencimento</div>
-          <div class="cal-legend-item"><span class="cal-dot" style="background:#B8872A"></span>Reunião do Conselho</div>
-          <div class="cal-legend-item"><span class="cal-dot" style="background:#7C5CBF"></span>Assembleia Geral</div>
-          <div class="cal-legend-item"><span class="cal-dot" style="background:#4CAF82"></span>Manutenção</div>
-          <div class="cal-legend-item"><span class="cal-dot" style="background:#E05C3A"></span>Feriado</div>
-        </div>
-
-        <div class="cal-grid">
-          <div class="cal-weekdays">
-            <div class="cal-wd we">Dom</div>
-            <div class="cal-wd">Seg</div>
-            <div class="cal-wd">Ter</div>
-            <div class="cal-wd">Qua</div>
-            <div class="cal-wd">Qui</div>
-            <div class="cal-wd">Sex</div>
-            <div class="cal-wd we">Sáb</div>
-          </div>
-          <div class="cal-days" id="calDays"></div>
-        </div>
-
-        <div class="cal-event-panel" id="calEventPanel">
-          <div class="cal-event-panel-title" id="calEventPanelTitle">Eventos do dia</div>
-          <div id="calEventList"></div>
-        </div>
-
+        <!-- COLUNA ESQUERDA: lista próximos eventos -->
         <div class="cal-upcoming">
           <div class="cal-upcoming-title">Próximos eventos</div>
           <div id="calUpcomingList"></div>
+        </div>
+
+        <!-- COLUNA DIREITA: grade mensal (só desktop) -->
+        <div class="cal-desktop-right">
+          <div class="cal-legend">
+            <div class="cal-legend-item"><span class="cal-dot" style="background:#3B7DD8"></span>Boleto / Vencimento</div>
+            <div class="cal-legend-item"><span class="cal-dot" style="background:#B8872A"></span>Reunião do Conselho</div>
+            <div class="cal-legend-item"><span class="cal-dot" style="background:#7C5CBF"></span>Assembleia Geral</div>
+            <div class="cal-legend-item"><span class="cal-dot" style="background:#4CAF82"></span>Manutenção</div>
+            <div class="cal-legend-item"><span class="cal-dot" style="background:#E05C3A"></span>Feriado</div>
+          </div>
+          <div class="cal-header">
+            <button class="cal-nav-btn" onclick="calNavegar(-1)">
+              <svg viewBox="0 0 16 16" fill="none"><path d="M10 3L6 8l4 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="cal-month-label" id="calMesLabel">—<span id="calAnoLabel">2026</span></div>
+            <button class="cal-nav-btn" onclick="calNavegar(1)">
+              <svg viewBox="0 0 16 16" fill="none"><path d="M6 3l4 5-4 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+          <div class="cal-grid">
+            <div class="cal-weekdays">
+              <div class="cal-wd we">Dom</div><div class="cal-wd">Seg</div><div class="cal-wd">Ter</div>
+              <div class="cal-wd">Qua</div><div class="cal-wd">Qui</div><div class="cal-wd">Sex</div>
+              <div class="cal-wd we">Sáb</div>
+            </div>
+            <div class="cal-days" id="calDays"></div>
+          </div>
+          <div class="cal-event-panel" id="calEventPanel">
+            <div class="cal-event-panel-title" id="calEventPanelTitle">Eventos do dia</div>
+            <div id="calEventList"></div>
+          </div>
         </div>
 
       </div>
@@ -1039,19 +1072,15 @@ const CAT_LABELS = {
   assembleia:'Assembleia Geral', manutencao:'Manutenção', feriado:'Feriado'
 };
 
-let _calAno = 2026, _calMes = 0; // 0 = Janeiro
+let _calAno = 2026, _calMes = 0;
 
 function calInit() {
   const hoje = new Date();
-  _calAno = hoje.getFullYear();
-  _calMes = hoje.getMonth();
-  // Se o ano atual não for 2026, iniciar em janeiro 2026
-  if (_calAno < 2026) { _calAno = 2026; _calMes = 0; }
-  if (_calAno > 2026) { _calAno = 2026; _calMes = 11; }
+  _calAno = hoje.getFullYear() < 2026 ? 2026 : (hoje.getFullYear() > 2026 ? 2026 : hoje.getFullYear());
+  _calMes = _calAno === 2026 ? hoje.getMonth() : 0;
   calRenderizar();
   calRenderizarProximos();
 }
-
 function calNavegar(delta) {
   _calMes += delta;
   if (_calMes < 0)  { _calMes = 11; _calAno--; }
@@ -1063,81 +1092,54 @@ function calNavegar(delta) {
 function calRenderizar() {
   document.getElementById('calMesLabel').childNodes[0].textContent = MESES_FULL[_calMes] + ' ';
   document.getElementById('calAnoLabel').textContent = _calAno;
-
   const hoje = new Date();
-  const primeiroDia = new Date(_calAno, _calMes, 1).getDay(); // 0=Dom
+  const primeiroDia = new Date(_calAno, _calMes, 1).getDay();
   const totalDias   = new Date(_calAno, _calMes + 1, 0).getDate();
-
-  // Dias do mês anterior para completar a grade
-  const diasAntMes = new Date(_calAno, _calMes, 0).getDate();
-
+  const diasAntMes  = new Date(_calAno, _calMes, 0).getDate();
   let html = '';
-
-  // Células vazias antes do dia 1
   for (let i = 0; i < primeiroDia; i++) {
     const d = diasAntMes - primeiroDia + 1 + i;
     html += `<div class="cal-cell other-month"><span class="cal-dn">${d}</span></div>`;
   }
-
-  // Dias do mês
   for (let d = 1; d <= totalDias; d++) {
     const chave = `${_calAno}-${String(_calMes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const eventos = CAL_EVENTOS[chave] || [];
     const dow = new Date(_calAno, _calMes, d).getDay();
     const isWeekend = dow === 0 || dow === 6;
     const isHoje = d === hoje.getDate() && _calMes === hoje.getMonth() && _calAno === hoje.getFullYear();
-
     let classes = 'cal-cell';
     if (eventos.length) classes += ' has-event';
     if (isWeekend) classes += ' weekend';
     if (isHoje) classes += ' today';
-
-    const dots = eventos.map(e =>
-      `<span class="cal-evt-dot" style="background:${CAL_CORES[e.cat]}"></span>`
-    ).join('');
-
-    const onclick = eventos.length
-      ? `onclick="calMostrarEventos('${chave}', ${d})"`
-      : '';
-
-    html += `<div class="${classes}" ${onclick}>
-      <span class="cal-dn">${d}</span>
-      <div class="cal-dots">${dots}</div>
-    </div>`;
+    const dots = eventos.map(e => `<span class="cal-evt-dot" style="background:${CAL_CORES[e.cat]}"></span>`).join('');
+    const onclick = eventos.length ? `onclick="calMostrarEventos('${chave}', ${d})"` : '';
+    html += `<div class="${classes}" ${onclick}><span class="cal-dn">${d}</span><div class="cal-dots">${dots}</div></div>`;
   }
-
-  // Células após o último dia
-  const totalCelulas = primeiroDia + totalDias;
-  const resto = totalCelulas % 7 === 0 ? 0 : 7 - (totalCelulas % 7);
+  const resto = (primeiroDia + totalDias) % 7 === 0 ? 0 : 7 - ((primeiroDia + totalDias) % 7);
   for (let i = 1; i <= resto; i++) {
     html += `<div class="cal-cell other-month"><span class="cal-dn">${i}</span></div>`;
   }
-
   document.getElementById('calDays').innerHTML = html;
 }
 
 function calMostrarEventos(chave, dia) {
   const eventos = CAL_EVENTOS[chave] || [];
   if (!eventos.length) return;
-
   const panel = document.getElementById('calEventPanel');
-  const title = document.getElementById('calEventPanelTitle');
-  const list  = document.getElementById('calEventList');
-
-  title.textContent = `${dia} de ${MESES_FULL[_calMes]} de ${_calAno}`;
-  list.innerHTML = eventos.map(e => `
+  document.getElementById('calEventPanelTitle').textContent = `${dia} de ${MESES_FULL[_calMes]} de ${_calAno}`;
+  document.getElementById('calEventList').innerHTML = eventos.map(e => `
     <div class="cal-event-item">
       <div class="cal-event-color" style="background:${CAL_CORES[e.cat]}"></div>
-      <div>
-        <div class="cal-event-text">${e.t}</div>
-        <div class="cal-event-cat">${CAT_LABELS[e.cat]}</div>
-      </div>
-    </div>
-  `).join('');
-
+      <div><div class="cal-event-text">${e.t}</div><div class="cal-event-cat">${CAT_LABELS[e.cat]}</div></div>
+    </div>`).join('');
   panel.classList.add('show');
-  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  panel.scrollIntoView({ behavior:'smooth', block:'nearest' });
 }
+
+
+
+
+
 
 function calRenderizarProximos() {
   const hoje = new Date();
