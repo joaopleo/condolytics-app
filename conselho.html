@@ -633,7 +633,7 @@
       <div id="userPopover">
         <div class="upop-header">
           <div class="upop-name" id="upopName">—</div>
-          <span class="upop-perfil" id="upopPerfil">Síndico</span>
+          <span class="upop-perfil" id="upopPerfil">Conselho Fiscal</span>
         </div>
         <button class="upop-logout" onclick="logout()">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -1047,7 +1047,7 @@ window.addEventListener('load', async () => {
   // Popover mobile
   document.getElementById('upopName').textContent   = nome;
   const perfilLabel = { conselho: 'Conselho Fiscal', sindico: 'Síndico', admin: 'Administrador' };
-  document.getElementById('upopPerfil').textContent = perfilLabel[usuario.perfil] || 'Síndico';
+  document.getElementById('upopPerfil').textContent = perfilLabel[usuario.perfil] || 'Conselho Fiscal';
 });
 
 /* ── REVEAL ── */
