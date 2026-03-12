@@ -688,6 +688,26 @@ footer {
 .modal-switch a { color: var(--gold); cursor: pointer; }
 .modal-switch a:hover { text-decoration: underline; }
 
+/* ── Seleção de condomínio ── */
+.condo-pick-btn {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; padding: 14px 16px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 10px; cursor: pointer; text-align: left;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+  font-family: var(--font-sans);
+}
+.condo-pick-btn:hover {
+  border-color: rgba(201,168,76,0.4);
+  background: rgba(201,168,76,0.06);
+  transform: translateX(3px);
+}
+.condo-pick-icon { font-size: 20px; flex-shrink: 0; }
+.condo-pick-nome {
+  flex: 1; font-size: 14px; font-weight: 500;
+  color: var(--text); line-height: 1.3;
+}
+
 /* ════════════════════════════
    RESPONSIVO — 4 breakpoints
 ════════════════════════════ */
@@ -1423,6 +1443,11 @@ const PERFIL_REDIRECT = {
   admin:     'admin.html',
 };
 
+/* ── estado do login em progresso ── */
+let _loginUser     = null;
+let _loginPerfil   = null;
+let _loginVinculos = [];
+
 async function fazerLogin() {
   const email = document.getElementById('loginEmail').value.trim();
   const senha = document.getElementById('loginSenha').value;
@@ -1441,22 +1466,24 @@ async function fazerLogin() {
     const { data, error } = await db.auth.signInWithPassword({ email, password: senha });
     if (error) throw new Error('credenciais');
 
-    /* 2. Buscar perfil na tabela usuarios */
-    const { data: userData, error: userError } = await db
-      .from('usuarios')
-      .select('perfil')
-      .eq('id', data.user.id)
-      .single();
+    /* 2. Buscar perfil + vínculos em paralelo */
+    const [userRes, vinculosRes] = await Promise.all([
+      db.from('usuarios').select('perfil').eq('id', data.user.id).single(),
+      db.from('usuario_condominios')
+        .select('condominio_id, condominios(id, nome)')
+        .eq('usuario_id', data.user.id)
+    ]);
 
-    if (userError || !userData) throw new Error('perfil');
+    if (userRes.error || !userRes.data) throw new Error('perfil');
 
-    /* 3. Confirmar sessão persistida antes de redirecionar */
-    const destino = PERFIL_REDIRECT[userData.perfil];
+    _loginUser     = data.user;
+    _loginPerfil   = userRes.data.perfil;
+    _loginVinculos = vinculosRes.data || [];
+
+    const destino = PERFIL_REDIRECT[_loginPerfil];
     if (!destino) throw new Error('perfil');
 
-    btn.innerHTML = '<span style="opacity:0.7">Redirecionando...</span>';
-
-    /* Aguarda até getSession() confirmar a sessão no localStorage (máx 3s) */
+    /* 3. Aguardar sessão persistida */
     let tentativas = 0;
     while (tentativas < 30) {
       const { data: { session } } = await db.auth.getSession();
@@ -1465,7 +1492,17 @@ async function fazerLogin() {
       tentativas++;
     }
 
-    window.location.href = destino;
+    /* 4. Decidir: seleção ou redirect direto */
+    if (_loginVinculos.length > 1) {
+      mostrarSelecaoCondo(_loginVinculos, destino);
+    } else {
+      /* 0 ou 1 vínculo — salva o que tiver e redireciona */
+      const condoId = _loginVinculos[0]?.condominio_id || null;
+      localStorage.setItem('condolytics_condo_id',   condoId || '');
+      localStorage.setItem('condolytics_condo_nome',
+        _loginVinculos[0]?.condominios?.nome || '');
+      window.location.href = destino;
+    }
 
   } catch (e) {
     const msg = e.message === 'perfil'
@@ -1476,6 +1513,81 @@ async function fazerLogin() {
     btn.disabled = false;
     btn.innerHTML = `Entrar <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
   }
+}
+
+/* ── Tela de seleção de condomínio (substitui conteúdo do modal-body) ── */
+function mostrarSelecaoCondo(vinculos, destino) {
+  const body = document.querySelector('#modalLogin .modal-body');
+
+  const cards = vinculos.map(v => {
+    const nome = v.condominios?.nome || 'Condomínio';
+    const id   = v.condominio_id;
+    return `
+      <button class="condo-pick-btn" onclick="escolherCondo('${id}','${nome.replace(/'/g,"\\'")}','${destino}')">
+        <span class="condo-pick-icon">🏢</span>
+        <span class="condo-pick-nome">${nome}</span>
+        <svg viewBox="0 0 16 16" fill="none" width="13" height="13" style="flex-shrink:0;color:var(--text-faint)">
+          <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>`;
+  }).join('');
+
+  body.innerHTML = `
+    <div style="margin-bottom:20px">
+      <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px">Selecione o condomínio</div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--text-faint);letter-spacing:0.04em">
+        Você tem acesso a ${vinculos.length} condomínios
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      ${cards}
+    </div>
+    <div style="margin-top:20px;text-align:center">
+      <button onclick="voltarLogin()"
+        style="background:none;border:none;font-family:var(--font-mono);font-size:9px;
+               letter-spacing:0.06em;color:var(--text-faint);cursor:pointer;
+               text-transform:uppercase;padding:4px 0;transition:color 0.2s"
+        onmouseover="this.style.color='var(--gold)'"
+        onmouseout="this.style.color='var(--text-faint)'">
+        ← Voltar
+      </button>
+    </div>`;
+}
+
+function escolherCondo(condoId, condoNome, destino) {
+  localStorage.setItem('condolytics_condo_id',   condoId);
+  localStorage.setItem('condolytics_condo_nome', condoNome);
+  window.location.href = destino;
+}
+
+function voltarLogin() {
+  /* Restaura o modal-body original */
+  const body = document.querySelector('#modalLogin .modal-body');
+  body.innerHTML = `
+    <div class="modal-error" id="modalErro"></div>
+    <div class="modal-field">
+      <label class="modal-label">Email</label>
+      <input class="modal-input" id="loginEmail" type="email" placeholder="seu@email.com" autocomplete="email">
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">Senha</label>
+      <input class="modal-input" id="loginSenha" type="password" placeholder="••••••••" autocomplete="current-password">
+      <button class="modal-forgot">Esqueci minha senha</button>
+    </div>
+    <button class="btn-modal-login" id="btnModalLogin" onclick="fazerLogin()">
+      Entrar
+      <svg viewBox="0 0 16 16" fill="none" width="13" height="13">
+        <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <div class="modal-sep"></div>
+    <div class="modal-switch">
+      Não tem acesso? <a onclick="scrollToForm()">Solicite uma demonstração</a>
+    </div>`;
+  /* Reanexa listener Enter */
+  document.getElementById('loginSenha')
+    .addEventListener('keydown', e => { if (e.key === 'Enter') fazerLogin(); });
+  _loginUser = null; _loginPerfil = null; _loginVinculos = [];
 }
 
 /* ═══════════════════════════════════
