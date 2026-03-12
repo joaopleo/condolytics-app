@@ -1038,10 +1038,7 @@
 <script>
 /* ════════════════════════════════════════════════════════
    CONDOLYTICS — CONSELHO.HTML
-   Integração completa com Supabase
-   IDs:
-     Bellevue : 88af0e8b-9db8-47e9-b50a-d1b15d99c710
-     AMALPES  : 1b0f0e63-427b-43fd-a4d8-58cf56626f00
+   Dados reais do Supabase, por vínculo do usuário logado
 ════════════════════════════════════════════════════════ */
 
 const CONDO_IDS = {
@@ -1049,59 +1046,129 @@ const CONDO_IDS = {
   amalpes:  '1b0f0e63-427b-43fd-a4d8-58cf56626f00'
 };
 
-/* Mapeamento categoria DB → label legível */
 const CAT_LABEL = {
-  /* receitas */
-  rateio: 'Rateio Condominial', ressarcimentos: 'Ressarcimentos',
-  outras: 'Outras Receitas', financeiras: 'Receitas Financeiras',
-  fundo_reserva: 'Fundo de Reserva', acordos: 'Acordos/Multas',
-  reembolsos: 'Reembolsos',
-  /* despesas */
-  pessoal: 'Pessoal', rh: 'RH / Encargos', terceirizados: 'Terceirizados',
-  encargos: 'Encargos Sociais', administracao: 'Administração',
-  consumo: 'Consumo (Energ/Água)', manutencoes: 'Manutenção Predial',
-  financeiras_d: 'Despesas Financeiras', reembolsaveis: 'Reembolsáveis',
-  impostos: 'Taxa Assoc. AMALPES', investimentos: 'Investimentos',
-  investimentos_imobilizado: 'Invest. Imobilizado', outros: 'Outros'
+  rateio:'Rateio Condominial', ressarcimentos:'Ressarcimentos',
+  outras:'Outras Receitas', financeiras:'Receitas Financeiras',
+  fundo_reserva:'Fundo de Reserva', acordos:'Acordos/Multas', reembolsos:'Reembolsos',
+  pessoal:'Pessoal', rh:'RH / Encargos', terceirizados:'Terceirizados',
+  encargos:'Encargos Sociais', administracao:'Administração',
+  consumo:'Consumo (Energ/Água)', manutencoes:'Manutenção Predial',
+  reembolsaveis:'Reembolsáveis', impostos:'Taxa Assoc. AMALPES',
+  investimentos:'Investimentos', investimentos_imobilizado:'Invest. Imobilizado',
+  outros:'Outros'
 };
 
-/* Cor por categoria (despesas) */
-const CAT_COLOR = {
+const CAT_COLOR_DESP = {
   pessoal:'#E05C3A', rh:'#E05C3A', terceirizados:'#C9A84C',
   encargos:'#9B7FD4', administracao:'#4CAF7D', consumo:'#E05C3A',
-  manutencoes:'#5B9BD5', financeiras:'#52504C', reembolsaveis:'#52504C',
+  manutencoes:'#5B9BD5', financeiras:'#52504C', reembolsaveis:'#7A7870',
   impostos:'#C9A84C', investimentos:'#4CAF7D',
-  investimentos_imobilizado:'#4CAF7D', outros:'#52504C'
+  investimentos_imobilizado:'#3A8F65', outros:'#7A7870'
 };
 
-/* Estado global */
-let _dadosDB    = { bellevue: null, amalpes: null }; // { periodos, indicadores, lancamentos }
-let _expSource  = 'bellevue';
-let _periodoIdx = 0; // índice no array de períodos disponíveis
-let _epDataset  = null;
+const CAT_COLOR_REC = {
+  rateio:'#C9A84C', ressarcimentos:'#5B9BD5', outras:'#9B7FD4',
+  financeiras:'#4CAF7D', fundo_reserva:'#3A8F65', acordos:'#7A7870', reembolsos:'#7A7870'
+};
 
-/* ── UTILITÁRIOS ── */
+/* Estado */
+let _usuario    = null;
+let _condoKeys  = [];          // condomínios vinculados ao usuário, ex: ['bellevue']
+let _dadosDB    = {};          // cache por condoKey
+let _condoAtual = null;        // 'bellevue' | 'amalpes'
+let _periodoIdx = 0;
+let _barChart   = null;
+
+/* ── UTILS ── */
 function brl(v) {
   if (v == null) return '—';
   return v.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
-function brl2(v) {
-  if (v == null) return '—';
-  return v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
 function periodoLabel(iso) {
-  // '2025-10-01' → 'Out/2025'
   const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   const [y, m] = iso.split('-');
   return `${meses[parseInt(m)-1]}/${y}`;
 }
 
-/* ── CARGA DE DADOS ── */
-async function carregarDados(condoKey) {
-  if (_dadosDB[condoKey]) return _dadosDB[condoKey]; // cache
+/* ── AUTH GUARD + INIT ── */
+window.addEventListener('load', async () => {
+  _usuario = await protegerPagina(['conselho', 'admin']);
+  if (!_usuario) return;
 
-  const condoId = CONDO_IDS[condoKey];
+  /* Preencher nome */
+  const nome = _usuario.nome_completo || 'Conselheiro';
+  ['userName','respNome','upopName'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = nome;
+  });
+  const av = document.getElementById('userAvatar');
+  if (av) av.textContent = nome[0].toUpperCase();
+  const perfEl = document.getElementById('upopPerfil');
+  if (perfEl) perfEl.textContent = { conselho:'Conselho Fiscal', sindico:'Síndico', admin:'Administrador' }[_usuario.perfil] || 'Conselho Fiscal';
 
+  await inicializar();
+});
+
+/* ── DESCOBRIR VÍNCULOS DO USUÁRIO ── */
+async function inicializar() {
+  /* Buscar condomínios vinculados */
+  const { data: vinculos } = await db
+    .from('usuario_condominios')
+    .select('condominio_id')
+    .eq('usuario_id', _usuario.id);
+
+  /* Mapear IDs para keys */
+  _condoKeys = [];
+  for (const [key, id] of Object.entries(CONDO_IDS)) {
+    if (vinculos?.some(v => v.condominio_id === id)) _condoKeys.push(key);
+  }
+
+  /* Fallback: se não houver vínculo na tabela, usa o condominio_id do perfil */
+  if (_condoKeys.length === 0 && _usuario.condominio_id) {
+    for (const [key, id] of Object.entries(CONDO_IDS)) {
+      if (_usuario.condominio_id === id) _condoKeys.push(key);
+    }
+  }
+
+  /* Se ainda vazio, dá acesso a Bellevue como default */
+  if (_condoKeys.length === 0) _condoKeys = ['bellevue'];
+
+  _condoAtual = _condoKeys[0];
+
+  /* Mostrar/ocultar toggle AMALPES conforme vínculo */
+  configurarToggleCondos();
+
+  /* Carregar dados e renderizar */
+  await carregarDados(_condoAtual);
+  _periodoIdx = _dadosDB[_condoAtual].periodos.length - 1;
+  construirTabs();
+  renderizarTudo();
+}
+
+/* ── TOGGLE CONDOMÍNIOS ── */
+function configurarToggleCondos() {
+  const btnBellevue = document.getElementById('ctBellevue');
+  const btnAmalpes  = document.getElementById('ctAmalpes');
+  const dtBellevue  = document.getElementById('dtBellevue');
+  const dtAmalpes   = document.getElementById('dtAmalpes');
+
+  const temBellevue = _condoKeys.includes('bellevue');
+  const temAmalpes  = _condoKeys.includes('amalpes');
+
+  /* Gráfico toggles */
+  if (btnBellevue) { btnBellevue.style.display = temBellevue ? '' : 'none'; btnBellevue.classList.toggle('ct-active', _condoAtual === 'bellevue'); }
+  if (btnAmalpes)  { btnAmalpes.style.display  = temAmalpes  ? '' : 'none'; btnAmalpes.classList.toggle('ct-active',  _condoAtual === 'amalpes'); }
+
+  /* Tabela toggles */
+  if (dtBellevue) { dtBellevue.style.display = temBellevue ? '' : 'none'; dtBellevue.classList.toggle('ct-active', _condoAtual === 'bellevue'); }
+  if (dtAmalpes)  { dtAmalpes.style.display  = temAmalpes  ? '' : 'none'; dtAmalpes.classList.toggle('ct-active',  _condoAtual === 'amalpes'); }
+}
+
+/* ── CARGA SUPABASE ── */
+async function carregarDados(key) {
+  if (_dadosDB[key]) return; /* cache */
+
+  const condoId = CONDO_IDS[key];
   const [indRes, lancRes] = await Promise.all([
     db.from('indicadores_financeiros')
       .select('periodo,receita_realizada,despesa_realizada,inadimplencia_pct,fundo_reserva,saldo_conta')
@@ -1116,227 +1183,189 @@ async function carregarDados(condoKey) {
   const indicadores = indRes.data || [];
   const lancamentos = lancRes.data || [];
 
-  // Agrupar lançamentos por período
   const lancPorPeriodo = {};
   for (const l of lancamentos) {
-    if (!lancPorPeriodo[l.periodo]) lancPorPeriodo[l.periodo] = { receita: [], despesa: [] };
+    if (!lancPorPeriodo[l.periodo]) lancPorPeriodo[l.periodo] = { receita:[], despesa:[] };
     lancPorPeriodo[l.periodo][l.tipo].push({ categoria: l.categoria, valor: l.valor });
   }
 
-  const periodos = indicadores.map(i => i.periodo);
-
-  _dadosDB[condoKey] = { periodos, indicadores, lancPorPeriodo };
-  return _dadosDB[condoKey];
+  _dadosDB[key] = {
+    periodos: indicadores.map(i => i.periodo),
+    indicadores,
+    lancPorPeriodo
+  };
 }
 
-/* ── AUTH GUARD + INIT ── */
-window.addEventListener('load', async () => {
-  const usuario = await protegerPagina(['conselho', 'admin']);
-  if (!usuario) return;
-
-  const nome = usuario.nome_completo || 'Conselheiro';
-  document.getElementById('userName').textContent   = nome;
-  document.getElementById('userAvatar').textContent = nome[0].toUpperCase();
-  document.getElementById('respNome').textContent   = nome;
-  document.getElementById('upopName').textContent   = nome;
-  const perfilLabel = { conselho: 'Conselho Fiscal', sindico: 'Síndico', admin: 'Administrador' };
-  document.getElementById('upopPerfil').textContent = perfilLabel[usuario.perfil] || 'Conselho Fiscal';
-
-  // Carregar dados e inicializar dashboard
-  await inicializarDashboard();
-});
-
-async function inicializarDashboard() {
-  // Carrega ambos em paralelo para ter cache pronto
-  await Promise.all([carregarDados('bellevue'), carregarDados('amalpes')]);
-
-  // Inicializa com Bellevue, mês mais recente
-  _expSource  = 'bellevue';
-  const dados = _dadosDB['bellevue'];
-  _periodoIdx = dados.periodos.length - 1;
-
+/* ── SWITCH CONDOMÍNIO ── */
+async function switchChartSource(key) {
+  if (!_condoKeys.includes(key)) return;
+  _condoAtual = key;
+  await carregarDados(key);
+  _periodoIdx = _dadosDB[key].periodos.length - 1;
+  configurarToggleCondos();
   construirTabs();
-  await renderizarTudo();
+  renderizarTudo();
 }
+async function switchExpSource(key) { await switchChartSource(key); }
 
-/* ── TABS DE MÊS (dinâmicas) ── */
+/* ── TABS DE MÊS ── */
 function construirTabs() {
-  const dados   = _dadosDB[_expSource];
-  const tabsEl  = document.querySelector('.m-tabs');
+  const periodos = _dadosDB[_condoAtual].periodos;
+  const tabsEl   = document.querySelector('.m-tabs');
   if (!tabsEl) return;
-  tabsEl.innerHTML = dados.periodos.map((p, i) => {
-    const ativo = i === _periodoIdx ? 'm-active' : '';
-    return `<button class="m-tab ${ativo}" onclick="trocarPeriodo(${i})">${periodoLabel(p)}</button>`;
-  }).join('');
+  tabsEl.innerHTML = periodos.map((p, i) =>
+    `<button class="m-tab ${i === _periodoIdx ? 'm-active' : ''}" onclick="trocarPeriodo(${i})">${periodoLabel(p)}</button>`
+  ).join('');
 }
 
-async function trocarPeriodo(idx) {
+function trocarPeriodo(idx) {
   _periodoIdx = idx;
   construirTabs();
-  await renderizarTudo();
+  renderizarTudo();
 }
 
-/* ── SWITCH CONDOMÍNIO (Bellevue / AMALPES) ── */
-async function switchChartSource(src) {
-  _expSource  = src;
-  document.getElementById('ctBellevue').classList.toggle('ct-active', src === 'bellevue');
-  document.getElementById('ctAmalpes').classList.toggle('ct-active',  src === 'amalpes');
+/* ── RENDER PRINCIPAL ── */
+function renderizarTudo() {
+  const dados   = _dadosDB[_condoAtual];
+  const periodo = dados.periodos[_periodoIdx];
+  const ind     = dados.indicadores[_periodoIdx];
+  const lanc    = dados.lancPorPeriodo[periodo] || { receita:[], despesa:[] };
 
-  const dados = _dadosDB[src];
-  // Mantém posição relativa: vai para o último período disponível
-  _periodoIdx = dados.periodos.length - 1;
+  renderKPIs(ind, periodo);
+  renderGraficoBarras(lanc, periodo);
+  renderTabelaCategorias(lanc.despesa);
 
-  construirTabs();
-  await renderizarTudo();
-}
-
-async function switchExpSource(src) {
-  await switchChartSource(src);
-  document.getElementById('dtBellevue').classList.toggle('ct-active', src === 'bellevue');
-  document.getElementById('dtAmalpes').classList.toggle('ct-active',  src === 'amalpes');
-}
-
-/* ── RENDERIZAÇÃO PRINCIPAL ── */
-async function renderizarTudo() {
-  const dados     = _dadosDB[_expSource];
-  const periodo   = dados.periodos[_periodoIdx];
-  const ind       = dados.indicadores[_periodoIdx];
-  const lanc      = dados.lancPorPeriodo[periodo] || { receita: [], despesa: [] };
-
-  renderKPIs(ind);
-  renderGrafico(dados);
-  renderTabelaDespesas(lanc.despesa, periodo);
-  renderExpenseTable(lanc, periodo); // tabela coluna B (categorias detalhadas)
+  /* Tag mês na tabela */
+  const tagEl = document.getElementById('monthTag');
+  if (tagEl) tagEl.textContent = periodoLabel(periodo);
 }
 
 /* ── KPIs ── */
-function renderKPIs(ind) {
+function renderKPIs(ind, periodo) {
   if (!ind) return;
 
-  // Inadimplência
+  /* Inadimplência */
   const inadEl = document.querySelector('.kpi-card:nth-child(1) .counter');
   if (inadEl) { inadEl.dataset.target = ind.inadimplencia_pct ?? 0; animateCounter(inadEl); }
   const inadT = document.getElementById('inadDeltaText');
-  if (inadT) inadT.textContent = `${brl2(ind.inadimplencia_pct ?? 0)}% das unidades`;
+  if (inadT) inadT.textContent = `${(ind.inadimplencia_pct ?? 0).toFixed(0).replace('.',',')}% das unidades em ${periodoLabel(periodo)}`;
 
-  // Saldo
+  /* Saldo */
   const saldoEl = document.querySelector('.kpi-card:nth-child(2) .counter');
   if (saldoEl) { saldoEl.dataset.target = ind.saldo_conta ?? 0; animateCounter(saldoEl); }
 
-  // Fundo de reserva
+  /* Fundo de reserva */
   const resEl = document.querySelector('.kpi-card:nth-child(3) .counter');
   if (resEl) { resEl.dataset.target = ind.fundo_reserva ?? 0; animateCounter(resEl); }
-  // Progress bar fundo (meta: Bellevue 300k, AMALPES 400k)
-  const meta = _expSource === 'bellevue' ? 300000 : 400000;
+  const meta = _condoAtual === 'bellevue' ? 300000 : 400000;
   const pct  = Math.min(((ind.fundo_reserva ?? 0) / meta) * 100, 100);
   const pb   = document.getElementById('reserveProg');
-  if (pb) { pb.style.transition = 'none'; pb.style.width = '0'; pb.offsetHeight; pb.style.transition = 'width 1.2s cubic-bezier(.4,0,.2,1)'; pb.style.width = pct.toFixed(1) + '%'; }
+  if (pb) { pb.style.transition='none'; pb.style.width='0'; pb.offsetHeight; pb.style.transition='width 1.2s cubic-bezier(.4,0,.2,1)'; pb.style.width=pct.toFixed(1)+'%'; }
   const resDelta = document.getElementById('reserveDeltaText');
   if (resDelta) resDelta.textContent = `${pct.toFixed(1).replace('.',',')}% da meta · R$ ${brl(meta)}`;
 
-  // Execução orçamentária (receita vs despesa)
-  const execPct = ind.receita_realizada > 0
-    ? Math.round((ind.despesa_realizada / ind.receita_realizada) * 100) : 0;
+  /* Execução orçamentária */
+  const execPct = ind.receita_realizada > 0 ? Math.round((ind.despesa_realizada / ind.receita_realizada) * 100) : 0;
   const arc = document.getElementById('arcCircle');
-  if (arc) { arc.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)'; arc.style.strokeDashoffset = (138.2 * (1 - execPct / 100)).toFixed(1); }
+  if (arc) { arc.style.transition='stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)'; arc.style.strokeDashoffset=(138.2*(1-execPct/100)).toFixed(1); }
   const arcMain = document.getElementById('arcInfoMain');
-  if (arcMain) arcMain.innerHTML = `${execPct}% executado<br>em ${periodoLabel(dados.periodos[_periodoIdx])}`;
+  if (arcMain) arcMain.innerHTML = `${execPct}% executado<br>em ${periodoLabel(periodo)}`;
   const arcSub = document.getElementById('arcInfoSub');
   if (arcSub) arcSub.textContent = `R$ ${brl(ind.despesa_realizada)} / R$ ${brl(ind.receita_realizada)}`;
 }
 
-/* ── GRÁFICO RECEITAS VS DESPESAS ── */
-let _chart = null;
-function renderGrafico(dados) {
-  const labels   = dados.periodos.map(periodoLabel);
-  const receitas = dados.indicadores.map(i => parseFloat((i.receita_realizada / 1000).toFixed(1)));
-  const despesas = dados.indicadores.map(i => parseFloat((i.despesa_realizada / 1000).toFixed(1)));
+/* ── GRÁFICO DE BARRAS — BREAKDOWN POR CATEGORIA ── */
+function renderGraficoBarras(lanc, periodo) {
+  const titulo = document.getElementById('chartPanelTitle');
+  if (titulo) titulo.textContent = `Receitas e Despesas por Categoria — ${periodoLabel(periodo)}`;
 
-  const allVals  = [...receitas, ...despesas].filter(Boolean);
-  const yMin     = Math.floor(Math.min(...allVals) * 0.92 / 10) * 10;
-  const yMax     = Math.ceil(Math.max(...allVals)  * 1.05 / 10) * 10;
+  /* Monta datasets: receitas (positivo) e despesas (negativo no mesmo eixo, ou separado) */
+  /* Usamos barras horizontais: receitas em gold, despesas em vermelho */
+  const receitasOrdenadas = [...(lanc.receita || [])].sort((a,b) => b.valor - a.valor);
+  const despesasOrdenadas = [...(lanc.despesa || [])].sort((a,b) => b.valor - a.valor);
 
-  const titulo = _expSource === 'bellevue'
-    ? 'Receitas vs. Despesas — Bellevue'
-    : 'Receitas vs. Despesas — AMALPES';
-  const titleEl = document.getElementById('chartPanelTitle');
-  if (titleEl) titleEl.textContent = titulo;
+  const labelsRec  = receitasOrdenadas.map(r => CAT_LABEL[r.categoria] || r.categoria);
+  const valoresRec = receitasOrdenadas.map(r => r.valor);
+  const labelsDesp = despesasOrdenadas.map(r => CAT_LABEL[r.categoria] || r.categoria);
+  const valoresDesp = despesasOrdenadas.map(r => r.valor);
+  const coloresDesp = despesasOrdenadas.map(r => CAT_COLOR_DESP[r.categoria] || '#52504C');
 
-  if (_chart) {
-    _chart.data.labels                  = labels;
-    _chart.data.datasets[0].data        = receitas;
-    _chart.data.datasets[1].data        = despesas;
-    _chart.options.scales.y.min         = yMin;
-    _chart.options.scales.y.max         = yMax;
-    _chart.update('active');
-    return;
-  }
+  const ctx = document.getElementById('revenueChart');
+  if (!ctx) return;
 
-  const ctx      = document.getElementById('revenueChart').getContext('2d');
-  const gradRec  = ctx.createLinearGradient(0,0,0,280);
-  gradRec.addColorStop(0,'rgba(201,168,76,0.22)'); gradRec.addColorStop(1,'rgba(201,168,76,0)');
-  const gradDesp = ctx.createLinearGradient(0,0,0,280);
-  gradDesp.addColorStop(0,'rgba(224,92,58,0.18)'); gradDesp.addColorStop(1,'rgba(224,92,58,0)');
+  if (_barChart) { _barChart.destroy(); _barChart = null; }
 
   Chart.defaults.font.family = "-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-serif";
   Chart.defaults.color       = '#52504C';
 
-  _chart = new Chart(ctx, {
-    type: 'line',
+  _barChart = new Chart(ctx.getContext('2d'), {
+    type: 'bar',
     data: {
-      labels,
-      datasets: [
-        { label:'Receitas', data:receitas, borderColor:'#C9A84C', backgroundColor:gradRec,  borderWidth:2, pointBackgroundColor:'#C9A84C', pointBorderColor:'#0A0C0F', pointBorderWidth:2, pointRadius:4, pointHoverRadius:6, tension:0.4, fill:true, spanGaps:true },
-        { label:'Despesas', data:despesas, borderColor:'#E05C3A', backgroundColor:gradDesp, borderWidth:2, pointBackgroundColor:'#E05C3A', pointBorderColor:'#0A0C0F', pointBorderWidth:2, pointRadius:4, pointHoverRadius:6, tension:0.4, fill:true, spanGaps:true }
-      ]
+      labels: labelsDesp,
+      datasets: [{
+        label: 'Despesas',
+        data: valoresDesp,
+        backgroundColor: coloresDesp,
+        borderRadius: 4,
+        borderSkipped: false
+      }]
     },
     options: {
-      responsive:true, maintainAspectRatio:false,
-      animation:{ duration:1800, easing:'easeInOutQuart' },
-      interaction:{ mode:'index', intersect:false },
-      plugins:{
-        legend:{ display:false },
-        tooltip:{ backgroundColor:'#16191F', borderColor:'rgba(201,168,76,0.25)', borderWidth:1, titleColor:'#9A9690', bodyColor:'#E8E6E0', padding:12, cornerRadius:6,
-          callbacks:{ label: c => `  ${c.dataset.label}: R$ ${c.parsed.y?.toLocaleString('pt-BR')||'N/D'}k` }
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 900, easing: 'easeInOutQuart' },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#16191F',
+          borderColor: 'rgba(201,168,76,0.25)',
+          borderWidth: 1,
+          titleColor: '#9A9690',
+          bodyColor: '#E8E6E0',
+          padding: 12,
+          cornerRadius: 6,
+          callbacks: {
+            label: c => `  R$ ${brl(c.parsed.x)}`
+          }
         }
       },
-      scales:{
-        x:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{font:{size:10},color:'#52504C'}, border:{display:false} },
-        y:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{font:{family:"'IBM Plex Mono'",size:10},color:'#52504C',callback:v=>`R$ ${v}k`}, border:{display:false}, min:yMin, max:yMax }
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: {
+            font: { family:"'IBM Plex Mono'", size: 9 },
+            color: '#52504C',
+            callback: v => `R$ ${(v/1000).toFixed(0)}k`
+          },
+          border: { display: false }
+        },
+        y: {
+          grid: { display: false },
+          ticks: { font: { size: 11 }, color: '#9A9690' },
+          border: { display: false }
+        }
       }
     }
   });
 }
 
-/* ── TABELA DE DESPESAS (coluna B) ── */
-function renderExpenseTable(lanc, periodo) {
-  // Exibe tag do mês
-  const tagEl = document.getElementById('monthTag');
-  if (tagEl) tagEl.textContent = periodoLabel(periodo);
-
-  const despesas = lanc.despesa || [];
-  if (!despesas.length) {
-    const tbody = document.getElementById('expenseBody');
-    if (tbody) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-faint);padding:24px">Sem dados para este período</td></tr>';
-    return;
-  }
-
-  // Ordena por valor decrescente, pega top 6
+/* ── TABELA DETALHADA (coluna B) ── */
+function renderTabelaCategorias(despesas) {
+  if (!despesas?.length) return;
   const sorted = [...despesas].sort((a,b) => b.valor - a.valor);
-  const maxVal  = sorted[0]?.valor || 1;
-
-  const tbody = document.getElementById('expenseBody');
+  const maxVal = sorted[0].valor;
+  const tbody  = document.getElementById('expenseBody');
   if (!tbody) return;
 
   tbody.innerHTML = sorted.map((r, i) => {
-    const label = CAT_LABEL[r.categoria] || r.categoria;
-    const color = CAT_COLOR[r.categoria] || '#52504C';
-    const pct   = Math.round((r.valor / maxVal) * 100);
-    // Chip: > 90% = vermelho, > 70% = neutro, < 70% = verde
-    const chipCls = pct > 90 ? 'var-up' : pct < 70 ? 'var-down' : 'var-neu';
+    const label  = CAT_LABEL[r.categoria] || r.categoria;
+    const color  = CAT_COLOR_DESP[r.categoria] || '#52504C';
+    const pct    = Math.round((r.valor / maxVal) * 100);
+    const chipCls = pct >= 90 ? 'var-up' : pct < 60 ? 'var-down' : 'var-neu';
     const bStyle  = i === sorted.length - 1 ? 'border-bottom:none' : '';
     return `
-    <tr data-row-idx="${i}">
+    <tr>
       <td style="padding-left:22px;width:38%;${bStyle}">
         <span class="cat-name"><span class="cat-dot" style="background:${color}"></span>${label}</span>
       </td>
@@ -1353,91 +1382,90 @@ function renderExpenseTable(lanc, periodo) {
       </td>
     </tr>`;
   }).join('');
-
-  _epDataset = { expenses: sorted.map(r => ({
-    cat: CAT_LABEL[r.categoria] || r.categoria,
-    color: CAT_COLOR[r.categoria] || '#52504C',
-    val: 'R$ ' + brl(r.valor),
-    bpct: Math.round((r.valor / maxVal) * 100)
-  })) };
 }
-
-/* ── TABELA PRINCIPAL (renderizarTabelaDespesas não usada — mantida para compatibilidade) ── */
-function renderizarTabelaDespesas() {}
 
 /* ── COUNTER ANIMATION ── */
 function formatBRL(v) { return v.toLocaleString('pt-BR', { minimumFractionDigits:0, maximumFractionDigits:0 }); }
 function animateCounter(el) {
-  const target=parseFloat(el.dataset.target||0), decimals=parseInt(el.dataset.decimals)||0;
-  const suffix=el.dataset.suffix||'', isBRL=el.dataset.format==='brl';
-  const start=performance.now();
+  const target   = parseFloat(el.dataset.target || 0);
+  const decimals = parseInt(el.dataset.decimals) || 0;
+  const suffix   = el.dataset.suffix || '';
+  const isBRL    = el.dataset.format === 'brl';
+  const start    = performance.now();
   function step(now) {
-    const p=Math.min((now-start)/1500,1), ease=1-Math.pow(1-p,3), val=ease*target;
-    el.textContent=isBRL?formatBRL(val):val.toFixed(decimals)+suffix;
-    if(p<1) requestAnimationFrame(step);
-    else el.textContent=isBRL?formatBRL(target):target.toFixed(decimals)+suffix;
+    const p = Math.min((now - start) / 1500, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    const val  = ease * target;
+    el.textContent = isBRL ? formatBRL(val) : val.toFixed(decimals) + suffix;
+    if (p < 1) requestAnimationFrame(step);
+    else el.textContent = isBRL ? formatBRL(target) : target.toFixed(decimals) + suffix;
   }
   requestAnimationFrame(step);
 }
 
 const kpiObs = new IntersectionObserver(entries => {
   entries.forEach(e => { if (e.isIntersecting) { e.target.querySelectorAll('.counter').forEach(animateCounter); kpiObs.unobserve(e.target); } });
-}, { threshold:0.3 });
+}, { threshold: 0.3 });
 const kpiStrip = document.querySelector('.kpi-strip');
 if (kpiStrip) kpiObs.observe(kpiStrip);
 
 /* ── REVEAL ── */
 const observer = new IntersectionObserver(entries => {
   entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
-}, { threshold:0.06 });
+}, { threshold: 0.06 });
 document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
 /* ── KPI TOOLTIPS ── */
 const kpiTips = [
-  {title:'Taxa de Inadimplência', text:'Percentual das unidades com cota condominial em atraso há mais de 30 dias em relação ao total de unidades. Meta recomendada: abaixo de 3%.'},
-  {title:'Saldo Conta Corrente',  text:'Saldo disponível na conta corrente do condomínio no Banco Itaú, atualizado via prestação de contas da administradora.'},
-  {title:'Fundo de Reserva',      text:'Reserva financeira acumulada conforme prestação de contas. Meta aprovada em assembleia.'},
-  {title:'Execução Orçamentária', text:'Percentual da receita realizada já consumida em despesas no período corrente.'}
+  { title:'Taxa de Inadimplência', text:'Percentual das unidades com cota condominial em atraso há mais de 30 dias. Meta recomendada: abaixo de 3%.' },
+  { title:'Saldo Conta Corrente',  text:'Saldo disponível na conta corrente do condomínio conforme prestação de contas da administradora.' },
+  { title:'Fundo de Reserva',      text:'Reserva financeira acumulada conforme prestação de contas. Meta aprovada em assembleia.' },
+  { title:'Execução Orçamentária', text:'Percentual da receita realizada já consumida em despesas no período selecionado.' }
 ];
-const tipEl=document.getElementById('kpiTooltip'), tipTitle=document.getElementById('tipTitle'), tipBody=document.getElementById('tipBody');
-function posTip(e){
-  const tw=tipEl.offsetWidth||230, th=tipEl.offsetHeight||80;
-  let x=e.clientX+18, y=e.clientY+18;
-  if(x+tw>window.innerWidth-16) x=e.clientX-tw-14;
-  if(y+th>window.innerHeight-16) y=e.clientY-th-14;
-  tipEl.style.left=x+'px'; tipEl.style.top=y+'px';
+const tipEl = document.getElementById('kpiTooltip');
+const tipTitle = document.getElementById('tipTitle');
+const tipBody  = document.getElementById('tipBody');
+function posTip(e) {
+  const tw = tipEl.offsetWidth || 230, th = tipEl.offsetHeight || 80;
+  let x = e.clientX + 18, y = e.clientY + 18;
+  if (x + tw > window.innerWidth  - 16) x = e.clientX - tw - 14;
+  if (y + th > window.innerHeight - 16) y = e.clientY - th - 14;
+  tipEl.style.left = x + 'px'; tipEl.style.top = y + 'px';
 }
-document.querySelectorAll('.kpi-card').forEach((card,i)=>{
-  const data=kpiTips[i]; if(!data)return;
-  card.addEventListener('mouseenter',e=>{tipTitle.textContent=data.title;tipBody.textContent=data.text;posTip(e);tipEl.classList.add('tip-visible');});
-  card.addEventListener('mousemove',posTip);
-  card.addEventListener('mouseleave',()=>tipEl.classList.remove('tip-visible'));
+document.querySelectorAll('.kpi-card').forEach((card, i) => {
+  const data = kpiTips[i]; if (!data) return;
+  card.addEventListener('mouseenter', e => { tipTitle.textContent = data.title; tipBody.textContent = data.text; posTip(e); tipEl.classList.add('tip-visible'); });
+  card.addEventListener('mousemove', posTip);
+  card.addEventListener('mouseleave', () => tipEl.classList.remove('tip-visible'));
 });
 
-/* ── MODAL ALERTAS (mantém dados hardcoded — alertas ainda não estão no DB) ── */
+/* ── MODAL ALERTAS ── */
 const modalData = [
-  {badgeClass:'crit',badgeText:'Crítico',title:'Contrato de Limpeza 23% Acima do Mercado',
-   sections:[{label:'Descrição do Alerta',text:'O agente de benchmarking detectou que o contrato vigente de <strong>limpeza terceirizada</strong> está 23% acima da média apurada em 47 contratos similares em Ribeirão Preto.'}],
-   kv:[{label:'Valor atual',val:'R$ 10.379/mês'},{label:'Média de mercado',val:'R$ 8.438/mês'},{label:'Diferença mensal',val:'R$ 1.941'},{label:'Impacto anual',val:'R$ 23.292'}],
-   rec:'Solicitar nova cotação com ao menos 3 fornecedores habilitados e encaminhar ao Síndico e à administradora para renegociação.',
-   date:'Detectado: 28 Fev 2025 · Agente: Contract·Scan v1.2'},
-  {badgeClass:'warn',badgeText:'Atenção',title:'Inadimplência Recorrente — Unidade 47',
-   sections:[{label:'Descrição do Alerta',text:'A <strong>Unidade 47</strong> acumula 3 meses consecutivos sem pagamento da cota condominial, configurando inadimplência contumaz conforme o art. 1.336, §1º do Código Civil.'}],
-   kv:[{label:'Valor acumulado',val:'R$ 3.840'},{label:'Período',val:'Dez/24 – Fev/25'},{label:'Multa (2%)',val:'R$ 76,80/mês'},{label:'Juros (1%/mês)',val:'R$ 38,40/mês'}],
-   rec:'Verificar junto à ValleCon se notificação extrajudicial foi emitida.',
-   date:'Detectado: 05 Mar 2025 · Agente: Default·Watch v2.0'},
-  {badgeClass:'info',badgeText:'Informativo',title:'Fundo de Reserva Abaixo da Meta ABNT NBR 5674',
-   sections:[{label:'Descrição do Alerta',text:'O fundo de reserva está abaixo do mínimo recomendado pela <strong>ABNT NBR 5674:2012</strong> para edifícios com mais de 15 anos de vida útil.'}],
-   kv:[{label:'Saldo atual',val:'R$ 236.208'},{label:'Meta ABNT',val:'R$ 300.000'},{label:'Déficit',val:'R$ 63.792'},{label:'Progresso',val:'78,7%'}],
-   rec:'Propor em assembleia aumento gradual do rateio destinado ao Fundo de Reserva.',
-   date:'Detectado: 01 Mar 2025 · Agente: Reserve·Guard v1.5'}
+  { badgeClass:'crit', badgeText:'Crítico', title:'Contrato de Limpeza 23% Acima do Mercado',
+    sections:[{ label:'Descrição do Alerta', text:'O agente detectou que o contrato vigente de <strong>limpeza terceirizada</strong> está 23% acima da média de 47 contratos similares em Ribeirão Preto.' }],
+    kv:[{label:'Valor atual',val:'R$ 10.379/mês'},{label:'Média de mercado',val:'R$ 8.438/mês'},{label:'Diferença mensal',val:'R$ 1.941'},{label:'Impacto anual',val:'R$ 23.292'}],
+    rec:'Solicitar nova cotação com ao menos 3 fornecedores e encaminhar ao Síndico para renegociação.',
+    date:'Detectado: 28 Fev 2025 · Agente: Contract·Scan v1.2' },
+  { badgeClass:'warn', badgeText:'Atenção', title:'Inadimplência Recorrente — Unidade 47',
+    sections:[{ label:'Descrição do Alerta', text:'A <strong>Unidade 47</strong> acumula 3 meses consecutivos sem pagamento, configurando inadimplência contumaz conforme art. 1.336, §1º do Código Civil.' }],
+    kv:[{label:'Valor acumulado',val:'R$ 3.840'},{label:'Período',val:'Dez/24 – Fev/25'},{label:'Multa (2%)',val:'R$ 76,80/mês'},{label:'Juros (1%/mês)',val:'R$ 38,40/mês'}],
+    rec:'Verificar junto à ValleCon se notificação extrajudicial foi emitida.',
+    date:'Detectado: 05 Mar 2025 · Agente: Default·Watch v2.0' },
+  { badgeClass:'info', badgeText:'Informativo', title:'Fundo de Reserva Abaixo da Meta ABNT NBR 5674',
+    sections:[{ label:'Descrição do Alerta', text:'O fundo está abaixo do mínimo recomendado pela <strong>ABNT NBR 5674:2012</strong> para edifícios com mais de 15 anos de vida útil.' }],
+    kv:[{label:'Saldo atual',val:'R$ 236.208'},{label:'Meta ABNT',val:'R$ 300.000'},{label:'Déficit',val:'R$ 63.792'},{label:'Progresso',val:'78,7%'}],
+    rec:'Propor em assembleia aumento gradual do rateio destinado ao Fundo de Reserva.',
+    date:'Detectado: 01 Mar 2025 · Agente: Reserve·Guard v1.5' }
 ];
-const mainModal=document.getElementById('mainModal'), modalBadge=document.getElementById('modalBadge'), modalH2=document.getElementById('modalH'), modalBody2=document.getElementById('modalBody');
-function openModal(index){
-  const d=modalData[index]; if(!d)return;
-  modalBadge.className=`modal-badge ${d.badgeClass}`; modalBadge.textContent=d.badgeText;
-  modalH2.textContent=d.title;
-  modalBody2.innerHTML=`
+const mainModal   = document.getElementById('mainModal');
+const modalBadge  = document.getElementById('modalBadge');
+const modalH2     = document.getElementById('modalH');
+const modalBody2  = document.getElementById('modalBody');
+function openModal(index) {
+  const d = modalData[index]; if (!d) return;
+  modalBadge.className = `modal-badge ${d.badgeClass}`; modalBadge.textContent = d.badgeText;
+  modalH2.textContent  = d.title;
+  modalBody2.innerHTML = `
     ${d.sections.map(s=>`<div class="modal-section"><div class="modal-section-label">${s.label}</div><div class="modal-section-text">${s.text}</div></div>`).join('')}
     <div class="modal-divider"></div>
     <div class="modal-kv">${d.kv.map(k=>`<div class="modal-kv-item"><div class="modal-kv-label">${k.label}</div><div class="modal-kv-val">${k.val}</div></div>`).join('')}</div>
@@ -1446,42 +1474,47 @@ function openModal(index){
     <div style="margin-top:14px;font-family:var(--font-mono);font-size:9px;color:var(--text-faint);letter-spacing:0.06em">${d.date}</div>`;
   mainModal.classList.add('modal-open');
 }
-document.getElementById('modalClose').onclick=()=>mainModal.classList.remove('modal-open');
-document.getElementById('modalBackdrop').onclick=()=>mainModal.classList.remove('modal-open');
-document.addEventListener('keydown',e=>{if(e.key==='Escape')mainModal.classList.remove('modal-open');});
+document.getElementById('modalClose').onclick    = () => mainModal.classList.remove('modal-open');
+document.getElementById('modalBackdrop').onclick = () => mainModal.classList.remove('modal-open');
+document.addEventListener('keydown', e => { if (e.key === 'Escape') mainModal.classList.remove('modal-open'); });
 
-/* ── POPOVER USUÁRIO MOBILE ── */
+/* ── POPOVER USUÁRIO ── */
 function toggleUserPopover() {
-  const pop=document.getElementById('userPopover');
-  pop.classList.toggle('pop-open');
+  document.getElementById('userPopover').classList.toggle('pop-open');
 }
 document.addEventListener('click', e => {
-  const pill=document.querySelector('.user-pill');
-  const pop=document.getElementById('userPopover');
-  if(pop && pill && !pill.contains(e.target)) pop.classList.remove('pop-open');
+  const pill = document.querySelector('.user-pill');
+  const pop  = document.getElementById('userPopover');
+  if (pop && pill && !pill.contains(e.target)) pop.classList.remove('pop-open');
 });
 
 /* ── NOTIFICAÇÕES ── */
-const notifBtn=document.getElementById('notifBtn'), notifPop=document.getElementById('notifPopover');
-notifBtn.addEventListener('click',e=>{
+const notifBtn = document.getElementById('notifBtn');
+const notifPop = document.getElementById('notifPopover');
+notifBtn.addEventListener('click', e => {
   e.stopPropagation();
   notifPop.classList.toggle('pop-open');
-  if(notifPop.classList.contains('pop-open')){
-    const rect=notifBtn.getBoundingClientRect();
-    notifPop.style.top=(rect.bottom+8)+'px';
-    notifPop.style.right=(window.innerWidth-rect.right)+'px';
+  if (notifPop.classList.contains('pop-open')) {
+    const rect = notifBtn.getBoundingClientRect();
+    notifPop.style.top   = (rect.bottom + 8) + 'px';
+    notifPop.style.right = (window.innerWidth - rect.right) + 'px';
   }
 });
-document.addEventListener('click',()=>notifPop.classList.remove('pop-open'));
-notifPop.addEventListener('click',e=>e.stopPropagation());
-document.querySelectorAll('.pop-item[data-modal]').forEach(item=>item.addEventListener('click',()=>openModal(parseInt(item.dataset.modal))));
-notifBtn.addEventListener('click',()=>{const b=notifBtn.querySelector('.notif-badge');b.style.animation='none';b.offsetHeight;b.style.animation='badgePop 0.3s ease';});
-const style=document.createElement('style');
-style.textContent=`@keyframes badgePop{0%{transform:scale(0.8)}60%{transform:scale(1.3)}100%{transform:scale(1)}}`;
-document.head.appendChild(style);
+document.addEventListener('click', () => notifPop.classList.remove('pop-open'));
+notifPop.addEventListener('click', e => e.stopPropagation());
+document.querySelectorAll('.pop-item[data-modal]').forEach(item =>
+  item.addEventListener('click', () => openModal(parseInt(item.dataset.modal)))
+);
+const badgeStyle = document.createElement('style');
+badgeStyle.textContent = `@keyframes badgePop{0%{transform:scale(0.8)}60%{transform:scale(1.3)}100%{transform:scale(1)}}`;
+document.head.appendChild(badgeStyle);
 
 /* ── TOAST ── */
-function showToast(){const t=document.getElementById('dlToast');t.classList.add('toast-show');setTimeout(()=>t.classList.remove('toast-show'),3000);}
+function showToast() {
+  const t = document.getElementById('dlToast');
+  t.classList.add('toast-show');
+  setTimeout(() => t.classList.remove('toast-show'), 3000);
+}
 </script>
 </body>
 </html>
