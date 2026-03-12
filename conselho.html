@@ -1036,30 +1036,339 @@
 
 <script src="js/supabase.js"></script>
 <script>
-/* ── AUTH GUARD ── */
+/* ════════════════════════════════════════════════════════
+   CONDOLYTICS — CONSELHO.HTML
+   Integração completa com Supabase
+   IDs:
+     Bellevue : 88af0e8b-9db8-47e9-b50a-d1b15d99c710
+     AMALPES  : 1b0f0e63-427b-43fd-a4d8-58cf56626f00
+════════════════════════════════════════════════════════ */
+
+const CONDO_IDS = {
+  bellevue: '88af0e8b-9db8-47e9-b50a-d1b15d99c710',
+  amalpes:  '1b0f0e63-427b-43fd-a4d8-58cf56626f00'
+};
+
+/* Mapeamento categoria DB → label legível */
+const CAT_LABEL = {
+  /* receitas */
+  rateio: 'Rateio Condominial', ressarcimentos: 'Ressarcimentos',
+  outras: 'Outras Receitas', financeiras: 'Receitas Financeiras',
+  fundo_reserva: 'Fundo de Reserva', acordos: 'Acordos/Multas',
+  reembolsos: 'Reembolsos',
+  /* despesas */
+  pessoal: 'Pessoal', rh: 'RH / Encargos', terceirizados: 'Terceirizados',
+  encargos: 'Encargos Sociais', administracao: 'Administração',
+  consumo: 'Consumo (Energ/Água)', manutencoes: 'Manutenção Predial',
+  financeiras_d: 'Despesas Financeiras', reembolsaveis: 'Reembolsáveis',
+  impostos: 'Taxa Assoc. AMALPES', investimentos: 'Investimentos',
+  investimentos_imobilizado: 'Invest. Imobilizado', outros: 'Outros'
+};
+
+/* Cor por categoria (despesas) */
+const CAT_COLOR = {
+  pessoal:'#E05C3A', rh:'#E05C3A', terceirizados:'#C9A84C',
+  encargos:'#9B7FD4', administracao:'#4CAF7D', consumo:'#E05C3A',
+  manutencoes:'#5B9BD5', financeiras:'#52504C', reembolsaveis:'#52504C',
+  impostos:'#C9A84C', investimentos:'#4CAF7D',
+  investimentos_imobilizado:'#4CAF7D', outros:'#52504C'
+};
+
+/* Estado global */
+let _dadosDB    = { bellevue: null, amalpes: null }; // { periodos, indicadores, lancamentos }
+let _expSource  = 'bellevue';
+let _periodoIdx = 0; // índice no array de períodos disponíveis
+let _epDataset  = null;
+
+/* ── UTILITÁRIOS ── */
+function brl(v) {
+  if (v == null) return '—';
+  return v.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+function brl2(v) {
+  if (v == null) return '—';
+  return v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function periodoLabel(iso) {
+  // '2025-10-01' → 'Out/2025'
+  const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const [y, m] = iso.split('-');
+  return `${meses[parseInt(m)-1]}/${y}`;
+}
+
+/* ── CARGA DE DADOS ── */
+async function carregarDados(condoKey) {
+  if (_dadosDB[condoKey]) return _dadosDB[condoKey]; // cache
+
+  const condoId = CONDO_IDS[condoKey];
+
+  const [indRes, lancRes] = await Promise.all([
+    db.from('indicadores_financeiros')
+      .select('periodo,receita_realizada,despesa_realizada,inadimplencia_pct,fundo_reserva,saldo_conta')
+      .eq('condominio_id', condoId)
+      .order('periodo', { ascending: true }),
+    db.from('lancamentos_categoria')
+      .select('periodo,tipo,categoria,valor')
+      .eq('condominio_id', condoId)
+      .order('periodo', { ascending: true })
+  ]);
+
+  const indicadores = indRes.data || [];
+  const lancamentos = lancRes.data || [];
+
+  // Agrupar lançamentos por período
+  const lancPorPeriodo = {};
+  for (const l of lancamentos) {
+    if (!lancPorPeriodo[l.periodo]) lancPorPeriodo[l.periodo] = { receita: [], despesa: [] };
+    lancPorPeriodo[l.periodo][l.tipo].push({ categoria: l.categoria, valor: l.valor });
+  }
+
+  const periodos = indicadores.map(i => i.periodo);
+
+  _dadosDB[condoKey] = { periodos, indicadores, lancPorPeriodo };
+  return _dadosDB[condoKey];
+}
+
+/* ── AUTH GUARD + INIT ── */
 window.addEventListener('load', async () => {
   const usuario = await protegerPagina(['conselho', 'admin']);
   if (!usuario) return;
-  const nome = usuario.nome_completo || 'Síndico';
+
+  const nome = usuario.nome_completo || 'Conselheiro';
   document.getElementById('userName').textContent   = nome;
   document.getElementById('userAvatar').textContent = nome[0].toUpperCase();
   document.getElementById('respNome').textContent   = nome;
-  // Popover mobile
   document.getElementById('upopName').textContent   = nome;
   const perfilLabel = { conselho: 'Conselho Fiscal', sindico: 'Síndico', admin: 'Administrador' };
   document.getElementById('upopPerfil').textContent = perfilLabel[usuario.perfil] || 'Conselho Fiscal';
+
+  // Carregar dados e inicializar dashboard
+  await inicializarDashboard();
 });
 
-/* ── REVEAL ── */
-const observer = new IntersectionObserver(entries => {
-  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
-}, { threshold: 0.06 });
-document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+async function inicializarDashboard() {
+  // Carrega ambos em paralelo para ter cache pronto
+  await Promise.all([carregarDados('bellevue'), carregarDados('amalpes')]);
 
-/* ── COUNTER ── */
+  // Inicializa com Bellevue, mês mais recente
+  _expSource  = 'bellevue';
+  const dados = _dadosDB['bellevue'];
+  _periodoIdx = dados.periodos.length - 1;
+
+  construirTabs();
+  await renderizarTudo();
+}
+
+/* ── TABS DE MÊS (dinâmicas) ── */
+function construirTabs() {
+  const dados   = _dadosDB[_expSource];
+  const tabsEl  = document.querySelector('.m-tabs');
+  if (!tabsEl) return;
+  tabsEl.innerHTML = dados.periodos.map((p, i) => {
+    const ativo = i === _periodoIdx ? 'm-active' : '';
+    return `<button class="m-tab ${ativo}" onclick="trocarPeriodo(${i})">${periodoLabel(p)}</button>`;
+  }).join('');
+}
+
+async function trocarPeriodo(idx) {
+  _periodoIdx = idx;
+  construirTabs();
+  await renderizarTudo();
+}
+
+/* ── SWITCH CONDOMÍNIO (Bellevue / AMALPES) ── */
+async function switchChartSource(src) {
+  _expSource  = src;
+  document.getElementById('ctBellevue').classList.toggle('ct-active', src === 'bellevue');
+  document.getElementById('ctAmalpes').classList.toggle('ct-active',  src === 'amalpes');
+
+  const dados = _dadosDB[src];
+  // Mantém posição relativa: vai para o último período disponível
+  _periodoIdx = dados.periodos.length - 1;
+
+  construirTabs();
+  await renderizarTudo();
+}
+
+async function switchExpSource(src) {
+  await switchChartSource(src);
+  document.getElementById('dtBellevue').classList.toggle('ct-active', src === 'bellevue');
+  document.getElementById('dtAmalpes').classList.toggle('ct-active',  src === 'amalpes');
+}
+
+/* ── RENDERIZAÇÃO PRINCIPAL ── */
+async function renderizarTudo() {
+  const dados     = _dadosDB[_expSource];
+  const periodo   = dados.periodos[_periodoIdx];
+  const ind       = dados.indicadores[_periodoIdx];
+  const lanc      = dados.lancPorPeriodo[periodo] || { receita: [], despesa: [] };
+
+  renderKPIs(ind);
+  renderGrafico(dados);
+  renderTabelaDespesas(lanc.despesa, periodo);
+  renderExpenseTable(lanc, periodo); // tabela coluna B (categorias detalhadas)
+}
+
+/* ── KPIs ── */
+function renderKPIs(ind) {
+  if (!ind) return;
+
+  // Inadimplência
+  const inadEl = document.querySelector('.kpi-card:nth-child(1) .counter');
+  if (inadEl) { inadEl.dataset.target = ind.inadimplencia_pct ?? 0; animateCounter(inadEl); }
+  const inadT = document.getElementById('inadDeltaText');
+  if (inadT) inadT.textContent = `${brl2(ind.inadimplencia_pct ?? 0)}% das unidades`;
+
+  // Saldo
+  const saldoEl = document.querySelector('.kpi-card:nth-child(2) .counter');
+  if (saldoEl) { saldoEl.dataset.target = ind.saldo_conta ?? 0; animateCounter(saldoEl); }
+
+  // Fundo de reserva
+  const resEl = document.querySelector('.kpi-card:nth-child(3) .counter');
+  if (resEl) { resEl.dataset.target = ind.fundo_reserva ?? 0; animateCounter(resEl); }
+  // Progress bar fundo (meta: Bellevue 300k, AMALPES 400k)
+  const meta = _expSource === 'bellevue' ? 300000 : 400000;
+  const pct  = Math.min(((ind.fundo_reserva ?? 0) / meta) * 100, 100);
+  const pb   = document.getElementById('reserveProg');
+  if (pb) { pb.style.transition = 'none'; pb.style.width = '0'; pb.offsetHeight; pb.style.transition = 'width 1.2s cubic-bezier(.4,0,.2,1)'; pb.style.width = pct.toFixed(1) + '%'; }
+  const resDelta = document.getElementById('reserveDeltaText');
+  if (resDelta) resDelta.textContent = `${pct.toFixed(1).replace('.',',')}% da meta · R$ ${brl(meta)}`;
+
+  // Execução orçamentária (receita vs despesa)
+  const execPct = ind.receita_realizada > 0
+    ? Math.round((ind.despesa_realizada / ind.receita_realizada) * 100) : 0;
+  const arc = document.getElementById('arcCircle');
+  if (arc) { arc.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)'; arc.style.strokeDashoffset = (138.2 * (1 - execPct / 100)).toFixed(1); }
+  const arcMain = document.getElementById('arcInfoMain');
+  if (arcMain) arcMain.innerHTML = `${execPct}% executado<br>em ${periodoLabel(dados.periodos[_periodoIdx])}`;
+  const arcSub = document.getElementById('arcInfoSub');
+  if (arcSub) arcSub.textContent = `R$ ${brl(ind.despesa_realizada)} / R$ ${brl(ind.receita_realizada)}`;
+}
+
+/* ── GRÁFICO RECEITAS VS DESPESAS ── */
+let _chart = null;
+function renderGrafico(dados) {
+  const labels   = dados.periodos.map(periodoLabel);
+  const receitas = dados.indicadores.map(i => parseFloat((i.receita_realizada / 1000).toFixed(1)));
+  const despesas = dados.indicadores.map(i => parseFloat((i.despesa_realizada / 1000).toFixed(1)));
+
+  const allVals  = [...receitas, ...despesas].filter(Boolean);
+  const yMin     = Math.floor(Math.min(...allVals) * 0.92 / 10) * 10;
+  const yMax     = Math.ceil(Math.max(...allVals)  * 1.05 / 10) * 10;
+
+  const titulo = _expSource === 'bellevue'
+    ? 'Receitas vs. Despesas — Bellevue'
+    : 'Receitas vs. Despesas — AMALPES';
+  const titleEl = document.getElementById('chartPanelTitle');
+  if (titleEl) titleEl.textContent = titulo;
+
+  if (_chart) {
+    _chart.data.labels                  = labels;
+    _chart.data.datasets[0].data        = receitas;
+    _chart.data.datasets[1].data        = despesas;
+    _chart.options.scales.y.min         = yMin;
+    _chart.options.scales.y.max         = yMax;
+    _chart.update('active');
+    return;
+  }
+
+  const ctx      = document.getElementById('revenueChart').getContext('2d');
+  const gradRec  = ctx.createLinearGradient(0,0,0,280);
+  gradRec.addColorStop(0,'rgba(201,168,76,0.22)'); gradRec.addColorStop(1,'rgba(201,168,76,0)');
+  const gradDesp = ctx.createLinearGradient(0,0,0,280);
+  gradDesp.addColorStop(0,'rgba(224,92,58,0.18)'); gradDesp.addColorStop(1,'rgba(224,92,58,0)');
+
+  Chart.defaults.font.family = "-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-serif";
+  Chart.defaults.color       = '#52504C';
+
+  _chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label:'Receitas', data:receitas, borderColor:'#C9A84C', backgroundColor:gradRec,  borderWidth:2, pointBackgroundColor:'#C9A84C', pointBorderColor:'#0A0C0F', pointBorderWidth:2, pointRadius:4, pointHoverRadius:6, tension:0.4, fill:true, spanGaps:true },
+        { label:'Despesas', data:despesas, borderColor:'#E05C3A', backgroundColor:gradDesp, borderWidth:2, pointBackgroundColor:'#E05C3A', pointBorderColor:'#0A0C0F', pointBorderWidth:2, pointRadius:4, pointHoverRadius:6, tension:0.4, fill:true, spanGaps:true }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      animation:{ duration:1800, easing:'easeInOutQuart' },
+      interaction:{ mode:'index', intersect:false },
+      plugins:{
+        legend:{ display:false },
+        tooltip:{ backgroundColor:'#16191F', borderColor:'rgba(201,168,76,0.25)', borderWidth:1, titleColor:'#9A9690', bodyColor:'#E8E6E0', padding:12, cornerRadius:6,
+          callbacks:{ label: c => `  ${c.dataset.label}: R$ ${c.parsed.y?.toLocaleString('pt-BR')||'N/D'}k` }
+        }
+      },
+      scales:{
+        x:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{font:{size:10},color:'#52504C'}, border:{display:false} },
+        y:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{font:{family:"'IBM Plex Mono'",size:10},color:'#52504C',callback:v=>`R$ ${v}k`}, border:{display:false}, min:yMin, max:yMax }
+      }
+    }
+  });
+}
+
+/* ── TABELA DE DESPESAS (coluna B) ── */
+function renderExpenseTable(lanc, periodo) {
+  // Exibe tag do mês
+  const tagEl = document.getElementById('monthTag');
+  if (tagEl) tagEl.textContent = periodoLabel(periodo);
+
+  const despesas = lanc.despesa || [];
+  if (!despesas.length) {
+    const tbody = document.getElementById('expenseBody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-faint);padding:24px">Sem dados para este período</td></tr>';
+    return;
+  }
+
+  // Ordena por valor decrescente, pega top 6
+  const sorted = [...despesas].sort((a,b) => b.valor - a.valor);
+  const maxVal  = sorted[0]?.valor || 1;
+
+  const tbody = document.getElementById('expenseBody');
+  if (!tbody) return;
+
+  tbody.innerHTML = sorted.map((r, i) => {
+    const label = CAT_LABEL[r.categoria] || r.categoria;
+    const color = CAT_COLOR[r.categoria] || '#52504C';
+    const pct   = Math.round((r.valor / maxVal) * 100);
+    // Chip: > 90% = vermelho, > 70% = neutro, < 70% = verde
+    const chipCls = pct > 90 ? 'var-up' : pct < 70 ? 'var-down' : 'var-neu';
+    const bStyle  = i === sorted.length - 1 ? 'border-bottom:none' : '';
+    return `
+    <tr data-row-idx="${i}">
+      <td style="padding-left:22px;width:38%;${bStyle}">
+        <span class="cat-name"><span class="cat-dot" style="background:${color}"></span>${label}</span>
+      </td>
+      <td style="text-align:right;font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--text);${bStyle}">
+        R$ ${brl(r.valor)}
+      </td>
+      <td style="text-align:right;${bStyle}">
+        <span class="var-chip ${chipCls}">${pct}%</span>
+      </td>
+      <td style="padding-right:22px;width:220px;${bStyle}">
+        <div class="budget-mini-bg" style="height:4px;margin-top:0">
+          <div class="budget-mini-fill" style="width:${pct}%;background:${color};height:4px"></div>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  _epDataset = { expenses: sorted.map(r => ({
+    cat: CAT_LABEL[r.categoria] || r.categoria,
+    color: CAT_COLOR[r.categoria] || '#52504C',
+    val: 'R$ ' + brl(r.valor),
+    bpct: Math.round((r.valor / maxVal) * 100)
+  })) };
+}
+
+/* ── TABELA PRINCIPAL (renderizarTabelaDespesas não usada — mantida para compatibilidade) ── */
+function renderizarTabelaDespesas() {}
+
+/* ── COUNTER ANIMATION ── */
 function formatBRL(v) { return v.toLocaleString('pt-BR', { minimumFractionDigits:0, maximumFractionDigits:0 }); }
 function animateCounter(el) {
-  const target=parseFloat(el.dataset.target), decimals=parseInt(el.dataset.decimals)||0;
+  const target=parseFloat(el.dataset.target||0), decimals=parseInt(el.dataset.decimals)||0;
   const suffix=el.dataset.suffix||'', isBRL=el.dataset.format==='brl';
   const start=performance.now();
   function step(now) {
@@ -1070,318 +1379,33 @@ function animateCounter(el) {
   }
   requestAnimationFrame(step);
 }
+
 const kpiObs = new IntersectionObserver(entries => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      e.target.querySelectorAll('.counter').forEach(animateCounter);
-      const pb=document.getElementById('reserveProg');
-      if(pb) pb.style.width='76.2%';
-      setTimeout(()=>{
-        const arc=document.getElementById('arcCircle');
-        if(arc){arc.style.transition='stroke-dashoffset 1.5s cubic-bezier(.4,0,.2,1)';arc.style.strokeDashoffset=138.2*(1-0.81);}
-      },200);
-      kpiObs.unobserve(e.target);
-    }
-  });
-},{ threshold:0.3 });
-const kpiStrip=document.querySelector('.kpi-strip');
-if(kpiStrip) kpiObs.observe(kpiStrip);
+  entries.forEach(e => { if (e.isIntersecting) { e.target.querySelectorAll('.counter').forEach(animateCounter); kpiObs.unobserve(e.target); } });
+}, { threshold:0.3 });
+const kpiStrip = document.querySelector('.kpi-strip');
+if (kpiStrip) kpiObs.observe(kpiStrip);
 
-/* ── CHART.JS ── */
-const ctx = document.getElementById('revenueChart').getContext('2d');
-const gradRec=ctx.createLinearGradient(0,0,0,280); gradRec.addColorStop(0,'rgba(201,168,76,0.22)'); gradRec.addColorStop(1,'rgba(201,168,76,0)');
-const gradDesp=ctx.createLinearGradient(0,0,0,280); gradDesp.addColorStop(0,'rgba(224,92,58,0.18)'); gradDesp.addColorStop(1,'rgba(224,92,58,0)');
-Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',sans-serif";
-Chart.defaults.color='#52504C';
-
-const chartSources = {
-  bellevue:{ title:'Receitas vs. Despesas — Bellevue', receitas:[124.6,135.8,131.4,125.3,118.7,142.4,147.8], despesas:[125.0,131.6,108.8,123.5,115.0,114.7,121.5], yMin:90, yMax:165 },
-  amalpes: { title:'Receitas vs. Despesas — AMALPES',  receitas:[185.3,null,183.7,183.7,null,184.2,184.7],  despesas:[158.5,null,176.7,164.1,null,176.8,164.9],  yMin:140, yMax:205 }
-};
-
-const revenueChart = new Chart(ctx, {
-  type:'line',
-  data:{ labels:['Jul','Ago','Set','Out','Nov','Dez','Jan'], datasets:[
-    {label:'Receitas',data:chartSources.bellevue.receitas,borderColor:'#C9A84C',backgroundColor:gradRec,borderWidth:2,pointBackgroundColor:'#C9A84C',pointBorderColor:'#0A0C0F',pointBorderWidth:2,pointRadius:4,pointHoverRadius:6,tension:0.4,fill:true,spanGaps:true},
-    {label:'Despesas',data:chartSources.bellevue.despesas,borderColor:'#E05C3A',backgroundColor:gradDesp,borderWidth:2,pointBackgroundColor:'#E05C3A',pointBorderColor:'#0A0C0F',pointBorderWidth:2,pointRadius:4,pointHoverRadius:6,tension:0.4,fill:true,spanGaps:true}
-  ]},
-  options:{
-    responsive:true,maintainAspectRatio:false,
-    animation:{duration:1800,easing:'easeInOutQuart'},
-    interaction:{mode:'index',intersect:false},
-    plugins:{
-      legend:{display:false},
-      tooltip:{backgroundColor:'#16191F',borderColor:'rgba(201,168,76,0.25)',borderWidth:1,titleColor:'#9A9690',bodyColor:'#E8E6E0',padding:12,cornerRadius:6,
-        callbacks:{label:c=>`  ${c.dataset.label}: R$ ${c.parsed.y?.toLocaleString('pt-BR')||'N/D'}k`}}
-    },
-    scales:{
-      x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{font:{size:10},color:'#52504C'},border:{display:false}},
-      y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{font:{family:"'IBM Plex Mono'",size:10},color:'#52504C',callback:v=>`R$ ${v}k`},border:{display:false},min:90,max:160}
-    }
-  }
-});
-
-function switchChartSource(src) {
-  const d=chartSources[src];
-  document.getElementById('ctBellevue').classList.toggle('ct-active',src==='bellevue');
-  document.getElementById('ctAmalpes').classList.toggle('ct-active', src==='amalpes');
-  revenueChart.data.datasets[0].data=d.receitas;
-  revenueChart.data.datasets[1].data=d.despesas;
-  revenueChart.options.scales.y.min=d.yMin;
-  revenueChart.options.scales.y.max=d.yMax;
-  document.getElementById('chartPanelTitle').textContent=d.title;
-  revenueChart.update('active');
-}
-
-/* ── EXPENSE TABLE (Coluna B) — dados por mês ── */
-const monthDataSet = [
-  { tag:'Jul/2025', expenses:[
-    {cat:'Taxa Assoc. AMALPES',color:'#C9A84C',val:'R$ 67.202',bpct:100,bcol:'var(--gold)',bw:'100%'},
-    {cat:'Manutenções Gerais', color:'#5B9BD5',val:'R$ 17.000',bpct:85, bcol:'var(--blue)', bw:'85%'},
-    {cat:'Consumo (Energ/Água)',color:'#E05C3A',val:'R$ 9.000', bpct:90, bcol:'var(--gold)',bw:'90%'},
-    {cat:'Administração',      color:'#4CAF7D',val:'R$ 9.880', bpct:100,bcol:'var(--green)',bw:'100%'},
-    {cat:'Outros Serviços',    color:'#9B7FD4',val:'R$ 18.837',bpct:188,bcol:'var(--red)',  bw:'100%'}
-  ]},
-  { tag:'Ago/2025', expenses:[
-    {cat:'Taxa Assoc. AMALPES',color:'#C9A84C',val:'R$ 67.202',bpct:100,bcol:'var(--gold)',bw:'100%'},
-    {cat:'Manutenções Gerais', color:'#5B9BD5',val:'R$ 16.000',bpct:80, bcol:'var(--blue)', bw:'80%'},
-    {cat:'Consumo (Energ/Água)',color:'#E05C3A',val:'R$ 10.500',bpct:105,bcol:'var(--red)', bw:'100%'},
-    {cat:'Administração',      color:'#4CAF7D',val:'R$ 9.880', bpct:100,bcol:'var(--green)',bw:'100%'},
-    {cat:'Outros Serviços',    color:'#9B7FD4',val:'R$ 3.200', bpct:32, bcol:'var(--green)',bw:'32%'}
-  ]},
-  { tag:'Set/2025', expenses:[
-    {cat:'Taxa Assoc. AMALPES',color:'#C9A84C',val:'R$ 67.202',bpct:100,bcol:'var(--gold)',bw:'100%'},
-    {cat:'Consumo (Energ/Água)',color:'#E05C3A',val:'R$ 8.900', bpct:89, bcol:'var(--gold)',bw:'89%'},
-    {cat:'Manutenções Gerais', color:'#5B9BD5',val:'R$ 7.900', bpct:40, bcol:'var(--green)',bw:'40%'},
-    {cat:'Administração',      color:'#4CAF7D',val:'R$ 6.833', bpct:69, bcol:'var(--green)',bw:'69%'},
-    {cat:'Outros Serviços',    color:'#9B7FD4',val:'R$ 3.100', bpct:31, bcol:'var(--green)',bw:'31%'}
-  ]},
-  { tag:'Out/2025', expenses:[
-    {cat:'Taxa Assoc. AMALPES',color:'#C9A84C',val:'R$ 67.202',bpct:100,bcol:'var(--gold)',bw:'100%'},
-    {cat:'Consumo (Energ/Água)',color:'#E05C3A',val:'R$ 12.100',bpct:121,bcol:'var(--red)', bw:'100%'},
-    {cat:'Manutenções Gerais', color:'#5B9BD5',val:'R$ 11.000',bpct:55, bcol:'var(--blue)', bw:'55%'},
-    {cat:'Administração',      color:'#4CAF7D',val:'R$ 9.880', bpct:100,bcol:'var(--green)',bw:'100%'},
-    {cat:'Outros Serviços',    color:'#9B7FD4',val:'R$ 5.200', bpct:52, bcol:'var(--green)',bw:'52%'}
-  ]},
-  { tag:'Nov/2025', expenses:[
-    {cat:'Taxa Assoc. AMALPES',color:'#C9A84C',val:'R$ 67.202',bpct:100,bcol:'var(--gold)',bw:'100%'},
-    {cat:'Consumo (Energ/Água)',color:'#E05C3A',val:'R$ 13.800',bpct:138,bcol:'var(--red)', bw:'100%'},
-    {cat:'Manutenções Gerais', color:'#5B9BD5',val:'R$ 10.500',bpct:53, bcol:'var(--blue)', bw:'53%'},
-    {cat:'Administração',      color:'#4CAF7D',val:'R$ 9.880', bpct:100,bcol:'var(--green)',bw:'100%'},
-    {cat:'Outros Serviços',    color:'#9B7FD4',val:'R$ 2.800', bpct:28, bcol:'var(--green)',bw:'28%'}
-  ]},
-  { tag:'Dez/2025', expenses:[
-    {cat:'Taxa Assoc. AMALPES',color:'#C9A84C',val:'R$ 67.202',bpct:100,bcol:'var(--gold)',bw:'100%'},
-    {cat:'Manutenções Gerais', color:'#5B9BD5',val:'R$ 23.158',bpct:136,bcol:'var(--red)',  bw:'100%'},
-    {cat:'Consumo (Energ/Água)',color:'#E05C3A',val:'R$ 15.117',bpct:151,bcol:'var(--red)',  bw:'100%'},
-    {cat:'Administração',      color:'#4CAF7D',val:'R$ 7.198', bpct:100,bcol:'var(--green)',bw:'100%'},
-    {cat:'Outros Serviços',    color:'#9B7FD4',val:'R$ 2.032', bpct:20, bcol:'var(--green)',bw:'20%'}
-  ]},
-  { tag:'Jan/2026', expenses:[
-    {cat:'Utilidades (Energ/Água)',color:'#5B9BD5',val:'R$ 23.783',bpct:78, bcol:'var(--blue)', bw:'78%',
-      bdHeader:'Utilidades · Jan/2026',bdSource:'Prestação de Contas Bellevue',
-      breakdown:[{item:'Energia Elétrica (CPFL)',val:'R$ 15.810',pct:66.5},{item:'Água e Esgoto (DAERP)',val:'R$ 7.963',pct:33.5}]},
-    {cat:'Limpeza e Conservação',  color:'#E05C3A',val:'R$ 10.379',bpct:91, bcol:'var(--red)',   bw:'91%',
-      bdHeader:'Limpeza · Jan/2026',bdSource:'Prestação de Contas Bellevue',
-      breakdown:[{item:'Limpeza Terceirizada',val:'R$ 10.379',pct:100}]},
-    {cat:'Administração',          color:'#4CAF7D',val:'R$ 6.833', bpct:69, bcol:'var(--green)', bw:'69%',
-      bdHeader:'Administração · Jan/2026',bdSource:'Prestação de Contas Bellevue',
-      breakdown:[{item:'Serv. Administrativos (Vallecon)',val:'R$ 4.554',pct:66.6},{item:'Remuneração Síndico (ACA)',val:'R$ 2.279',pct:33.4}]},
-    {cat:'Manutenção Predial',     color:'#C9A84C',val:'R$ 4.985', bpct:55, bcol:'var(--gold)',  bw:'55%',
-      bdHeader:'Manutenção · Jan/2026',bdSource:'Prestação de Contas Bellevue',
-      breakdown:[{item:'Elevadores',val:'R$ 2.800',pct:56.2},{item:'Áreas comuns',val:'R$ 2.185',pct:43.8}]},
-    {cat:'Outros Serviços',        color:'#9B7FD4',val:'R$ 2.471', bpct:30, bcol:'var(--green)', bw:'30%',
-      bdHeader:'Outros Serviços · Jan/2026',bdSource:'Prestação de Contas Bellevue',
-      breakdown:[{item:'Investimentos',val:'R$ 1.640',pct:66.4},{item:'Encargos e Impostos',val:'R$ 318',pct:12.9},{item:'Outras despesas',val:'R$ 513',pct:20.7}]}
-  ]}
-];
-
-
-/* ── AMALPES expense data por mês ── */
-const monthDataSetAmalpes = [
-  { tag:'Jul/2025', expenses:[
-    {cat:'Segurança Patrimonial', color:'#C9A84C',val:'R$ 38.400',bpct:100,bcol:'var(--gold)',bw:'100%'},
-    {cat:'Limpeza e Conservação', color:'#5B9BD5',val:'R$ 22.100',bpct:92, bcol:'var(--blue)', bw:'92%'},
-    {cat:'Consumo (Energ/Água)',  color:'#E05C3A',val:'R$ 18.300',bpct:88, bcol:'var(--gold)',bw:'88%'},
-    {cat:'Administração',        color:'#4CAF7D',val:'R$ 14.200',bpct:100,bcol:'var(--green)',bw:'100%'},
-    {cat:'Manutenção Predial',   color:'#9B7FD4',val:'R$ 9.800', bpct:65, bcol:'var(--green)',bw:'65%'}
-  ]},
-  { tag:'Ago/2025', expenses:[
-    {cat:'Segurança Patrimonial', color:'#C9A84C',val:'R$ 38.400',bpct:100,bcol:'var(--gold)',bw:'100%'},
-    {cat:'Limpeza e Conservação', color:'#5B9BD5',val:'R$ 21.800',bpct:91, bcol:'var(--blue)', bw:'91%'},
-    {cat:'Consumo (Energ/Água)',  color:'#E05C3A',val:'R$ 19.100',bpct:92, bcol:'var(--gold)',bw:'92%'},
-    {cat:'Administração',        color:'#4CAF7D',val:'R$ 14.200',bpct:100,bcol:'var(--green)',bw:'100%'},
-    {cat:'Manutenção Predial',   color:'#9B7FD4',val:'R$ 7.200', bpct:48, bcol:'var(--green)',bw:'48%'}
-  ]},
-  { tag:'Set/2025', expenses:[
-    {cat:'Segurança Patrimonial', color:'#C9A84C',val:'R$ 38.400',bpct:100,bcol:'var(--gold)',bw:'100%'},
-    {cat:'Consumo (Energ/Água)',  color:'#E05C3A',val:'R$ 17.200',bpct:83, bcol:'var(--gold)',bw:'83%'},
-    {cat:'Limpeza e Conservação', color:'#5B9BD5',val:'R$ 16.900',bpct:70, bcol:'var(--blue)', bw:'70%'},
-    {cat:'Administração',        color:'#4CAF7D',val:'R$ 14.200',bpct:100,bcol:'var(--green)',bw:'100%'},
-    {cat:'Manutenção Predial',   color:'#9B7FD4',val:'R$ 11.400',bpct:76, bcol:'var(--green)',bw:'76%'}
-  ]},
-  { tag:'Out/2025', expenses:[
-    {cat:'Segurança Patrimonial', color:'#C9A84C',val:'R$ 38.400',bpct:100,bcol:'var(--gold)',bw:'100%'},
-    {cat:'Consumo (Energ/Água)',  color:'#E05C3A',val:'R$ 20.500',bpct:99, bcol:'var(--gold)',bw:'99%'},
-    {cat:'Limpeza e Conservação', color:'#5B9BD5',val:'R$ 19.300',bpct:80, bcol:'var(--blue)', bw:'80%'},
-    {cat:'Administração',        color:'#4CAF7D',val:'R$ 14.200',bpct:100,bcol:'var(--green)',bw:'100%'},
-    {cat:'Manutenção Predial',   color:'#9B7FD4',val:'R$ 13.100',bpct:87, bcol:'var(--green)',bw:'87%'}
-  ]},
-  { tag:'Nov/2025', expenses:[
-    {cat:'Segurança Patrimonial', color:'#C9A84C',val:'R$ 38.400',bpct:100,bcol:'var(--gold)',bw:'100%'},
-    {cat:'Consumo (Energ/Água)',  color:'#E05C3A',val:'R$ 22.800',bpct:110,bcol:'var(--red)',  bw:'100%'},
-    {cat:'Limpeza e Conservação', color:'#5B9BD5',val:'R$ 20.100',bpct:84, bcol:'var(--blue)', bw:'84%'},
-    {cat:'Administração',        color:'#4CAF7D',val:'R$ 14.200',bpct:100,bcol:'var(--green)',bw:'100%'},
-    {cat:'Manutenção Predial',   color:'#9B7FD4',val:'R$ 8.700', bpct:58, bcol:'var(--green)',bw:'58%'}
-  ]},
-  { tag:'Dez/2025', expenses:[
-    {cat:'Segurança Patrimonial', color:'#C9A84C',val:'R$ 38.400',bpct:100,bcol:'var(--gold)',bw:'100%'},
-    {cat:'Consumo (Energ/Água)',  color:'#E05C3A',val:'R$ 24.300',bpct:117,bcol:'var(--red)',  bw:'100%'},
-    {cat:'Limpeza e Conservação', color:'#5B9BD5',val:'R$ 21.500',bpct:90, bcol:'var(--blue)', bw:'90%'},
-    {cat:'Administração',        color:'#4CAF7D',val:'R$ 14.200',bpct:100,bcol:'var(--green)',bw:'100%'},
-    {cat:'Manutenção Predial',   color:'#9B7FD4',val:'R$ 16.200',bpct:108,bcol:'var(--red)',  bw:'100%'}
-  ]},
-  { tag:'Jan/2026', expenses:[
-    {cat:'Segurança Patrimonial', color:'#C9A84C',val:'R$ 38.400',bpct:100,bcol:'var(--gold)',bw:'100%'},
-    {cat:'Consumo (Energ/Água)',  color:'#E05C3A',val:'R$ 21.900',bpct:105,bcol:'var(--red)',  bw:'100%'},
-    {cat:'Limpeza e Conservação', color:'#5B9BD5',val:'R$ 18.700',bpct:78, bcol:'var(--blue)', bw:'78%'},
-    {cat:'Administração',        color:'#4CAF7D',val:'R$ 14.200',bpct:100,bcol:'var(--green)',bw:'100%'},
-    {cat:'Manutenção Predial',   color:'#9B7FD4',val:'R$ 10.400',bpct:69, bcol:'var(--green)',bw:'69%'}
-  ]}
-];
-
-let _expSource = 'bellevue';
-function switchExpSource(src) {
-  _expSource = src;
-  document.getElementById('dtBellevue').classList.toggle('ct-active', src === 'bellevue');
-  document.getElementById('dtAmalpes').classList.toggle('ct-active',  src === 'amalpes');
-  const currentMonth = [...document.querySelectorAll('.m-tab')].findIndex(t => t.classList.contains('m-active'));
-  renderExpenseTable(currentMonth >= 0 ? currentMonth : 6);
-}
-
-function renderExpenseTable(monthIdx) {
-  const d = (_expSource === 'amalpes' ? monthDataSetAmalpes : monthDataSet)[monthIdx];
-  document.getElementById('monthTag').textContent = d.tag;
-  const tbody = document.getElementById('expenseBody');
-  const last = d.expenses.length - 1;
-  tbody.innerHTML = d.expenses.map((r,i) => {
-    const isLast = i === last;
-    const bdStyle = isLast ? 'border-bottom:none' : '';
-    return `
-    <tr data-row-idx="${i}">
-      <td style="padding-left:22px;width:38%;${bdStyle}">
-        <span class="cat-name"><span class="cat-dot" style="background:${r.color}"></span>${r.cat}</span>
-      </td>
-      <td style="text-align:right;font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--text);${bdStyle}">
-        ${r.val}
-      </td>
-      <td style="text-align:right;${bdStyle}">
-        <span class="var-chip ${r.bpct>110?'var-up':r.bpct<90?'var-down':'var-neu'}">${r.bpct}%</span>
-      </td>
-      <td style="padding-right:22px;width:220px;${bdStyle}">
-        <div class="budget-mini-bg" style="height:4px;margin-top:0">
-          <div class="budget-mini-fill" style="width:${Math.min(r.bpct,100)}%;background:${r.bcol};height:4px"></div>
-        </div>
-      </td>
-    </tr>`;
-  }).join('');
-  _epDataset = d;
-  attachExpensePopover();
-}
-
-/* ── EXPENSE POPOVER ── */
-let _epDataset = null;
-const expPop=document.getElementById('expPopover');
-const epTitleEl=document.getElementById('epTitle'),epSrcEl=document.getElementById('epSource'),epBodyEl=document.getElementById('epBody');
-
-function showExpPopover(rowEl,idx){
-  if(!_epDataset||!expPop)return;
-  const r=_epDataset.expenses[idx]; if(!r||!r.breakdown)return;
-  clearTimeout(window._epHideTimer);
-  epTitleEl.textContent=r.bdHeader||r.cat; epSrcEl.textContent=r.bdSource||'';
-  const maxP=Math.max(...r.breakdown.map(x=>x.pct),1);
-  epBodyEl.innerHTML=r.breakdown.map(item=>{
-    const bw=Math.max(4,Math.round((item.pct/maxP)*100));
-    return `<div class="ep-item"><div class="ep-item-label">${item.item}</div><div class="ep-bar-wrap"><div class="ep-bar-fill" style="width:${bw}%"></div></div><div class="ep-item-val">${item.val}</div></div>`;
-  }).join('');
-  const rect=rowEl.getBoundingClientRect(),tRect=rowEl.closest('table').getBoundingClientRect(),popW=310;
-  let left=tRect.right+12; if(left+popW>window.innerWidth-8)left=tRect.left-popW-12; if(left<8)left=Math.max(8,rect.left+rect.width/2-popW/2);
-  expPop.style.left=left+'px'; expPop.style.top='-9999px'; expPop.classList.add('ep-visible');
-  const popH=expPop.offsetHeight;
-  let top=rect.top+rect.height/2-popH/2; top=Math.max(8,Math.min(top,window.innerHeight-popH-8));
-  expPop.style.top=top+'px';
-}
-function hideExpPopover(){window._epHideTimer=setTimeout(()=>{if(expPop)expPop.classList.remove('ep-visible');},120);}
-function attachExpensePopover(){
-  const tbody=document.getElementById('expenseBody'); if(!tbody)return;
-  tbody.onmouseover=e=>{const tr=e.target.closest('tr[data-row-idx]');if(tr)showExpPopover(tr,parseInt(tr.dataset.rowIdx));else clearTimeout(window._epHideTimer);};
-  tbody.onmouseleave=()=>hideExpPopover();
-  expPop.onmouseenter=()=>clearTimeout(window._epHideTimer);
-  expPop.onmouseleave=()=>hideExpPopover();
-}
-
-/* ── MONTH SWITCHING ── */
-const monthKPI = [
-  {inad:{target:7.0,deltaText:'−8,9 pp vs Jul/2025 · 7 unidades'},saldo:{target:70830},reserva:{target:229000,pct:76.2,meta:'300.000'},orc:{pct:81,main:'81% executado<br>em Jul/2025',sub:'R$ 115.000 / R$ 142.000'},alertas:{count:3,badge:3}},
-  {inad:{target:6.5,deltaText:'−0,5 pp vs Jul/2025 · 6 unidades'},saldo:{target:65000},reserva:{target:235000,pct:78.3,meta:'300.000'},orc:{pct:79,main:'79% executado<br>em Ago/2025',sub:'R$ 112.000 / R$ 142.000'},alertas:{count:3,badge:3}},
-  {inad:{target:7.1,deltaText:'+0,6 pp vs Ago/2025 · 7 unidades'},saldo:{target:58000},reserva:{target:238000,pct:79.3,meta:'300.000'},orc:{pct:77,main:'77% executado<br>em Set/2025',sub:'R$ 109.500 / R$ 142.000'},alertas:{count:2,badge:2}},
-  {inad:{target:6.8,deltaText:'−0,3 pp vs Set/2025 · 6 unidades'},saldo:{target:62000},reserva:{target:240000,pct:80.0,meta:'300.000'},orc:{pct:82,main:'82% executado<br>em Out/2025',sub:'R$ 116.700 / R$ 142.000'},alertas:{count:2,badge:2}},
-  {inad:{target:9.8,deltaText:'+3,0 pp vs Out/2025 · 9 unidades'},saldo:{target:48000},reserva:{target:225000,pct:75.0,meta:'300.000'},orc:{pct:80,main:'80% executado<br>em Nov/2025',sub:'R$ 113.760 / R$ 142.000'},alertas:{count:3,badge:3}},
-  {inad:{target:8.7,deltaText:'−1,1 pp vs Nov/2025 · 8 unidades'},saldo:{target:55000},reserva:{target:226000,pct:75.3,meta:'300.000'},orc:{pct:81,main:'81% executado<br>em Dez/2025',sub:'R$ 114.707 / R$ 122.800'},alertas:{count:3,badge:3}},
-  {inad:{target:7.3,deltaText:'−2,5 pp vs Nov/2025 · 6 unidades'},saldo:{target:52160},reserva:{target:228578,pct:76.2,meta:'300.000'},orc:{pct:99,main:'99% executado<br>em Jan/2026',sub:'R$ 121.512 / R$ 122.800'},alertas:{count:3,badge:3}}
-];
-
-function applyMonth(index) {
-  const d = monthKPI[index];
-  document.querySelectorAll('.m-tab').forEach((t,i) => t.classList.toggle('m-active', i===index));
-
-  const inadC=document.querySelector('.kpi-card:nth-child(1) .counter');
-  if(inadC){inadC.dataset.target=d.inad.target; animateCounter(inadC);}
-  const inadT=document.getElementById('inadDeltaText');
-  if(inadT) inadT.textContent=d.inad.deltaText;
-
-  const saldoC=document.querySelector('.kpi-card:nth-child(2) .counter');
-  if(saldoC){saldoC.dataset.target=d.saldo.target; animateCounter(saldoC);}
-
-  const reservaC=document.querySelector('.kpi-card:nth-child(3) .counter');
-  if(reservaC){reservaC.dataset.target=d.reserva.target; animateCounter(reservaC);}
-  const pb=document.getElementById('reserveProg');
-  if(pb){pb.style.transition='none';pb.style.width='0';pb.offsetHeight;pb.style.transition='width 1.2s cubic-bezier(.4,0,.2,1)';pb.style.width=d.reserva.pct+'%';}
-  const resDelta=document.getElementById('reserveDeltaText');
-  if(resDelta) resDelta.textContent=d.reserva.pct.toFixed(1).replace('.',',')+'% da meta · R$ '+d.reserva.meta;
-
-  const arc=document.getElementById('arcCircle');
-  if(arc){arc.style.transition='stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)';arc.style.strokeDashoffset=(138.2*(1-d.orc.pct/100)).toFixed(1);}
-  const arcSvgText=document.querySelector('#arcCircle ~ defs ~ text, .radial-svg text');
-  if(arcSvgText) arcSvgText.textContent=d.orc.pct+'%';
-  const arcMain=document.getElementById('arcInfoMain'); if(arcMain) arcMain.innerHTML=d.orc.main;
-  const arcSub=document.getElementById('arcInfoSub');   if(arcSub)  arcSub.textContent=d.orc.sub;
-
-  renderExpenseTable(index);
-  // mantém toggle Bellevue/AMALPES visualmente correto ao trocar mês
-  const dtB = document.getElementById('dtBellevue');
-  const dtA = document.getElementById('dtAmalpes');
-  if (dtB) dtB.classList.toggle('ct-active', _expSource === 'bellevue');
-  if (dtA) dtA.classList.toggle('ct-active',  _expSource === 'amalpes');
-}
-
-document.querySelectorAll('.m-tab').forEach((tab,i) => tab.addEventListener('click', () => applyMonth(i)));
-applyMonth(6);
+/* ── REVEAL ── */
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+}, { threshold:0.06 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
 /* ── KPI TOOLTIPS ── */
 const kpiTips = [
   {title:'Taxa de Inadimplência', text:'Percentual das unidades com cota condominial em atraso há mais de 30 dias em relação ao total de unidades. Meta recomendada: abaixo de 3%.'},
-  {title:'Saldo Conta Corrente',  text:'Saldo disponível na conta corrente do condomínio no Banco Itaú, atualizado via Open Finance.'},
-  {title:'Fundo de Reserva',      text:'Reserva financeira acumulada. Meta aprovada em assembleia: R$ 380.000 conforme ABNT NBR 5674.'},
-  {title:'Execução Orçamentária', text:'Percentual do orçamento anual aprovado já executado no período corrente.'}
+  {title:'Saldo Conta Corrente',  text:'Saldo disponível na conta corrente do condomínio no Banco Itaú, atualizado via prestação de contas da administradora.'},
+  {title:'Fundo de Reserva',      text:'Reserva financeira acumulada conforme prestação de contas. Meta aprovada em assembleia.'},
+  {title:'Execução Orçamentária', text:'Percentual da receita realizada já consumida em despesas no período corrente.'}
 ];
-const tipEl=document.getElementById('kpiTooltip'),tipTitle=document.getElementById('tipTitle'),tipBody=document.getElementById('tipBody');
+const tipEl=document.getElementById('kpiTooltip'), tipTitle=document.getElementById('tipTitle'), tipBody=document.getElementById('tipBody');
 function posTip(e){
-  const tw=tipEl.offsetWidth||230,th=tipEl.offsetHeight||80;
-  let x=e.clientX+18,y=e.clientY+18;
+  const tw=tipEl.offsetWidth||230, th=tipEl.offsetHeight||80;
+  let x=e.clientX+18, y=e.clientY+18;
   if(x+tw>window.innerWidth-16) x=e.clientX-tw-14;
-  if(y+th>window.innerHeight-16)y=e.clientY-th-14;
-  tipEl.style.left=x+'px';tipEl.style.top=y+'px';
+  if(y+th>window.innerHeight-16) y=e.clientY-th-14;
+  tipEl.style.left=x+'px'; tipEl.style.top=y+'px';
 }
 document.querySelectorAll('.kpi-card').forEach((card,i)=>{
   const data=kpiTips[i]; if(!data)return;
@@ -1390,27 +1414,25 @@ document.querySelectorAll('.kpi-card').forEach((card,i)=>{
   card.addEventListener('mouseleave',()=>tipEl.classList.remove('tip-visible'));
 });
 
-/* ── MODAL ── */
+/* ── MODAL ALERTAS (mantém dados hardcoded — alertas ainda não estão no DB) ── */
 const modalData = [
   {badgeClass:'crit',badgeText:'Crítico',title:'Contrato de Limpeza 23% Acima do Mercado',
-   sections:[{label:'Descrição do Alerta',text:'O agente de benchmarking detectou que o contrato vigente de <strong>limpeza terceirizada</strong> está 23% acima da média apurada em 47 contratos similares em Ribeirão Preto. A cotação original data de 2022 e não passou por revisão competitiva desde então.'}],
+   sections:[{label:'Descrição do Alerta',text:'O agente de benchmarking detectou que o contrato vigente de <strong>limpeza terceirizada</strong> está 23% acima da média apurada em 47 contratos similares em Ribeirão Preto.'}],
    kv:[{label:'Valor atual',val:'R$ 10.379/mês'},{label:'Média de mercado',val:'R$ 8.438/mês'},{label:'Diferença mensal',val:'R$ 1.941'},{label:'Impacto anual',val:'R$ 23.292'}],
-   rec:'Solicitar nova cotação com ao menos 3 fornecedores habilitados e encaminhar ao Síndico e à administradora para renegociação ou substituição do prestador.',
+   rec:'Solicitar nova cotação com ao menos 3 fornecedores habilitados e encaminhar ao Síndico e à administradora para renegociação.',
    date:'Detectado: 28 Fev 2025 · Agente: Contract·Scan v1.2'},
   {badgeClass:'warn',badgeText:'Atenção',title:'Inadimplência Recorrente — Unidade 47',
-   sections:[{label:'Descrição do Alerta',text:'A <strong>Unidade 47</strong> acumula 3 meses consecutivos sem pagamento da cota condominial, configurando inadimplência contumaz conforme o art. 1.336, §1º do Código Civil. O agente identificou ausência de notificação formal no sistema da administradora ValleCon.'}],
+   sections:[{label:'Descrição do Alerta',text:'A <strong>Unidade 47</strong> acumula 3 meses consecutivos sem pagamento da cota condominial, configurando inadimplência contumaz conforme o art. 1.336, §1º do Código Civil.'}],
    kv:[{label:'Valor acumulado',val:'R$ 3.840'},{label:'Período',val:'Dez/24 – Fev/25'},{label:'Multa (2%)',val:'R$ 76,80/mês'},{label:'Juros (1%/mês)',val:'R$ 38,40/mês'}],
-   rec:'Verificar junto à ValleCon se notificação extrajudicial foi emitida. Caso não haja resposta em 15 dias, encaminhar para assessoria jurídica para início de cobrança judicial.',
+   rec:'Verificar junto à ValleCon se notificação extrajudicial foi emitida.',
    date:'Detectado: 05 Mar 2025 · Agente: Default·Watch v2.0'},
   {badgeClass:'info',badgeText:'Informativo',title:'Fundo de Reserva Abaixo da Meta ABNT NBR 5674',
-   sections:[{label:'Descrição do Alerta',text:'O fundo de reserva está abaixo do mínimo recomendado pela <strong>ABNT NBR 5674:2012</strong> para edifícios com mais de 15 anos de vida útil. A norma orienta reserva equivalente a 5–10% da receita anual.'}],
-   kv:[{label:'Saldo atual',val:'R$ 312.800'},{label:'Meta ABNT',val:'R$ 380.000'},{label:'Déficit',val:'R$ 67.200'},{label:'Progresso',val:'82,3%'}],
-   rec:'Propor em assembleia aumento gradual do rateio destinado ao Fundo de Reserva de R$ 50–100 por unidade/mês pelos próximos 12 meses.',
+   sections:[{label:'Descrição do Alerta',text:'O fundo de reserva está abaixo do mínimo recomendado pela <strong>ABNT NBR 5674:2012</strong> para edifícios com mais de 15 anos de vida útil.'}],
+   kv:[{label:'Saldo atual',val:'R$ 236.208'},{label:'Meta ABNT',val:'R$ 300.000'},{label:'Déficit',val:'R$ 63.792'},{label:'Progresso',val:'78,7%'}],
+   rec:'Propor em assembleia aumento gradual do rateio destinado ao Fundo de Reserva.',
    date:'Detectado: 01 Mar 2025 · Agente: Reserve·Guard v1.5'}
 ];
-
-const mainModal=document.getElementById('mainModal'),modalBadge=document.getElementById('modalBadge'),modalH2=document.getElementById('modalH'),modalBody2=document.getElementById('modalBody');
-
+const mainModal=document.getElementById('mainModal'), modalBadge=document.getElementById('modalBadge'), modalH2=document.getElementById('modalH'), modalBody2=document.getElementById('modalBody');
 function openModal(index){
   const d=modalData[index]; if(!d)return;
   modalBadge.className=`modal-badge ${d.badgeClass}`; modalBadge.textContent=d.badgeText;
@@ -1428,19 +1450,19 @@ document.getElementById('modalClose').onclick=()=>mainModal.classList.remove('mo
 document.getElementById('modalBackdrop').onclick=()=>mainModal.classList.remove('modal-open');
 document.addEventListener('keydown',e=>{if(e.key==='Escape')mainModal.classList.remove('modal-open');});
 
-/* ── NOTIF POPOVER ── */
-/* ── USER POPOVER MOBILE ── */
+/* ── POPOVER USUÁRIO MOBILE ── */
 function toggleUserPopover() {
-  const pop = document.getElementById('userPopover');
+  const pop=document.getElementById('userPopover');
   pop.classList.toggle('pop-open');
 }
 document.addEventListener('click', e => {
-  const pill = document.querySelector('.user-pill');
-  const pop  = document.getElementById('userPopover');
-  if (pop && !pill.contains(e.target)) pop.classList.remove('pop-open');
+  const pill=document.querySelector('.user-pill');
+  const pop=document.getElementById('userPopover');
+  if(pop && pill && !pill.contains(e.target)) pop.classList.remove('pop-open');
 });
 
-const notifBtn=document.getElementById('notifBtn'),notifPop=document.getElementById('notifPopover');
+/* ── NOTIFICAÇÕES ── */
+const notifBtn=document.getElementById('notifBtn'), notifPop=document.getElementById('notifPopover');
 notifBtn.addEventListener('click',e=>{
   e.stopPropagation();
   notifPop.classList.toggle('pop-open');
