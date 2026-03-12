@@ -754,10 +754,7 @@
             <span id="chartPanelTitle">Receitas vs. Despesas — Bellevue</span>
           </div>
           <div style="display:flex;align-items:center;gap:16px">
-            <div style="display:flex;gap:4px">
-              <button id="ctBellevue" class="ct-btn ct-active" onclick="switchChartSource('bellevue')">Bellevue</button>
-              <button id="ctAmalpes"  class="ct-btn"           onclick="switchChartSource('amalpes')">AMALPES</button>
-            </div>
+            <div style="display:flex;gap:4px" id="chartToggleContainer"></div>
             <div style="display:flex;gap:12px">
               <div style="display:flex;align-items:center;gap:5px">
                 <div style="width:16px;height:2px;background:var(--gold);border-radius:1px"></div>
@@ -819,10 +816,7 @@
           Despesas por Categoria
         </div>
         <div style="display:flex;align-items:center;gap:12px">
-          <div style="display:flex;gap:4px">
-            <button id="dtBellevue" class="ct-btn ct-active" onclick="switchExpSource('bellevue')">Bellevue</button>
-            <button id="dtAmalpes"  class="ct-btn"           onclick="switchExpSource('amalpes')">AMALPES</button>
-          </div>
+          <div style="display:flex;gap:4px" id="expToggleContainer"></div>
           <span class="tag tag-gold" id="monthTag">Jan/2026</span>
         </div>
       </div>
@@ -1041,10 +1035,7 @@
    Dados reais do Supabase, por vínculo do usuário logado
 ════════════════════════════════════════════════════════ */
 
-const CONDO_IDS = {
-  bellevue: '88af0e8b-9db8-47e9-b50a-d1b15d99c710',
-  amalpes:  '1b0f0e63-427b-43fd-a4d8-58cf56626f00'
-};
+/* Condomínios carregados dinamicamente do Supabase */
 
 const CAT_LABEL = {
   rateio:'Rateio Condominial', ressarcimentos:'Ressarcimentos',
@@ -1068,10 +1059,10 @@ const CAT_COLOR_DESP = {
 
 /* Estado */
 let _usuario    = null;
-let _condoKeys  = [];
-let _dadosDB    = {};
-let _condoAtual = null;
-let _periodoIdx = 0;   // índice dentro de periodos6 (últimos 6)
+let _condos     = [];    // [{ id, nome }] — carregado do Supabase
+let _dadosDB    = {};    // keyed by UUID do condomínio
+let _condoAtual = null;  // UUID do condomínio ativo
+let _periodoIdx = 0;
 let _lineChart  = null;
 
 /* ── UTILS ── */
@@ -1104,25 +1095,28 @@ window.addEventListener('load', async () => {
 
 /* ── VÍNCULOS DO USUÁRIO ── */
 async function inicializar() {
+  /* Busca todos os condomínios vinculados ao usuário com nome real */
   const { data: vinculos } = await db
     .from('usuario_condominios')
-    .select('condominio_id')
+    .select('condominio_id, condominios(id, nome)')
     .eq('usuario_id', _usuario.id);
 
-  _condoKeys = [];
-  for (const [key, id] of Object.entries(CONDO_IDS)) {
-    if (vinculos?.some(v => v.condominio_id === id)) _condoKeys.push(key);
-  }
-  if (_condoKeys.length === 0 && _usuario.condominio_id) {
-    for (const [key, id] of Object.entries(CONDO_IDS)) {
-      if (_usuario.condominio_id === id) _condoKeys.push(key);
-    }
-  }
-  if (_condoKeys.length === 0) _condoKeys = ['bellevue'];
+  _condos = (vinculos || [])
+    .map(v => ({ id: v.condominio_id, nome: v.condominios?.nome || v.condominio_id }))
+    .filter(c => c.id);
 
-  _condoAtual = _condoKeys[0];
+  /* Fallback: usa condominio_id direto do perfil se não houver vínculo na tabela */
+  if (_condos.length === 0 && _usuario.condominio_id) {
+    _condos = [{ id: _usuario.condominio_id, nome: _usuario.condominio_id }];
+  }
+  if (_condos.length === 0) return;
+
+  /* Respeita o condomínio escolhido na tela de seleção do login */
+  const savedId = localStorage.getItem('condoId');
+  const found   = _condos.find(c => c.id === savedId);
+  _condoAtual   = found ? found.id : _condos[0].id;
+
   configurarToggleCondos();
-
   await carregarDados(_condoAtual);
 
   /* Começa no mês mais recente (último dos 6) */
@@ -1132,23 +1126,24 @@ async function inicializar() {
   renderizarTudo();
 }
 
-/* ── TOGGLE CONDOMÍNIOS ── */
+/* ── TOGGLE CONDOMÍNIOS — criado dinamicamente ── */
 function configurarToggleCondos() {
-  ['bellevue','amalpes'].forEach(key => {
-    const tem = _condoKeys.includes(key);
-    const ativo = _condoAtual === key;
-    ['ct','dt'].forEach(prefix => {
-      const el = document.getElementById(`${prefix}${key.charAt(0).toUpperCase()+key.slice(1)}`);
-      if (el) { el.style.display = tem ? '' : 'none'; el.classList.toggle('ct-active', ativo); }
-    });
+  ['chartToggleContainer', 'expToggleContainer'].forEach(containerId => {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    /* Só mostra os botões se o usuário tiver acesso a mais de um condomínio */
+    if (_condos.length <= 1) { container.innerHTML = ''; return; }
+    container.innerHTML = _condos.map(c =>
+      `<button class="ct-btn ${c.id === _condoAtual ? 'ct-active' : ''}"
+        onclick="switchCondoSource('${c.id}')">${c.nome}</button>`
+    ).join('');
   });
 }
 
 /* ── CARGA SUPABASE ── */
-async function carregarDados(key) {
-  if (_dadosDB[key]) return;
+async function carregarDados(condoId) {
+  if (_dadosDB[condoId]) return;
 
-  const condoId = CONDO_IDS[key];
   const [indRes, lancRes] = await Promise.all([
     db.from('indicadores_financeiros')
       .select('periodo,receita_realizada,despesa_realizada,inadimplencia_pct,fundo_reserva,saldo_conta')
@@ -1174,20 +1169,23 @@ async function carregarDados(key) {
     lancPorPeriodo[l.periodo][l.tipo].push({ categoria: l.categoria, valor: l.valor });
   }
 
-  _dadosDB[key] = { periodos6, indicadores6, lancPorPeriodo };
+  _dadosDB[condoId] = { periodos6, indicadores6, lancPorPeriodo };
 }
 
 /* ── SWITCH CONDOMÍNIO ── */
-async function switchChartSource(key) {
-  if (!_condoKeys.includes(key)) return;
-  _condoAtual = key;
-  await carregarDados(key);
-  _periodoIdx = _dadosDB[key].periodos6.length - 1;
+async function switchCondoSource(condoId) {
+  if (!_condos.find(c => c.id === condoId)) return;
+  _condoAtual = condoId;
+  localStorage.setItem('condoId', condoId); // persiste seleção
+  await carregarDados(condoId);
+  _periodoIdx = _dadosDB[condoId].periodos6.length - 1;
   configurarToggleCondos();
   construirTabs();
   renderizarTudo();
 }
-async function switchExpSource(key) { await switchChartSource(key); }
+/* Aliases mantidos para compatibilidade */
+async function switchChartSource(id) { await switchCondoSource(id); }
+async function switchExpSource(id)   { await switchCondoSource(id); }
 
 /* ── TABS DE MÊS (últimos 6, barra superior) ── */
 function construirTabs() {
@@ -1234,7 +1232,7 @@ function renderKPIs(ind, periodo) {
 
   const resEl = document.querySelector('.kpi-card:nth-child(3) .counter');
   if (resEl) { resEl.dataset.target = ind.fundo_reserva ?? 0; animateCounter(resEl); }
-  const meta = _condoAtual === 'bellevue' ? 300000 : 400000;
+  const meta = 300000; /* TODO: buscar meta do banco (campo a criar em condominios) */
   const pct  = Math.min(((ind.fundo_reserva ?? 0) / meta) * 100, 100);
   const pb   = document.getElementById('reserveProg');
   if (pb) { pb.style.transition='none'; pb.style.width='0'; pb.offsetHeight; pb.style.transition='width 1.2s cubic-bezier(.4,0,.2,1)'; pb.style.width=pct.toFixed(1)+'%'; }
@@ -1260,9 +1258,9 @@ function renderGraficoLinha(dados) {
   const yMin = Math.floor(Math.min(...allVals) * 0.93 / 10) * 10;
   const yMax = Math.ceil( Math.max(...allVals) * 1.05 / 10) * 10;
 
-  const nomesCondo = { bellevue:'Bellevue', amalpes:'AMALPES' };
+  const nomeCondo = _condos.find(c => c.id === _condoAtual)?.nome || _condoAtual;
   const titulo = document.getElementById('chartPanelTitle');
-  if (titulo) titulo.textContent = `Receitas vs. Despesas — ${nomesCondo[_condoAtual]} · últimos 6 meses`;
+  if (titulo) titulo.textContent = `Receitas vs. Despesas — ${nomeCondo} · últimos 6 meses`;
 
   const ctx = document.getElementById('revenueChart');
   if (!ctx) return;
