@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Condolytics — Síndico</title>
+  <title>Condolytics — Conselho</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -614,7 +614,7 @@
 
   <div class="header-center">
     <div class="condo-name">Les Alpes Residence Bellevue</div>
-    <div class="condo-period">Síndico &nbsp;·&nbsp; Gestão 2026/2027 &nbsp;·&nbsp; Condomínio Bellevue - Les Alpes</div>
+    <div class="condo-period">Conselho Fiscal &nbsp;·&nbsp; Gestão 2026/2027 &nbsp;·&nbsp; Condomínio Bellevue - Les Alpes</div>
   </div>
 
   <div class="header-right">
@@ -1192,7 +1192,7 @@ async function switchExpSource(key) { await switchChartSource(key); }
 /* ── TABS DE MÊS (últimos 6, barra superior) ── */
 function construirTabs() {
   const periodos = _dadosDB[_condoAtual].periodos6;
-  const tabsEl   = document.querySelector('.m-tabs');
+  const tabsEl   = document.querySelector('.month-tabs');
   if (!tabsEl) return;
   tabsEl.innerHTML = periodos.map((p, i) =>
     `<button class="m-tab ${i === _periodoIdx ? 'm-active' : ''}" onclick="trocarPeriodo(${i})">${periodoLabel(p)}</button>`
