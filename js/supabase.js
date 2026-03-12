@@ -31,16 +31,21 @@ async function logout() {
   window.location.href = 'index.html';
 }
 
-// Retorna o usuário logado — aguarda o SDK restaurar a sessão antes de verificar
+// Retorna o usuário logado
+// Usa getSession() com retry exponencial para dar tempo ao SDK
+// de restaurar a sessão do localStorage após um redirect
 async function getUsuarioLogado() {
-  // onAuthStateChange é mais confiável que getSession() no carregamento inicial:
-  // dispara com a sessão já restaurada do localStorage, evitando race condition
-  const session = await new Promise(resolve => {
-    const { data: { subscription } } = db.auth.onAuthStateChange((_event, session) => {
-      subscription.unsubscribe();
-      resolve(session);
-    });
-  });
+  let session = null;
+
+  for (let i = 0; i < 5; i++) {
+    const { data } = await db.auth.getSession();
+    if (data?.session?.user) {
+      session = data.session;
+      break;
+    }
+    // Espera crescente: 50ms, 100ms, 200ms, 400ms, 800ms
+    await new Promise(r => setTimeout(r, 50 * Math.pow(2, i)));
+  }
 
   if (!session?.user) return null;
 
@@ -81,7 +86,7 @@ async function protegerPagina(perfisPermitidos = []) {
     window.location.href = 'index.html';
     return null;
   }
-  if (perfisPermitidos.length > 0 && 
+  if (perfisPermitidos.length > 0 &&
       !perfisPermitidos.includes(usuario.perfil)) {
     window.location.href = 'index.html';
     return null;
