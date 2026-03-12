@@ -49,9 +49,11 @@ async function getUsuarioLogado() {
 
   if (!session?.user) return null;
 
+  // CORRIGIDO: removido condominios(*) que causava HTTP 300 (ambiguidade de FK)
+  // O PostgREST não sabia qual caminho usar: usuarios.condominio_id ou usuario_condominios
   const { data, error } = await db
     .from('usuarios')
-    .select('*, condominios(*)')
+    .select('*')
     .eq('id', session.user.id)
     .single();
 
@@ -66,12 +68,14 @@ async function redirecionarPorPerfil() {
     window.location.href = 'index.html';
     return;
   }
+
   const rotas = {
-    admin:     'admin.html',
-    sindico:   'sindico.html',
-    conselho:  'conselho.html',
+    admin: 'admin.html',
+    sindico: 'sindico.html',
+    conselho: 'conselho.html',
     condomino: 'condomino.html'
   };
+
   const destino = rotas[usuario.perfil];
   if (destino && !window.location.href.includes(destino)) {
     window.location.href = destino;
@@ -86,10 +90,12 @@ async function protegerPagina(perfisPermitidos = []) {
     window.location.href = 'index.html';
     return null;
   }
+
   if (perfisPermitidos.length > 0 &&
       !perfisPermitidos.includes(usuario.perfil)) {
     window.location.href = 'index.html';
     return null;
   }
+
   return usuario;
 }
