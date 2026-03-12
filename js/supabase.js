@@ -31,15 +31,18 @@ async function logout() {
   window.location.href = 'index.html';
 }
 
-// Retorna o usuário logado
+// Retorna o usuário logado — aguarda o SDK restaurar a sessão antes de verificar
 async function getUsuarioLogado() {
-  console.log('[Condolytics] getUsuarioLogado chamado');
-  const { data: { session }, error: sessErr } = await db.auth.getSession();
-  console.log('[Condolytics] session:', session, 'erro:', sessErr);
-  if (!session?.user) {
-    console.warn('[Condolytics] Sem sessão — redirecionando para index');
-    return null;
-  }
+  // onAuthStateChange é mais confiável que getSession() no carregamento inicial:
+  // dispara com a sessão já restaurada do localStorage, evitando race condition
+  const session = await new Promise(resolve => {
+    const { data: { subscription } } = db.auth.onAuthStateChange((_event, session) => {
+      subscription.unsubscribe();
+      resolve(session);
+    });
+  });
+
+  if (!session?.user) return null;
 
   const { data, error } = await db
     .from('usuarios')
@@ -47,7 +50,6 @@ async function getUsuarioLogado() {
     .eq('id', session.user.id)
     .single();
 
-  console.log('[Condolytics] usuario da tabela:', data, 'erro:', error);
   if (error) return null;
   return data;
 }
