@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
     if (condominio_id) {
       await supabaseAdmin
         .from('usuario_condominios')
-        .insert({ usuario_id: authData.user.id, condominio_id })
+        .insert({ usuario_id: authData.user.id, condominio_id, perfil })
     }
 
     return new Response(JSON.stringify({ success: true, user_id: authData.user.id }), {

@@ -875,8 +875,15 @@ async function criarUsuario() {
     body: { nome, email, senha, perfil, condominio_id: condId || null }
   });
 
-  if (fnErr || !result?.success) {
-    alert('Erro: ' + (result?.error || fnErr?.message || 'Falha ao criar usuário'));
+  if (fnErr) {
+    // Tenta ler o corpo da resposta de erro para mostrar mensagem útil
+    let msg = fnErr.message;
+    try { const body = await fnErr.context?.json(); if (body?.error) msg = body.error; } catch {}
+    alert('Erro: ' + msg);
+    return;
+  }
+  if (!result?.success) {
+    alert('Erro: ' + (result?.error || 'Falha ao criar usuário'));
     return;
   }
 
