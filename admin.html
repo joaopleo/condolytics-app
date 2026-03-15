@@ -741,7 +741,8 @@ async function carregarCondominios() {
 }
 
 async function carregarUsuarios(condoId) {
-  let query = db.from('usuarios').select('*, condominios(nome)').order('nome_completo', { ascending: true });
+  // condominios!condominio_id(nome) — hint explícita de FK para evitar HTTP 300 (ambiguidade com usuario_condominios)
+  let query = db.from('usuarios').select('*, condominios!condominio_id(nome)').order('nome_completo', { ascending: true });
   if (condoId) query = query.eq('condominio_id', condoId);
   const { data } = await query;
   const tbody = document.getElementById('usuariosBody');
