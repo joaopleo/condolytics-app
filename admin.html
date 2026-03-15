@@ -837,20 +837,15 @@ async function criarUsuario() {
   const senha  = document.getElementById('u_senha').value;
   if (!nome || !email || !senha) { alert('Preencha nome, e-mail e senha.'); return; }
 
-  const session = (await db.auth.getSession()).data.session;
-  if (!session) { alert('Sessão expirada. Faça login novamente.'); return; }
-
-  const resp = await fetch('https://mritzsidaqngexgijoqc.supabase.co/functions/v1/criar-usuario', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + session.access_token
-    },
-    body: JSON.stringify({ nome, email, senha, perfil, condominio_id: condId || null })
+  // db.functions.invoke() gerencia o token automaticamente (refresh incluído)
+  const { data: result, error: fnErr } = await db.functions.invoke('criar-usuario', {
+    body: { nome, email, senha, perfil, condominio_id: condId || null }
   });
 
-  const result = await resp.json();
-  if (!resp.ok) { alert('Erro: ' + (result.error || 'Falha ao criar usuário')); return; }
+  if (fnErr || !result?.success) {
+    alert('Erro: ' + (result?.error || fnErr?.message || 'Falha ao criar usuário'));
+    return;
+  }
 
   document.getElementById('userMsg').classList.add('show');
   setTimeout(() => document.getElementById('userMsg').classList.remove('show'), 3000);
