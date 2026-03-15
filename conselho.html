@@ -1202,7 +1202,7 @@ async function carregarDados(condoId) {
 async function switchCondoSource(condoId) {
   if (!_condos.find(c => c.id === condoId)) return;
   _condoAtual = condoId;
-  localStorage.setItem('condoId', condoId); // persiste seleção
+  localStorage.setItem('condolytics_condo_id', condoId);
   await carregarDados(condoId);
   _periodoIdx = _dadosDB[condoId].periodos6.length - 1;
   configurarToggleCondos();
@@ -1218,7 +1218,9 @@ function construirTabs() {
   const periodos = _dadosDB[_condoAtual].periodos6;
   const tabsEl   = document.querySelector('.month-tabs');
   if (!tabsEl) return;
-  tabsEl.innerHTML = periodos.map((p, i) =>
+  /* Exibe em ordem decrescente (mais recente primeiro), mantendo índice original */
+  const items = periodos.map((p, i) => ({ p, i })).reverse();
+  tabsEl.innerHTML = items.map(({ p, i }) =>
     `<button class="m-tab ${i === _periodoIdx ? 'm-active' : ''}" onclick="trocarPeriodo(${i})">${periodoLabel(p)}</button>`
   ).join('');
 }
