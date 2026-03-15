@@ -1671,11 +1671,21 @@ function enviarForm() {
   btn.disabled = true;
   btn.innerHTML = '<span style="opacity:0.7">Enviando...</span>';
 
-  // Simulação — substituir por fetch para backend/Supabase
-  setTimeout(() => {
-    document.getElementById('formWrap').style.display = 'none';
-    document.getElementById('formSuccess').classList.add('show');
-  }, 1500);
+  const unidades = document.getElementById('fUnidades').value;
+  const perfil   = document.getElementById('fPerfil').value;
+
+  db.from('leads').insert({ nome, email, condominio: condo, unidades, perfil })
+    .then(({ error }) => {
+      if (error) {
+        btn.disabled = false;
+        btn.innerHTML = 'Solicitar demonstração gratuita';
+        erroEl.textContent = 'Erro ao enviar. Tente novamente.';
+        erroEl.style.display = 'block';
+        return;
+      }
+      document.getElementById('formWrap').style.display = 'none';
+      document.getElementById('formSuccess').classList.add('show');
+    });
 }
 
 function scrollToForm() {
