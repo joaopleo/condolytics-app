@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Verificar se quem chama é admin
+    // Verificar se quem chama tem sessão válida
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Não autorizado' }), {
@@ -50,7 +50,6 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Criar o novo usuário
     const { nome, email, senha, perfil, condominio_id } = await req.json()
 
     if (!nome || !email || !senha || !perfil) {
@@ -59,11 +58,18 @@ Deno.serve(async (req) => {
       })
     }
 
+    // Criar o auth user.
+    // O trigger handle_new_user cuida automaticamente do insert em public.usuarios
+    // usando raw_user_meta_data (nome_completo, perfil, condominio_id).
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password: senha,
       email_confirm: true,
-      user_metadata: { nome_completo: nome, perfil }
+      user_metadata: {
+        nome_completo: nome,
+        perfil,
+        condominio_id: condominio_id || null
+      }
     })
 
     if (authError) {
@@ -72,27 +78,7 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Inserir na tabela usuarios
-    const { error: insertError } = await supabaseAdmin
-      .from('usuarios')
-      .insert({
-        id: authData.user.id,
-        email,
-        nome_completo: nome,
-        perfil,
-        condominio_id: condominio_id || null,
-        ativo: true
-      })
-
-    if (insertError) {
-      // Rollback: remover do Auth se falhou no insert
-      await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
-      return new Response(JSON.stringify({ error: 'Erro ao salvar usuário: ' + insertError.message }), {
-        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      })
-    }
-
-    // Inserir na tabela usuario_condominios se tiver condominio
+    // Inserir também na tabela usuario_condominios (relação N:N)
     if (condominio_id) {
       await supabaseAdmin
         .from('usuario_condominios')
