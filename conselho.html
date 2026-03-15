@@ -1075,8 +1075,9 @@ const CAT_COLOR_DESP = {
 };
 
 /* Estado */
-let _usuario    = null;
-let _condos     = [];    // [{ id, nome }] — carregado do Supabase
+let _usuario       = null;
+let _condos        = [];    // [{ id, nome }] — filtrado pela seleção do login
+let _totalVinculos = 0;     // total de vínculos do usuário (para "Trocar usuário")
 let _dadosDB    = {};    // keyed by UUID do condomínio
 let _condoAtual = null;  // UUID do condomínio ativo
 let _periodoIdx = 0;
@@ -1128,10 +1129,15 @@ async function inicializar() {
   }
   if (_condos.length === 0) return;
 
+  /* Guarda total antes de filtrar (usado para exibir "Trocar usuário") */
+  _totalVinculos = _condos.length;
+
   /* Respeita o condomínio escolhido na tela de seleção do login */
-  const savedId = localStorage.getItem('condoId');
+  const savedId = localStorage.getItem('condolytics_condo_id');
   const found   = _condos.find(c => c.id === savedId);
-  _condoAtual   = found ? found.id : _condos[0].id;
+  /* Se o usuário escolheu um condo específico, restringe a visualização a ele */
+  if (found) _condos = [found];
+  _condoAtual = _condos[0].id;
 
   configurarToggleCondos();
   await carregarDados(_condoAtual);
@@ -1148,10 +1154,11 @@ function configurarToggleCondos() {
   ['chartToggleContainer', 'expToggleContainer'].forEach(containerId => {
     const container = document.getElementById(containerId);
     if (!container) return;
-    /* Só mostra os botões e o botão Trocar se o usuário tiver acesso a mais de um condomínio */
-    if (_condos.length <= 1) { container.innerHTML = ''; return; }
+    /* Mostra "Trocar usuário" se o usuário tem mais de 1 vínculo no total */
     const btnTrocar = document.getElementById('btnTrocarUsuario');
-    if (btnTrocar) btnTrocar.style.display = '';
+    if (btnTrocar) btnTrocar.style.display = _totalVinculos > 1 ? '' : 'none';
+    /* Só mostra o switcher de condos se houver mais de 1 após o filtro */
+    if (_condos.length <= 1) { container.innerHTML = ''; return; }
     container.innerHTML = _condos.map(c =>
       `<button class="ct-btn ${c.id === _condoAtual ? 'ct-active' : ''}"
         onclick="switchCondoSource('${c.id}')">${c.nome}</button>`

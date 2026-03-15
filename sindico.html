@@ -565,10 +565,15 @@ window.addEventListener('load', async () => {
     condos = [{ id: usuario.condominio_id, nome: null }];
   }
 
-  /* Define o condomínio ativo (respeita seleção prévia salva no localStorage) */
-  const savedId = localStorage.getItem('condoId');
+  /* Guarda total antes de filtrar (usado para exibir "Trocar usuário") */
+  const totalVinculos = condos.length;
+
+  /* Define o condomínio ativo (respeita seleção feita na tela de login) */
+  const savedId = localStorage.getItem('condolytics_condo_id');
   const found   = condos.find(c => c.id === savedId);
-  condoAtual    = found ? found.id : (condos[0]?.id || usuario.condominio_id);
+  /* Se o usuário escolheu um condo específico, restringe a visualização a ele */
+  if (found) condos = [found];
+  condoAtual = condos[0]?.id || usuario.condominio_id;
 
   /* Exibe nome do condomínio ativo */
   const condoNomeAtivo = condos.find(c => c.id === condoAtual);
@@ -580,9 +585,12 @@ window.addEventListener('load', async () => {
     if (condoNomeAtivo) condoNomeAtivo.nome = c?.nome || 'Condomínio';
   }
 
-  /* Monta e exibe o switcher + botão trocar quando há mais de 1 condomínio */
-  if (condos.length > 1) {
+  /* "Trocar usuário" aparece se o total de vínculos for > 1 */
+  if (totalVinculos > 1) {
     document.getElementById('btnTrocarUsuario').style.display = '';
+  }
+  /* Switcher de condos só aparece se houver mais de 1 após o filtro */
+  if (condos.length > 1) {
     const sel = document.getElementById('condoSwitcher');
     sel.innerHTML = condos.map(c =>
       `<option value="${c.id}" ${c.id === condoAtual ? 'selected' : ''}>${c.nome || c.id}</option>`
@@ -609,7 +617,7 @@ async function carregarTudo() {
 async function trocarCondominio(novoId) {
   if (novoId === condoAtual) return;
   condoAtual = novoId;
-  localStorage.setItem('condoId', novoId);
+  localStorage.setItem('condolytics_condo_id', novoId);
   /* Atualiza o nome no sidebar */
   const sel = document.getElementById('condoSwitcher');
   const optSelected = sel.options[sel.selectedIndex];
