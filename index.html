@@ -1272,6 +1272,12 @@ footer {
           </div>
           <div class="form-row">
             <div class="form-group">
+              <label class="form-label">Celular</label>
+              <input class="form-input" id="fCelular" type="tel" placeholder="(11) 99999-9999">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
               <label class="form-label">Nome do condomínio *</label>
               <input class="form-input" id="fCondo" type="text" placeholder="Ex: Residencial Park">
             </div>
@@ -1283,6 +1289,20 @@ footer {
                 <option value="51-150">51 a 150 unidades</option>
                 <option value="151-300">151 a 300 unidades</option>
                 <option value="mais300">Mais de 300 unidades</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Estado</label>
+              <select class="form-select" id="fEstado" onchange="carregarCidades()">
+                <option value="">Carregando estados...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Cidade</label>
+              <select class="form-select" id="fCidade" disabled>
+                <option value="">Selecione o estado primeiro</option>
               </select>
             </div>
           </div>
@@ -1651,6 +1671,42 @@ atualizarCountdown();
 setInterval(atualizarCountdown, 1000);
 
 /* ═══════════════════════════════════
+   ESTADOS E CIDADES — API IBGE
+═══════════════════════════════════ */
+fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome')
+  .then(r => r.json())
+  .then(estados => {
+    const sel = document.getElementById('fEstado');
+    sel.innerHTML = '<option value="">Selecione o estado...</option>';
+    estados.forEach(e => {
+      const opt = document.createElement('option');
+      opt.value = e.sigla;
+      opt.textContent = e.nome;
+      sel.appendChild(opt);
+    });
+  });
+
+function carregarCidades() {
+  const uf      = document.getElementById('fEstado').value;
+  const selCid  = document.getElementById('fCidade');
+  if (!uf) { selCid.innerHTML = '<option value="">Selecione o estado primeiro</option>'; selCid.disabled = true; return; }
+  selCid.innerHTML = '<option value="">Carregando cidades...</option>';
+  selCid.disabled = true;
+  fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`)
+    .then(r => r.json())
+    .then(cidades => {
+      selCid.innerHTML = '<option value="">Selecione a cidade...</option>';
+      cidades.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.nome;
+        opt.textContent = c.nome;
+        selCid.appendChild(opt);
+      });
+      selCid.disabled = false;
+    });
+}
+
+/* ═══════════════════════════════════
    FORMULÁRIO CTA
 ═══════════════════════════════════ */
 function enviarForm() {
@@ -1673,8 +1729,11 @@ function enviarForm() {
 
   const unidades = document.getElementById('fUnidades').value;
   const perfil   = document.getElementById('fPerfil').value;
+  const celular  = document.getElementById('fCelular').value.trim();
+  const estado   = document.getElementById('fEstado').value;
+  const cidade   = document.getElementById('fCidade').value;
 
-  db.from('leads').insert({ nome, email, condominio: condo, unidades, perfil })
+  db.from('leads').insert({ nome, email, condominio: condo, unidades, perfil, celular, estado, cidade })
     .then(({ error }) => {
       if (error) {
         btn.disabled = false;
@@ -1687,7 +1746,7 @@ function enviarForm() {
       fetch('https://mritzsidaqngexgijoqc.supabase.co/functions/v1/notify-lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome, email, condominio: condo, unidades, perfil })
+        body: JSON.stringify({ nome, email, condominio: condo, unidades, perfil, celular, estado, cidade })
       }).catch(() => {});
       document.getElementById('formWrap').style.display = 'none';
       document.getElementById('formSuccess').classList.add('show');
