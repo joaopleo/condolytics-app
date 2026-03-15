@@ -387,6 +387,28 @@
   .cal-month-label { font-size:16px; font-weight:600; color:var(--off-white); letter-spacing:-0.01em; text-align:center; flex:1; }
   .cal-month-label span { font-family:var(--font-mono); font-size:10px; color:var(--amber); letter-spacing:0.12em; display:block; text-transform:uppercase; margin-top:1px; font-weight:400; }
 
+/* Comunicados */
+.comunicado-item { padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.comunicado-item:last-child { border-bottom: none; }
+.comunicado-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.comunicado-titulo { font-size: 13px; font-weight: 600; color: var(--off-white); }
+.comunicado-texto { font-size: 12px; color: var(--text-faint); line-height: 1.6; margin-bottom: 6px; }
+.comunicado-data { font-family: var(--font-mono); font-size: 9px; color: var(--gray); letter-spacing: 0.05em; }
+
+/* Categorias de gastos */
+.cat-row { margin-bottom: 12px; }
+.cat-info { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-faint); margin-bottom: 5px; }
+.cat-info span:first-child { color: var(--off-white); }
+.cat-pct { font-family: var(--font-mono); font-size: 9px; color: var(--gray); text-align: right; margin-top: 3px; }
+
+/* Alertas públicos */
+.alerta-pub-item { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.alerta-pub-item:last-child { border-bottom: none; }
+.alerta-pub-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+.alerta-pub-titulo { font-size: 13px; font-weight: 600; color: var(--off-white); }
+.alerta-pub-desc { font-size: 12px; color: var(--text-faint); line-height: 1.5; margin-bottom: 4px; }
+.alerta-pub-data { font-family: var(--font-mono); font-size: 9px; color: var(--gray); letter-spacing: 0.05em; }
+
   /* Mobile: grade oculta, só lista */
   @media (max-width: 640px) {
     .cal-desktop-right { display: block; padding-right: 0; border-right: none; }
@@ -523,38 +545,66 @@
     <!-- DASHBOARD -->
     <section class="section active" id="sec-dashboard">
 
-      <div class="hero">
-        <div>
-          <div class="hero-title">
-            Seu condomínio está sendo<br><em>monitorado com inteligência.</em>
-          </div>
-          <div class="hero-sub">
-            A Condolytics analisa continuamente os dados financeiros e contratuais do seu condomínio.
-          </div>
-        </div>
-        <div class="hero-badge">
-          <div class="hero-badge-val" id="heroInad">—</div>
-          <div class="hero-badge-label">Inadimplência</div>
-        </div>
+  <div class="hero">
+    <div>
+      <div class="hero-title">
+        Seu condomínio está sendo<br><em>monitorado com inteligência.</em>
       </div>
-
-      <div class="kpi-grid" id="kpiGrid">
-        <div class="loading"><div class="spinner"></div>Carregando...</div>
+      <div class="hero-sub">
+        A Condolytics analisa continuamente os dados financeiros e contratuais do seu condomínio.
       </div>
+    </div>
+    <div class="hero-badge">
+      <div class="hero-badge-val" id="heroInad">—</div>
+      <div class="hero-badge-label">Inadimplência</div>
+    </div>
+  </div>
 
-      <div class="saude-grid" id="saudeGrid"></div>
+  <div class="kpi-grid" id="kpiGrid">
+    <div class="loading"><div class="spinner"></div>Carregando...</div>
+  </div>
 
-      <div class="panel">
-        <div class="panel-header">
-          <span class="panel-title">Evolução Financeira — 2025</span>
-          <span class="panel-tag">Receitas vs Despesas</span>
-        </div>
-        <div class="panel-body">
-          <canvas id="chartFinanceiro" height="160"></canvas>
-        </div>
-      </div>
+  <div class="saude-grid" id="saudeGrid"></div>
 
-    </section>
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Evolução Financeira — Últimos 6 Meses</span>
+      <span class="panel-tag">Receitas vs Despesas</span>
+    </div>
+    <div class="panel-body">
+      <canvas id="chartFinanceiro" height="160"></canvas>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Gastos por Categoria</span>
+      <span class="panel-tag" id="catPeriodo">—</span>
+    </div>
+    <div class="panel-body" id="categoriasGrid">
+      <div class="loading"><div class="spinner"></div>Carregando...</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Comunicados e Destaques</span>
+    </div>
+    <div style="padding: 0 20px 8px;" id="comunicadosList">
+      <div class="loading"><div class="spinner"></div>Carregando...</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Avisos</span>
+    </div>
+    <div style="padding: 0 20px 8px;" id="alertasPublicosList">
+      <div class="loading"><div class="spinner"></div>Carregando...</div>
+    </div>
+  </div>
+
+</section>
 
     <!-- FINANCEIRO -->
     <section class="section" id="sec-financeiro">
@@ -745,6 +795,9 @@ async function carregarTudo() {
     carregarKPIs(),
     carregarSaude(),
     carregarGrafico(),
+    carregarGastosCategorias(),
+    carregarComunicados(),
+    carregarAlertasPublicos(),
     carregarFinanceiro(),
     carregarDocumentos(),
     carregarRelatorios()
@@ -979,6 +1032,105 @@ async function carregarRelatorios() {
         <div class="card-row-field">${r.periodo||'—'}</div>
         ${r.url_pdf?`<a href="${r.url_pdf}" target="_blank" style="color:var(--amber-l);font-size:12px;text-decoration:none;margin-left:auto;">↓ Baixar PDF</a>`:''}
       </div>
+    </div>`).join('');
+}
+
+// ── Gastos por Categoria ──
+async function carregarGastosCategorias() {
+  const catLabel = {
+    pessoal:'Pessoal', rh:'RH / Encargos', terceirizados:'Terceirizados',
+    encargos:'Encargos Sociais', administracao:'Administração',
+    consumo:'Consumo (Energ/Água)', manutencoes:'Manutenção Predial',
+    financeiras:'Financeiras', reembolsaveis:'Reembolsáveis',
+    impostos:'Taxa Assoc. AMALPES', investimentos:'Investimentos',
+    investimentos_imobilizado:'Invest. Imobilizado', outros:'Outros'
+  };
+
+  const { data: ind } = await db.from('indicadores_financeiros')
+    .select('periodo').eq('condominio_id', condoAtual).order('periodo', { ascending: false }).limit(1);
+
+  const el = document.getElementById('categoriasGrid');
+  const periodoEl = document.getElementById('catPeriodo');
+
+  if (!ind?.length) { el.innerHTML = '<div class="empty">Sem dados.</div>'; return; }
+  const periodo = ind[0].periodo;
+
+  const mesesLabel = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const [y, m] = periodo.split('-');
+  periodoEl.textContent = `${mesesLabel[parseInt(m)-1]}/${y}`;
+
+  const { data } = await db.from('lancamentos_categoria')
+    .select('categoria, valor')
+    .eq('condominio_id', condoAtual)
+    .eq('periodo', periodo)
+    .eq('tipo', 'despesa')
+    .order('valor', { ascending: false });
+
+  if (!data?.length) { el.innerHTML = '<div class="empty">Sem dados de categoria.</div>'; return; }
+
+  const total = data.reduce((s, d) => s + Number(d.valor), 0);
+  el.innerHTML = data.map(d => {
+    const pct = total ? Math.round((Number(d.valor) / total) * 100) : 0;
+    return `<div class="cat-row">
+      <div class="cat-info">
+        <span>${catLabel[d.categoria] || d.categoria}</span>
+        <span>R$ ${Number(d.valor).toLocaleString('pt-BR')}</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:#B8872A;"></div></div>
+      <div class="cat-pct">${pct}% do total</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Comunicados ──
+async function carregarComunicados() {
+  const { data } = await db.from('comunicados')
+    .select('titulo, conteudo, tipo, created_at')
+    .eq('condominio_id', condoAtual)
+    .eq('publicado', true)
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  const el = document.getElementById('comunicadosList');
+  const tipoLabel = { ata: 'Ata', comunicado: 'Comunicado', aviso: 'Aviso' };
+  if (!data?.length) {
+    el.innerHTML = '<div class="empty" style="padding:4px 0 12px;">Nenhum comunicado no momento.</div>';
+    return;
+  }
+  el.innerHTML = data.map(c => `
+    <div class="comunicado-item">
+      <div class="comunicado-header">
+        <span class="comunicado-titulo">${c.titulo}</span>
+        <span class="badge badge-gray">${tipoLabel[c.tipo] || c.tipo}</span>
+      </div>
+      ${c.conteudo ? `<div class="comunicado-texto">${c.conteudo}</div>` : ''}
+      <div class="comunicado-data">${new Date(c.created_at).toLocaleDateString('pt-BR')}</div>
+    </div>`).join('');
+}
+
+// ── Alertas Públicos ──
+async function carregarAlertasPublicos() {
+  const { data } = await db.from('alertas')
+    .select('titulo, descricao, tipo, severidade, created_at')
+    .eq('condominio_id', condoAtual)
+    .eq('visibilidade', 'publico')
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  const el = document.getElementById('alertasPublicosList');
+  const sevBadge = { critico:'badge-red', atencao:'badge-amber', informativo:'badge-gray' };
+  if (!data?.length) {
+    el.innerHTML = '<div class="empty" style="padding:4px 0 12px;">Sem avisos no momento.</div>';
+    return;
+  }
+  el.innerHTML = data.map(a => `
+    <div class="alerta-pub-item">
+      <div class="alerta-pub-header">
+        <span class="alerta-pub-titulo">${a.titulo}</span>
+        <span class="badge ${sevBadge[a.severidade] || 'badge-gray'}">${a.severidade}</span>
+      </div>
+      ${a.descricao ? `<div class="alerta-pub-desc">${a.descricao}</div>` : ''}
+      <div class="alerta-pub-data">${new Date(a.created_at).toLocaleDateString('pt-BR')}</div>
     </div>`).join('');
 }
 
