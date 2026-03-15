@@ -31,6 +31,11 @@ async function logout() {
   window.location.href = 'index.html';
 }
 
+async function trocarUsuario() {
+  await db.auth.signOut();
+  window.location.href = 'index.html';
+}
+
 // Retorna o usuário logado
 // Usa getSession() com retry exponencial para dar tempo ao SDK
 // de restaurar a sessão do localStorage após um redirect
