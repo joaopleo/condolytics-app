@@ -834,11 +834,22 @@ async function criarUsuario() {
   const condId = document.getElementById('u_condominio').value;
   const senha  = document.getElementById('u_senha').value;
   if (!nome || !email || !senha) { alert('Preencha nome, e-mail e senha.'); return; }
-  const { error } = await db.auth.signUp({
-    email, password: senha,
-    options: { data: { nome_completo: nome, perfil, condominio_id: condId || null } }
+
+  const session = (await db.auth.getSession()).data.session;
+  if (!session) { alert('Sessão expirada. Faça login novamente.'); return; }
+
+  const resp = await fetch('https://mritzsidaqngexgijoqc.supabase.co/functions/v1/criar-usuario', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + session.access_token
+    },
+    body: JSON.stringify({ nome, email, senha, perfil, condominio_id: condId || null })
   });
-  if (error) { alert('Erro: ' + error.message); return; }
+
+  const result = await resp.json();
+  if (!resp.ok) { alert('Erro: ' + (result.error || 'Falha ao criar usuário')); return; }
+
   document.getElementById('userMsg').classList.add('show');
   setTimeout(() => document.getElementById('userMsg').classList.remove('show'), 3000);
   ['u_nome','u_email','u_senha'].forEach(id => document.getElementById(id).value = '');
