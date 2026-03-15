@@ -264,6 +264,36 @@
     border-radius: 8px; font-size: 12.5px; color: var(--green); margin-top: 12px;
   }
   .success-msg.show { display: block; }
+  .btn-edit {
+    background: none; border: 1px solid rgba(184,135,42,0.3);
+    border-radius: 6px; padding: 4px 12px; font-size: 11px;
+    color: var(--amber-l); cursor: pointer; font-family: var(--font-sans);
+    transition: all 0.15s; margin-right: 6px;
+  }
+  .btn-edit:hover { background: var(--amber-p); border-color: var(--amber); }
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7); z-index: 200;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid rgba(184,135,42,0.15);
+    border-radius: 12px; padding: 28px; width: 420px; max-width: 90vw;
+  }
+  .modal-title {
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--amber-l); margin-bottom: 20px;
+  }
+  .modal-subtitle { font-size: 13px; color: var(--gray-l); margin-bottom: 20px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+  .btn-secondary {
+    background: none; border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px; padding: 9px 20px; font-size: 12px;
+    color: var(--gray-l); cursor: pointer; font-family: var(--font-sans);
+  }
+  .btn-secondary:hover { border-color: rgba(255,255,255,0.2); color: var(--off-white); }
 </style>
 </head>
 <body>
@@ -762,6 +792,9 @@ async function carregarUsuarios(condoId) {
       <td>${u.condominios?.nome || '—'}</td>
       <td><span class="badge ${u.ativo ? 'badge-green' : 'badge-red'}">${u.ativo ? 'ativo' : 'inativo'}</span></td>
       <td>
+        <button class="btn-edit" onclick="abrirModalCondominio('${u.id}', '${u.nome_completo.replace(/'/g, "\\'")}', '${u.condominio_id || ''}')">
+          Editar
+        </button>
         ${u.perfil !== 'admin' ? `
           <button class="btn-danger" onclick="excluirUsuario('${u.id}', '${u.nome_completo.replace(/'/g, "\\'")}')">
             Desativar
@@ -860,6 +893,66 @@ async function excluirUsuario(id, nome) {
   alert(`Usuário "${nome}" desativado com sucesso.`);
   await carregarUsuarios(document.getElementById('u_condominio').value);
 }
+
+async function abrirModalCondominio(userId, userName, condoAtualId) {
+  document.getElementById('modalEditTitle').textContent = userName;
+  document.getElementById('modalEditUserId').value = userId;
+
+  // Popula o select com os condominios disponíveis
+  const sel = document.getElementById('modalCondSelect');
+  sel.innerHTML = '<option value="">Sem condomínio</option>';
+  const { data } = await db.from('condominios').select('id, nome').order('nome');
+  if (data) {
+    data.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = c.nome;
+      if (c.id === condoAtualId) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  }
+
+  document.getElementById('modalEditCondo').classList.add('open');
+}
+
+function fecharModalCondominio() {
+  document.getElementById('modalEditCondo').classList.remove('open');
+}
+
+async function salvarCondominio() {
+  const userId  = document.getElementById('modalEditUserId').value;
+  const condoId = document.getElementById('modalCondSelect').value || null;
+
+  const { error } = await db.from('usuarios').update({ condominio_id: condoId }).eq('id', userId);
+  if (error) { alert('Erro ao atualizar: ' + error.message); return; }
+
+  // Atualiza também usuario_condominios
+  if (condoId) {
+    await db.from('usuario_condominios')
+      .upsert({ usuario_id: userId, condominio_id: condoId }, { onConflict: 'usuario_id,condominio_id' });
+  }
+
+  fecharModalCondominio();
+  await carregarUsuarios(document.getElementById('u_condominio').value);
+}
 </script>
+
+<!-- Modal: editar condomínio do usuário -->
+<div class="modal-overlay" id="modalEditCondo" onclick="if(event.target===this) fecharModalCondominio()">
+  <div class="modal">
+    <div class="modal-title">Alterar Condomínio</div>
+    <div class="modal-subtitle" id="modalEditTitle"></div>
+    <input type="hidden" id="modalEditUserId"/>
+    <div class="form-group">
+      <label class="form-label" for="modalCondSelect">Condomínio</label>
+      <select class="form-select" id="modalCondSelect"></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="fecharModalCondominio()">Cancelar</button>
+      <button class="btn-primary" onclick="salvarCondominio()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
