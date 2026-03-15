@@ -70,6 +70,30 @@
     font-size:12px;font-weight:500;color:var(--off-white);
     line-height:1.3;
   }
+  .condo-switcher {
+    display:none;
+    margin-top:8px;
+    width:100%;
+    background:var(--surface2);
+    border:1px solid rgba(184,135,42,0.25);
+    border-radius:6px;
+    color:var(--off-white);
+    font-family:var(--font-sans);
+    font-size:11px;
+    padding:6px 8px;
+    cursor:pointer;
+    outline:none;
+    transition:border-color 0.15s;
+    -webkit-appearance:none;
+    appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23B8872A'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 8px center;
+    padding-right:24px;
+  }
+  .condo-switcher:hover,
+  .condo-switcher:focus { border-color:rgba(184,135,42,0.6); }
+  .condo-switcher.visible { display:block; }
   .sidebar-nav {
     flex:1;padding:16px 12px;
     display:flex;flex-direction:column;gap:2px;
@@ -279,6 +303,7 @@
   <div class="sidebar-cond">
     <div class="sidebar-cond-label">Condomínio</div>
     <div class="sidebar-cond-name" id="condNome">Carregando...</div>
+    <select id="condoSwitcher" class="condo-switcher" onchange="trocarCondominio(this.value)"></select>
   </div>
   <nav class="sidebar-nav">
     <div class="nav-section">Menu</div>
@@ -513,6 +538,7 @@
 <script>
 let usuario = null;
 let chartFin = null;
+let condoAtual = null;
 const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
 window.addEventListener('load', async () => {
@@ -521,11 +547,51 @@ window.addEventListener('load', async () => {
 
   document.getElementById('userName').textContent = usuario.nome_completo || 'Síndico';
   document.getElementById('userAvatar').textContent = (usuario.nome_completo||'S')[0].toUpperCase();
-  if (usuario.condominio_id) {
-    const { data: condo } = await db.from('condominios').select('nome').eq('id', usuario.condominio_id).single();
-    document.getElementById('condNome').textContent = condo?.nome || 'Condomínio';
+
+  /* Busca todos os condomínios vinculados ao usuário */
+  const { data: vinculos } = await db
+    .from('usuario_condominios')
+    .select('condominio_id, condominios(nome)')
+    .eq('usuario_id', usuario.id)
+    .eq('ativo', true);
+
+  let condos = (vinculos || [])
+    .map(v => ({ id: v.condominio_id, nome: v.condominios?.nome || v.condominio_id }))
+    .filter(c => c.id);
+
+  /* Fallback: usa condominio_id direto do perfil se não houver vínculo na tabela */
+  if (condos.length === 0 && usuario.condominio_id) {
+    condos = [{ id: usuario.condominio_id, nome: null }];
   }
 
+  /* Define o condomínio ativo (respeita seleção prévia salva no localStorage) */
+  const savedId = localStorage.getItem('condoId');
+  const found   = condos.find(c => c.id === savedId);
+  condoAtual    = found ? found.id : (condos[0]?.id || usuario.condominio_id);
+
+  /* Exibe nome do condomínio ativo */
+  const condoNomeAtivo = condos.find(c => c.id === condoAtual);
+  if (condoNomeAtivo?.nome) {
+    document.getElementById('condNome').textContent = condoNomeAtivo.nome;
+  } else if (condoAtual) {
+    const { data: c } = await db.from('condominios').select('nome').eq('id', condoAtual).single();
+    document.getElementById('condNome').textContent = c?.nome || 'Condomínio';
+    if (condoNomeAtivo) condoNomeAtivo.nome = c?.nome || 'Condomínio';
+  }
+
+  /* Monta e exibe o switcher apenas quando há mais de 1 condomínio */
+  if (condos.length > 1) {
+    const sel = document.getElementById('condoSwitcher');
+    sel.innerHTML = condos.map(c =>
+      `<option value="${c.id}" ${c.id === condoAtual ? 'selected' : ''}>${c.nome || c.id}</option>`
+    ).join('');
+    sel.classList.add('visible');
+  }
+
+  await carregarTudo();
+});
+
+async function carregarTudo() {
   await Promise.all([
     carregarKPIs(),
     carregarGrafico(),
@@ -536,7 +602,19 @@ window.addEventListener('load', async () => {
     carregarAlertasTabela(),
     carregarRelatorios()
   ]);
-});
+}
+
+async function trocarCondominio(novoId) {
+  if (novoId === condoAtual) return;
+  condoAtual = novoId;
+  localStorage.setItem('condoId', novoId);
+  /* Atualiza o nome no sidebar */
+  const sel = document.getElementById('condoSwitcher');
+  const optSelected = sel.options[sel.selectedIndex];
+  document.getElementById('condNome').textContent = optSelected?.text || 'Condomínio';
+  /* Recarrega todos os dados com o novo condomínio */
+  await carregarTudo();
+}
 
 function mostrarSecao(nome, el) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -555,7 +633,7 @@ function mostrarSecao(nome, el) {
 
 async function carregarKPIs() {
   const { data } = await db.from('indicadores_financeiros')
-    .select('*').order('periodo',{ascending:false}).limit(1);
+    .select('*').eq('condominio_id', condoAtual).order('periodo',{ascending:false}).limit(1);
   const d = data?.[0];
   if (!d) return;
 
@@ -588,7 +666,7 @@ async function carregarKPIs() {
 
 async function carregarGrafico() {
   const { data } = await db.from('indicadores_financeiros')
-    .select('periodo,receita_realizada,despesa_realizada').order('periodo');
+    .select('periodo,receita_realizada,despesa_realizada').eq('condominio_id', condoAtual).order('periodo');
   if (!data?.length) return;
   const labels   = data.map(d => meses[new Date(d.periodo).getMonth()]);
   const receitas = data.map(d => d.receita_realizada);
@@ -622,7 +700,7 @@ async function carregarGrafico() {
 
 async function carregarInadimplencia() {
   const { data } = await db.from('indicadores_financeiros')
-    .select('inadimplencia_pct').order('periodo',{ascending:false}).limit(1);
+    .select('inadimplencia_pct').eq('condominio_id', condoAtual).order('periodo',{ascending:false}).limit(1);
   const pct = data?.[0]?.inadimplencia_pct || 0;
   const cor  = pct < 3 ? 'green' : pct < 5 ? '' : 'red';
   document.getElementById('inadValue').textContent = pct.toFixed(1) + '%';
@@ -634,7 +712,7 @@ async function carregarInadimplencia() {
 
 async function carregarAlertas() {
   const { data } = await db.from('alertas')
-    .select('*').eq('lido',false)
+    .select('*').eq('condominio_id', condoAtual).eq('lido',false)
     .order('created_at',{ascending:false}).limit(5);
   const el = document.getElementById('alertaList');
   const ct = document.getElementById('alertaCount');
@@ -657,7 +735,7 @@ async function carregarAlertas() {
 
 async function carregarFinanceiro() {
   const { data } = await db.from('indicadores_financeiros')
-    .select('*').order('periodo',{ascending:false});
+    .select('*').eq('condominio_id', condoAtual).order('periodo',{ascending:false});
   const tbody = document.getElementById('financeiroBody');
   if (!data?.length) {
     tbody.innerHTML='<tr><td colspan="7"><div class="empty">Sem dados.</div></td></tr>';
@@ -708,7 +786,7 @@ async function carregarFinanceiro() {
 
 async function carregarDocumentos() {
   const { data, count } = await db.from('documentos')
-    .select('*',{count:'exact'}).order('created_at',{ascending:false});
+    .select('*',{count:'exact'}).eq('condominio_id', condoAtual).order('created_at',{ascending:false});
   document.getElementById('docCount').textContent = (count||0)+' arquivos';
   const tbody = document.getElementById('documentosBody');
   if (!data?.length) {
@@ -730,7 +808,7 @@ async function carregarDocumentos() {
 
 async function carregarAlertasTabela() {
   const { data } = await db.from('alertas')
-    .select('*').order('created_at',{ascending:false});
+    .select('*').eq('condominio_id', condoAtual).order('created_at',{ascending:false});
   const tbody = document.getElementById('alertasBody');
   if (!data?.length) {
     tbody.innerHTML='<tr><td colspan="5"><div class="empty">Nenhum alerta.</div></td></tr>';
@@ -751,7 +829,7 @@ async function carregarAlertasTabela() {
 
 async function carregarRelatorios() {
   const { data } = await db.from('relatorios')
-    .select('*').eq('publicado',true)
+    .select('*').eq('condominio_id', condoAtual).eq('publicado',true)
     .order('created_at',{ascending:false});
   const tbody = document.getElementById('relatoriosBody');
   if (!data?.length) {

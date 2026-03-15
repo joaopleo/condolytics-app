@@ -43,6 +43,30 @@
   .sidebar-cond{padding:12px 24px;background:var(--amber-p);border-bottom:1px solid rgba(184,135,42,0.1);}
   .sidebar-cond-label{font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;color:var(--amber);text-transform:uppercase;margin-bottom:4px;}
   .sidebar-cond-name{font-size:12px;font-weight:500;color:var(--off-white);line-height:1.3;}
+  .condo-switcher{
+    display:none;
+    margin-top:8px;
+    width:100%;
+    background:var(--surface2);
+    border:1px solid rgba(184,135,42,0.25);
+    border-radius:6px;
+    color:var(--off-white);
+    font-family:var(--font-sans);
+    font-size:11px;
+    padding:6px 8px;
+    cursor:pointer;
+    outline:none;
+    transition:border-color 0.15s;
+    -webkit-appearance:none;
+    appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23B8872A'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 8px center;
+    padding-right:24px;
+  }
+  .condo-switcher:hover,
+  .condo-switcher:focus{border-color:rgba(184,135,42,0.6);}
+  .condo-switcher.visible{display:block;}
   .sidebar-nav{flex:1;padding:16px 12px;display:flex;flex-direction:column;gap:2px;}
   .nav-section{font-family:var(--font-mono);font-size:9px;letter-spacing:0.18em;color:var(--gray);text-transform:uppercase;padding:12px 12px 6px;margin-top:8px;}
   .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:400;color:var(--gray-l);transition:all 0.15s;border:none;background:none;width:100%;text-align:left;}
@@ -416,6 +440,7 @@
   <div class="sidebar-cond">
     <div class="sidebar-cond-label">Condomínio</div>
     <div class="sidebar-cond-name" id="condNome">Carregando...</div>
+    <select id="condoSwitcher" class="condo-switcher" onchange="trocarCondominio(this.value)"></select>
   </div>
   <nav class="sidebar-nav">
     <div class="nav-section">Menu</div>
@@ -653,6 +678,7 @@
 <script>
 let usuario = null;
 let chartFin = null;
+let condoAtual = null;
 const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
 window.addEventListener('load', async () => {
@@ -660,10 +686,51 @@ window.addEventListener('load', async () => {
   if (!usuario) return;
   document.getElementById('userName').textContent = usuario.nome_completo || 'Condômino';
   document.getElementById('userAvatar').textContent = (usuario.nome_completo||'C')[0].toUpperCase();
-  if (usuario.condominio_id) {
-    const { data: condo } = await db.from('condominios').select('nome').eq('id', usuario.condominio_id).single();
-    document.getElementById('condNome').textContent = condo?.nome || 'Condomínio';
+
+  /* Busca todos os condomínios vinculados ao usuário */
+  const { data: vinculos } = await db
+    .from('usuario_condominios')
+    .select('condominio_id, condominios(nome)')
+    .eq('usuario_id', usuario.id)
+    .eq('ativo', true);
+
+  let condos = (vinculos || [])
+    .map(v => ({ id: v.condominio_id, nome: v.condominios?.nome || v.condominio_id }))
+    .filter(c => c.id);
+
+  /* Fallback: usa condominio_id direto do perfil se não houver vínculo na tabela */
+  if (condos.length === 0 && usuario.condominio_id) {
+    condos = [{ id: usuario.condominio_id, nome: null }];
   }
+
+  /* Define o condomínio ativo (respeita seleção prévia salva no localStorage) */
+  const savedId = localStorage.getItem('condoId');
+  const found   = condos.find(c => c.id === savedId);
+  condoAtual    = found ? found.id : (condos[0]?.id || usuario.condominio_id);
+
+  /* Exibe nome do condomínio ativo */
+  const condoNomeAtivo = condos.find(c => c.id === condoAtual);
+  if (condoNomeAtivo?.nome) {
+    document.getElementById('condNome').textContent = condoNomeAtivo.nome;
+  } else if (condoAtual) {
+    const { data: c } = await db.from('condominios').select('nome').eq('id', condoAtual).single();
+    document.getElementById('condNome').textContent = c?.nome || 'Condomínio';
+    if (condoNomeAtivo) condoNomeAtivo.nome = c?.nome || 'Condomínio';
+  }
+
+  /* Monta e exibe o switcher apenas quando há mais de 1 condomínio */
+  if (condos.length > 1) {
+    const sel = document.getElementById('condoSwitcher');
+    sel.innerHTML = condos.map(c =>
+      `<option value="${c.id}" ${c.id === condoAtual ? 'selected' : ''}>${c.nome || c.id}</option>`
+    ).join('');
+    sel.classList.add('visible');
+  }
+
+  await carregarTudo();
+});
+
+async function carregarTudo() {
   await Promise.all([
     carregarKPIs(),
     carregarSaude(),
@@ -672,7 +739,19 @@ window.addEventListener('load', async () => {
     carregarDocumentos(),
     carregarRelatorios()
   ]);
-});
+}
+
+async function trocarCondominio(novoId) {
+  if (novoId === condoAtual) return;
+  condoAtual = novoId;
+  localStorage.setItem('condoId', novoId);
+  /* Atualiza o nome no sidebar */
+  const sel = document.getElementById('condoSwitcher');
+  const optSelected = sel.options[sel.selectedIndex];
+  document.getElementById('condNome').textContent = optSelected?.text || 'Condomínio';
+  /* Recarrega todos os dados com o novo condomínio */
+  await carregarTudo();
+}
 
 // ── Menu mobile ──
 function abrirMenu() {
@@ -714,7 +793,7 @@ function atualizarTitulo(nome) {
 // ── KPIs ──
 async function carregarKPIs() {
   const { data } = await db.from('indicadores_financeiros')
-    .select('*').order('periodo',{ascending:false}).limit(1);
+    .select('*').eq('condominio_id', condoAtual).order('periodo',{ascending:false}).limit(1);
   const d = data?.[0];
   if (!d) { document.getElementById('kpiGrid').innerHTML='<div class="empty">Sem dados.</div>'; return; }
   const saldo = d.receita_realizada - d.despesa_realizada;
@@ -747,7 +826,7 @@ async function carregarKPIs() {
 // ── Saúde ──
 async function carregarSaude() {
   const { data } = await db.from('indicadores_financeiros')
-    .select('*').order('periodo',{ascending:false}).limit(1);
+    .select('*').eq('condominio_id', condoAtual).order('periodo',{ascending:false}).limit(1);
   if (!data?.length) return;
   const d = data[0];
   const execBudget = ((d.despesa_realizada/d.despesa_prevista)*100).toFixed(1);
@@ -773,7 +852,7 @@ async function carregarSaude() {
 // ── Gráfico ──
 async function carregarGrafico() {
   const { data } = await db.from('indicadores_financeiros')
-    .select('periodo,receita_realizada,despesa_realizada').order('periodo');
+    .select('periodo,receita_realizada,despesa_realizada').eq('condominio_id', condoAtual).order('periodo');
   if (!data?.length) return;
   const labels   = data.map(d => meses[new Date(d.periodo).getMonth()]);
   const receitas = data.map(d => d.receita_realizada);
@@ -803,7 +882,7 @@ async function carregarGrafico() {
 // ── Financeiro ──
 async function carregarFinanceiro() {
   const { data } = await db.from('indicadores_financeiros')
-    .select('*').order('periodo',{ascending:false});
+    .select('*').eq('condominio_id', condoAtual).order('periodo',{ascending:false});
   const tbody = document.getElementById('financeiroBody');
   const cards  = document.getElementById('financeiroCards');
   if (!data?.length) {
@@ -835,7 +914,7 @@ async function carregarFinanceiro() {
 // ── Documentos ──
 async function carregarDocumentos() {
   const { data, count } = await db.from('documentos')
-    .select('*',{count:'exact'}).eq('visibilidade','publico')
+    .select('*',{count:'exact'}).eq('condominio_id', condoAtual).eq('visibilidade','publico')
     .order('created_at',{ascending:false});
   document.getElementById('docCount').textContent = (count||0)+' arquivos';
   const tbody = document.getElementById('documentosBody');
@@ -865,7 +944,7 @@ async function carregarDocumentos() {
 // ── Relatórios ──
 async function carregarRelatorios() {
   const { data } = await db.from('relatorios')
-    .select('*').eq('publicado',true)
+    .select('*').eq('condominio_id', condoAtual).eq('publicado',true)
     .order('created_at',{ascending:false});
   const tbody = document.getElementById('relatoriosBody');
   const cards  = document.getElementById('relatoriosCards');
