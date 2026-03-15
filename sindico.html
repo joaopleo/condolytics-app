@@ -5,11 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Condolytics — Síndico</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
   :root {
+    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Helvetica Neue", Arial, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, "SF Mono", monospace;
     --bg:        #0A0C0F;
     --surface:   #111318;
     --surface2:  #1A1D24;
@@ -25,7 +27,7 @@
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   body {
-    font-family:'Outfit',sans-serif;
+    font-family:var(--font-sans);
     background:var(--bg);
     color:var(--off-white);
     min-height:100vh;
@@ -51,7 +53,7 @@
     display:block;margin-bottom:3px;
   }
   .sidebar-logo-role {
-    font-family:'DM Mono',monospace;font-size:9px;
+    font-family:var(--font-mono);font-size:9px;
     letter-spacing:0.12em;color:var(--gray);text-transform:uppercase;
   }
   .sidebar-cond {
@@ -60,7 +62,7 @@
     border-bottom:1px solid rgba(184,135,42,0.1);
   }
   .sidebar-cond-label {
-    font-family:'DM Mono',monospace;font-size:9px;
+    font-family:var(--font-mono);font-size:9px;
     letter-spacing:0.12em;color:var(--amber);
     text-transform:uppercase;margin-bottom:4px;
   }
@@ -73,7 +75,7 @@
     display:flex;flex-direction:column;gap:2px;
   }
   .nav-section {
-    font-family:'DM Mono',monospace;font-size:9px;
+    font-family:var(--font-mono);font-size:9px;
     letter-spacing:0.18em;color:var(--gray);
     text-transform:uppercase;padding:12px 12px 6px;margin-top:8px;
   }
@@ -113,7 +115,7 @@
   .btn-logout {
     width:100%;margin-top:8px;padding:8px;
     background:none;border:1px solid rgba(255,255,255,0.06);
-    border-radius:6px;font-family:'Outfit',sans-serif;
+    border-radius:6px;font-family:var(--font-sans);
     font-size:11px;color:var(--gray);cursor:pointer;transition:all 0.15s;
   }
   .btn-logout:hover { border-color:var(--red);color:var(--red);background:rgba(224,92,58,0.05); }
@@ -124,14 +126,14 @@
     background:var(--surface);position:sticky;top:0;z-index:40;
   }
   .page-title {
-    font-family:'Cormorant Garamond',serif;font-size:22px;
+    font-family:var(--font-sans);font-size:22px;
     font-weight:300;color:var(--off-white);
   }
   .page-title span { color:var(--amber-l);font-style:italic; }
   .status-badge {
     display:flex;align-items:center;gap:6px;padding:6px 12px;
     background:rgba(76,175,130,0.08);border:1px solid rgba(76,175,130,0.2);
-    border-radius:20px;font-family:'DM Mono',monospace;
+    border-radius:20px;font-family:var(--font-mono);
     font-size:10px;color:var(--green);letter-spacing:0.1em;
   }
   .status-dot {
@@ -160,12 +162,12 @@
     background:linear-gradient(90deg,var(--amber),transparent);
   }
   .kpi-label {
-    font-family:'DM Mono',monospace;font-size:9px;
+    font-family:var(--font-mono);font-size:9px;
     letter-spacing:0.18em;text-transform:uppercase;
     color:var(--gray);margin-bottom:12px;
   }
   .kpi-value {
-    font-family:'Cormorant Garamond',serif;font-size:36px;
+    font-family:var(--font-sans);font-size:36px;
     font-weight:600;color:var(--amber-l);line-height:1;margin-bottom:8px;
   }
   .kpi-value.red { color:var(--red); }
@@ -189,7 +191,7 @@
     color:var(--off-white);text-transform:uppercase;
   }
   .panel-tag {
-    font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.12em;
+    font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;
     color:var(--amber);padding:4px 10px;background:var(--amber-p);border-radius:20px;
   }
   .panel-body { padding:22px; }
@@ -213,7 +215,7 @@
   .alert-desc { font-size:11px;color:var(--gray-l);line-height:1.5; }
   .data-table { width:100%;border-collapse:collapse; }
   .data-table th {
-    font-family:'DM Mono',monospace;font-size:9px;
+    font-family:var(--font-mono);font-size:9px;
     letter-spacing:0.15em;text-transform:uppercase;color:var(--gray);
     padding:10px 16px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.05);
   }
@@ -249,11 +251,11 @@
     padding:20px 0;
   }
   .gauge-value {
-    font-family:'Cormorant Garamond',serif;font-size:52px;
+    font-family:var(--font-sans);font-size:52px;
     font-weight:600;line-height:1;margin-bottom:6px;
   }
   .gauge-label {
-    font-family:'DM Mono',monospace;font-size:10px;
+    font-family:var(--font-mono);font-size:10px;
     letter-spacing:0.15em;color:var(--gray);text-transform:uppercase;
   }
   .gauge-bar {
@@ -608,7 +610,7 @@ async function carregarGrafico() {
     },
     options:{
       responsive:true,maintainAspectRatio:true,
-      plugins:{legend:{labels:{color:'#9CA3AF',font:{family:'Outfit',size:11},boxWidth:12}}},
+      plugins:{legend:{labels:{color:'#9CA3AF',font:{family:'Inter',size:11},boxWidth:12}}},
       scales:{
         x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6B7280',font:{size:11}}},
         y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6B7280',font:{size:11},
