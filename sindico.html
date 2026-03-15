@@ -519,8 +519,10 @@ window.addEventListener('load', async () => {
 
   document.getElementById('userName').textContent = usuario.nome_completo || 'Síndico';
   document.getElementById('userAvatar').textContent = (usuario.nome_completo||'S')[0].toUpperCase();
-  document.getElementById('condNome').textContent =
-    usuario.condominios?.nome || 'Condomínio';
+  if (usuario.condominio_id) {
+    const { data: condo } = await db.from('condominios').select('nome').eq('id', usuario.condominio_id).single();
+    document.getElementById('condNome').textContent = condo?.nome || 'Condomínio';
+  }
 
   await Promise.all([
     carregarKPIs(),

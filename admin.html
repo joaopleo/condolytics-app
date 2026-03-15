@@ -630,9 +630,18 @@ async function carregarGrafico() {
     .select('periodo, receita_realizada, despesa_realizada').order('periodo');
   if (!data || data.length === 0) return;
   const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  const labels   = data.map(d => meses[new Date(d.periodo).getMonth()]);
-  const receitas = data.map(d => d.receita_realizada);
-  const despesas = data.map(d => d.despesa_realizada);
+  // Agrupa por período (soma todos os condomínios para cada mês)
+  const agrupado = {};
+  data.forEach(d => {
+    const key = d.periodo.slice(0, 7); // 'YYYY-MM'
+    if (!agrupado[key]) agrupado[key] = { receita: 0, despesa: 0 };
+    agrupado[key].receita += Number(d.receita_realizada) || 0;
+    agrupado[key].despesa += Number(d.despesa_realizada) || 0;
+  });
+  const periodos = Object.keys(agrupado).sort();
+  const labels   = periodos.map(k => meses[parseInt(k.slice(5, 7)) - 1] + '/' + k.slice(2, 4));
+  const receitas = periodos.map(k => agrupado[k].receita);
+  const despesas = periodos.map(k => agrupado[k].despesa);
   const ctx = document.getElementById('chartFinanceiro');
   if (!ctx) return;
   if (chartFinanceiro) chartFinanceiro.destroy();
