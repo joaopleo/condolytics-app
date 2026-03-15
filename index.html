@@ -1474,8 +1474,9 @@ const PERFIL_REDIRECT = {
   const [userRes, vinculosRes] = await Promise.all([
     db.from('usuarios').select('perfil').eq('id', session.user.id).single(),
     db.from('usuario_condominios')
-      .select('condominio_id, condominios(id, nome)')
+      .select('condominio_id, perfil, condominios(id, nome)')
       .eq('usuario_id', session.user.id)
+      .eq('ativo', true)
   ]);
 
   if (userRes.error || !userRes.data) return;
@@ -1484,18 +1485,19 @@ const PERFIL_REDIRECT = {
   _loginPerfil   = userRes.data.perfil;
   _loginVinculos = vinculosRes.data || [];
 
-  const destino = PERFIL_REDIRECT[_loginPerfil];
-  if (!destino) return;
-
   document.getElementById('modalLogin').classList.add('open');
 
   if (_loginVinculos.length > 1) {
-    mostrarSelecaoCondo(_loginVinculos, destino);
+    mostrarSelecaoCondo(_loginVinculos);
   } else {
-    // Só um vínculo — redireciona direto sem mostrar seleção
-    const condoId = _loginVinculos[0]?.condominio_id || null;
+    // Só um vínculo — usa perfil do vínculo para redirecionar
+    const v       = _loginVinculos[0];
+    const condoId = v?.condominio_id || null;
+    const perfil  = v?.perfil || _loginPerfil;
+    const destino = PERFIL_REDIRECT[perfil] || PERFIL_REDIRECT[_loginPerfil];
+    if (!destino) return;
     localStorage.setItem('condolytics_condo_id',   condoId || '');
-    localStorage.setItem('condolytics_condo_nome', _loginVinculos[0]?.condominios?.nome || '');
+    localStorage.setItem('condolytics_condo_nome', v?.condominios?.nome || '');
     window.location.href = destino;
   }
 })();
@@ -1527,8 +1529,9 @@ async function fazerLogin() {
     const [userRes, vinculosRes] = await Promise.all([
       db.from('usuarios').select('perfil').eq('id', data.user.id).single(),
       db.from('usuario_condominios')
-        .select('condominio_id, condominios(id, nome)')
+        .select('condominio_id, perfil, condominios(id, nome)')
         .eq('usuario_id', data.user.id)
+        .eq('ativo', true)
     ]);
 
     if (userRes.error || !userRes.data) throw new Error('perfil');
@@ -1536,9 +1539,6 @@ async function fazerLogin() {
     _loginUser     = data.user;
     _loginPerfil   = userRes.data.perfil;
     _loginVinculos = vinculosRes.data || [];
-
-    const destino = PERFIL_REDIRECT[_loginPerfil];
-    if (!destino) throw new Error('perfil');
 
     /* 3. Aguardar sessão persistida */
     let tentativas = 0;
@@ -1551,13 +1551,16 @@ async function fazerLogin() {
 
     /* 4. Decidir: seleção ou redirect direto */
     if (_loginVinculos.length > 1) {
-      mostrarSelecaoCondo(_loginVinculos, destino);
+      mostrarSelecaoCondo(_loginVinculos);
     } else {
-      /* 0 ou 1 vínculo — salva o que tiver e redireciona */
-      const condoId = _loginVinculos[0]?.condominio_id || null;
+      /* 0 ou 1 vínculo — usa perfil do vínculo para redirecionar */
+      const v       = _loginVinculos[0];
+      const condoId = v?.condominio_id || null;
+      const perfil  = v?.perfil || _loginPerfil;
+      const destino = PERFIL_REDIRECT[perfil] || PERFIL_REDIRECT[_loginPerfil];
+      if (!destino) throw new Error('perfil');
       localStorage.setItem('condolytics_condo_id',   condoId || '');
-      localStorage.setItem('condolytics_condo_nome',
-        _loginVinculos[0]?.condominios?.nome || '');
+      localStorage.setItem('condolytics_condo_nome', v?.condominios?.nome || '');
       window.location.href = destino;
     }
 
@@ -1573,16 +1576,22 @@ async function fazerLogin() {
 }
 
 /* ── Tela de seleção de condomínio (substitui conteúdo do modal-body) ── */
-function mostrarSelecaoCondo(vinculos, destino) {
+function mostrarSelecaoCondo(vinculos) {
   const body = document.querySelector('#modalLogin .modal-body');
+  const perfilLabel = { conselho:'Conselho Fiscal', sindico:'Síndico', condomino:'Condômino', admin:'Admin' };
 
   const cards = vinculos.map(v => {
-    const nome = v.condominios?.nome || 'Condomínio';
-    const id   = v.condominio_id;
+    const nome  = v.condominios?.nome || 'Condomínio';
+    const id    = v.condominio_id;
+    const perf  = v.perfil || _loginPerfil;
+    const label = perfilLabel[perf] || perf;
     return `
-      <button class="condo-pick-btn" onclick="escolherCondo('${id}','${nome.replace(/'/g,"\\'")}','${destino}')">
+      <button class="condo-pick-btn" onclick="escolherCondo('${id}','${nome.replace(/'/g,"\\'")}','${perf}')">
         <span class="condo-pick-icon">🏢</span>
-        <span class="condo-pick-nome">${nome}</span>
+        <div style="flex:1;text-align:left">
+          <div class="condo-pick-nome">${nome}</div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.05em;margin-top:2px">${label}</div>
+        </div>
         <svg viewBox="0 0 16 16" fill="none" width="13" height="13" style="flex-shrink:0;color:var(--text-faint)">
           <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
@@ -1611,7 +1620,8 @@ function mostrarSelecaoCondo(vinculos, destino) {
     </div>`;
 }
 
-function escolherCondo(condoId, condoNome, destino) {
+function escolherCondo(condoId, condoNome, perfil) {
+  const destino = PERFIL_REDIRECT[perfil] || PERFIL_REDIRECT[_loginPerfil] || 'index.html';
   localStorage.setItem('condolytics_condo_id',   condoId);
   localStorage.setItem('condolytics_condo_nome', condoNome);
   window.location.href = destino;
