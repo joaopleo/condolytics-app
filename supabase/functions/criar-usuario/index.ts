@@ -11,7 +11,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Verificar se quem chama tem sessão válida
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Não autorizado' }), {
@@ -30,7 +29,7 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     )
 
-    // Verificar se o usuário logado é admin
+    // Verificar se quem chama é admin
     const { data: { user }, error: userError } = await supabaseUser.auth.getUser()
     if (userError || !user) {
       return new Response(JSON.stringify({ error: 'Sessão inválida' }), {
@@ -52,40 +51,74 @@ Deno.serve(async (req) => {
 
     const { nome, email, senha, perfil, condominio_id } = await req.json()
 
-    if (!nome || !email || !senha || !perfil) {
-      return new Response(JSON.stringify({ error: 'Campos obrigatórios faltando' }), {
+    if (!nome || !email || !perfil) {
+      return new Response(JSON.stringify({ error: 'Nome, e-mail e perfil são obrigatórios' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
 
-    // Criar o auth user.
-    // O trigger handle_new_user cuida automaticamente do insert em public.usuarios
-    // usando raw_user_meta_data (nome_completo, perfil, condominio_id).
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password: senha,
-      email_confirm: true,
-      user_metadata: {
-        nome_completo: nome,
-        perfil,
-        condominio_id: condominio_id || null
+    // Verificar se o e-mail já existe em auth.users
+    const { data: { users: existingUsers } } = await supabaseAdmin.auth.admin.listUsers()
+    const usuarioExistente = existingUsers?.find(u => u.email === email)
+
+    let userId: string
+
+    if (usuarioExistente) {
+      // Usuário já existe — apenas adicionar ao novo condomínio
+      userId = usuarioExistente.id
+
+      // Atualizar nome/perfil em usuarios se necessário (opcional)
+      // Não sobrescreve — o usuário já existe e mantém seus dados
+
+    } else {
+      // Usuário novo — criar auth user (trigger cria registro em usuarios automaticamente)
+      if (!senha) {
+        return new Response(JSON.stringify({ error: 'Senha obrigatória para novo usuário' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
       }
-    })
 
-    if (authError) {
-      return new Response(JSON.stringify({ error: authError.message }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        password: senha,
+        email_confirm: true,
+        user_metadata: {
+          nome_completo: nome,
+          perfil,
+          condominio_id: condominio_id || null
+        }
       })
+
+      if (authError) {
+        return new Response(JSON.stringify({ error: authError.message }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
+
+      userId = authData.user.id
     }
 
-    // Inserir também na tabela usuario_condominios (relação N:N)
+    // Adicionar/atualizar vínculo com o condomínio (upsert para não duplicar)
     if (condominio_id) {
-      await supabaseAdmin
+      const { error: ucError } = await supabaseAdmin
         .from('usuario_condominios')
-        .insert({ usuario_id: authData.user.id, condominio_id, perfil })
+        .upsert(
+          { usuario_id: userId, condominio_id, perfil },
+          { onConflict: 'usuario_id,condominio_id' }
+        )
+
+      if (ucError) {
+        return new Response(JSON.stringify({ error: 'Erro ao vincular condomínio: ' + ucError.message }), {
+          status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
+      }
     }
 
-    return new Response(JSON.stringify({ success: true, user_id: authData.user.id }), {
+    return new Response(JSON.stringify({
+      success: true,
+      user_id: userId,
+      usuario_existente: !!usuarioExistente
+    }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
 
