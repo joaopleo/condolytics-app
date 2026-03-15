@@ -397,6 +397,13 @@
 
 /* Categorias de gastos */
 .cat-row { margin-bottom: 12px; }
+/* Tabs de mês nas categorias */
+.cat-tabs { display:flex; gap:4px; flex-wrap:wrap; margin-top:10px; }
+.cat-tab { font-family:var(--font-mono); font-size:9px; letter-spacing:0.07em; text-transform:uppercase;
+  padding:4px 10px; border-radius:4px; border:1px solid rgba(255,255,255,0.08);
+  background:transparent; color:var(--gray); cursor:pointer; transition:all 0.15s; }
+.cat-tab:hover { color:var(--off-white); border-color:rgba(255,255,255,0.18); }
+.cat-tab.cat-active { background:var(--gold); color:var(--bg); border-color:var(--gold); font-weight:700; }
 .cat-info { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-faint); margin-bottom: 5px; }
 .cat-info span:first-child { color: var(--off-white); }
 .cat-pct { font-family: var(--font-mono); font-size: 9px; color: var(--gray); text-align: right; margin-top: 3px; }
@@ -568,21 +575,23 @@
 
   <div class="panel">
     <div class="panel-header">
-      <span class="panel-title">Evolução Financeira — Últimos 6 Meses</span>
-      <span class="panel-tag">Receitas vs Despesas</span>
+      <span class="panel-title">Gastos por Categoria</span>
     </div>
-    <div class="panel-body">
-      <canvas id="chartFinanceiro" height="160"></canvas>
+    <div style="padding:0 20px 4px">
+      <div class="cat-tabs" id="catTabs"></div>
+    </div>
+    <div class="panel-body" id="categoriasGrid">
+      <div class="loading"><div class="spinner"></div>Carregando...</div>
     </div>
   </div>
 
   <div class="panel">
     <div class="panel-header">
-      <span class="panel-title">Gastos por Categoria</span>
-      <span class="panel-tag" id="catPeriodo">—</span>
+      <span class="panel-title">Evolução Financeira — Últimos 6 Meses</span>
+      <span class="panel-tag">Receitas vs Despesas</span>
     </div>
-    <div class="panel-body" id="categoriasGrid">
-      <div class="loading"><div class="spinner"></div>Carregando...</div>
+    <div class="panel-body">
+      <canvas id="chartFinanceiro" height="160"></canvas>
     </div>
   </div>
 
@@ -1036,28 +1045,51 @@ async function carregarRelatorios() {
 }
 
 // ── Gastos por Categoria ──
+const CAT_LABEL = {
+  pessoal:'Pessoal', rh:'RH / Encargos', terceirizados:'Terceirizados',
+  encargos:'Encargos Sociais', administracao:'Administração',
+  consumo:'Consumo (Energ/Água)', manutencoes:'Manutenção Predial',
+  financeiras:'Financeiras', reembolsaveis:'Reembolsáveis',
+  impostos:'Taxa Assoc. AMALPES', investimentos:'Investimentos',
+  investimentos_imobilizado:'Invest. Imobilizado', outros:'Outros'
+};
+let _catPeriodos  = [];   // períodos disponíveis (desc)
+let _catSelecionado = null;
+
 async function carregarGastosCategorias() {
-  const catLabel = {
-    pessoal:'Pessoal', rh:'RH / Encargos', terceirizados:'Terceirizados',
-    encargos:'Encargos Sociais', administracao:'Administração',
-    consumo:'Consumo (Energ/Água)', manutencoes:'Manutenção Predial',
-    financeiras:'Financeiras', reembolsaveis:'Reembolsáveis',
-    impostos:'Taxa Assoc. AMALPES', investimentos:'Investimentos',
-    investimentos_imobilizado:'Invest. Imobilizado', outros:'Outros'
-  };
-
-  const { data: ind } = await db.from('indicadores_financeiros')
-    .select('periodo').eq('condominio_id', condoAtual).order('periodo', { ascending: false }).limit(1);
-
   const el = document.getElementById('categoriasGrid');
-  const periodoEl = document.getElementById('catPeriodo');
+  const { data: ind } = await db.from('indicadores_financeiros')
+    .select('periodo').eq('condominio_id', condoAtual)
+    .order('periodo', { ascending: false }).limit(6);
 
   if (!ind?.length) { el.innerHTML = '<div class="empty">Sem dados.</div>'; return; }
-  const periodo = ind[0].periodo;
 
+  _catPeriodos    = ind.map(i => i.periodo); // já desc (mais recente primeiro)
+  _catSelecionado = _catPeriodos[0];
+
+  renderCatTabs();
+  await renderCategoriasGrid(_catSelecionado);
+}
+
+function renderCatTabs() {
   const mesesLabel = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  const [y, m] = periodo.split('-');
-  periodoEl.textContent = `${mesesLabel[parseInt(m)-1]}/${y}`;
+  document.getElementById('catTabs').innerHTML = _catPeriodos.map(p => {
+    const [y, m] = p.split('-');
+    const label  = `${mesesLabel[parseInt(m)-1]}/${y.slice(2)}`;
+    return `<button class="cat-tab ${p === _catSelecionado ? 'cat-active' : ''}"
+      onclick="trocarCategoriaPeriodo('${p}')">${label}</button>`;
+  }).join('');
+}
+
+async function trocarCategoriaPeriodo(periodo) {
+  _catSelecionado = periodo;
+  renderCatTabs();
+  await renderCategoriasGrid(periodo);
+}
+
+async function renderCategoriasGrid(periodo) {
+  const el = document.getElementById('categoriasGrid');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Carregando...</div>';
 
   const { data } = await db.from('lancamentos_categoria')
     .select('categoria, valor')
@@ -1073,7 +1105,7 @@ async function carregarGastosCategorias() {
     const pct = total ? Math.round((Number(d.valor) / total) * 100) : 0;
     return `<div class="cat-row">
       <div class="cat-info">
-        <span>${catLabel[d.categoria] || d.categoria}</span>
+        <span>${CAT_LABEL[d.categoria] || d.categoria}</span>
         <span>R$ ${Number(d.valor).toLocaleString('pt-BR')}</span>
       </div>
       <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:#B8872A;"></div></div>
