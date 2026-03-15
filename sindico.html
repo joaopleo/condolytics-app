@@ -356,7 +356,7 @@
         <div class="user-role">Síndico</div>
       </div>
     </div>
-    <button class="btn-logout" onclick="trocarUsuario()" style="margin-top:6px;border-color:rgba(184,135,42,0.15);color:var(--gray);">⇄ Trocar usuário</button>
+    <button id="btnTrocarUsuario" class="btn-logout" onclick="trocarUsuario()" style="display:none;margin-top:6px;border-color:rgba(184,135,42,0.15);color:var(--gray);">⇄ Trocar usuário</button>
     <button class="btn-logout" onclick="logout()">Sair da conta</button>
   </div>
 </aside>
@@ -580,8 +580,9 @@ window.addEventListener('load', async () => {
     if (condoNomeAtivo) condoNomeAtivo.nome = c?.nome || 'Condomínio';
   }
 
-  /* Monta e exibe o switcher apenas quando há mais de 1 condomínio */
+  /* Monta e exibe o switcher + botão trocar quando há mais de 1 condomínio */
   if (condos.length > 1) {
+    document.getElementById('btnTrocarUsuario').style.display = '';
     const sel = document.getElementById('condoSwitcher');
     sel.innerHTML = condos.map(c =>
       `<option value="${c.id}" ${c.id === condoAtual ? 'selected' : ''}>${c.nome || c.id}</option>`

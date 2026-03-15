@@ -645,7 +645,7 @@
           <div class="upop-name" id="upopName">—</div>
           <span class="upop-perfil" id="upopPerfil">Conselho Fiscal</span>
         </div>
-        <button class="upop-switch" onclick="trocarUsuario()">
+        <button id="btnTrocarUsuario" class="upop-switch" onclick="trocarUsuario()" style="display:none;">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M2 8a6 6 0 1010.93 3M14 8a6 6 0 00-10.93-3" stroke-linecap="round"/>
             <path d="M11 5l3-3-3-3M5 14l-3 3 3 3" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1148,8 +1148,10 @@ function configurarToggleCondos() {
   ['chartToggleContainer', 'expToggleContainer'].forEach(containerId => {
     const container = document.getElementById(containerId);
     if (!container) return;
-    /* Só mostra os botões se o usuário tiver acesso a mais de um condomínio */
+    /* Só mostra os botões e o botão Trocar se o usuário tiver acesso a mais de um condomínio */
     if (_condos.length <= 1) { container.innerHTML = ''; return; }
+    const btnTrocar = document.getElementById('btnTrocarUsuario');
+    if (btnTrocar) btnTrocar.style.display = '';
     container.innerHTML = _condos.map(c =>
       `<button class="ct-btn ${c.id === _condoAtual ? 'ct-active' : ''}"
         onclick="switchCondoSource('${c.id}')">${c.nome}</button>`

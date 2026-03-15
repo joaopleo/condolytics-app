@@ -352,7 +352,7 @@
         <div class="user-role">Administrador</div>
       </div>
     </div>
-    <button class="btn-logout" onclick="trocarUsuario()" style="margin-top:6px;border-color:rgba(184,135,42,0.15);color:var(--gray);">⇄ Trocar usuário</button>
+    <button id="btnTrocarUsuario" class="btn-logout" onclick="trocarUsuario()" style="display:none;margin-top:6px;border-color:rgba(184,135,42,0.15);color:var(--gray);">⇄ Trocar usuário</button>
     <button class="btn-logout" onclick="logout()">Sair da conta</button>
   </div>
 </aside>
@@ -599,6 +599,13 @@ window.addEventListener('load', async () => {
 
   document.getElementById('userName').textContent = usuarioAtual.nome_completo || 'Admin';
   document.getElementById('userAvatar').textContent = (usuarioAtual.nome_completo || 'A')[0].toUpperCase();
+
+  // Mostrar "Trocar usuário" apenas se o admin tiver mais de 1 vínculo
+  const { count: vinculos } = await db
+    .from('usuario_condominios')
+    .select('*', { count: 'exact', head: true })
+    .eq('usuario_id', usuarioAtual.id);
+  if (vinculos > 1) document.getElementById('btnTrocarUsuario').style.display = '';
 
   await Promise.all([
     carregarKPIs(),
