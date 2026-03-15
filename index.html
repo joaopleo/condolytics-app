@@ -1683,6 +1683,12 @@ function enviarForm() {
         erroEl.style.display = 'block';
         return;
       }
+      // Notifica por email (não bloqueia o sucesso mesmo se falhar)
+      fetch('https://mritzsidaqngexgijoqc.supabase.co/functions/v1/notify-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, email, condominio: condo, unidades, perfil })
+      }).catch(() => {});
       document.getElementById('formWrap').style.display = 'none';
       document.getElementById('formSuccess').classList.add('show');
     });
