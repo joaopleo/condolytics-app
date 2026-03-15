@@ -471,7 +471,7 @@
             </div>
             <div class="form-group">
               <label class="form-label" for="u_condominio">Condomínio</label>
-              <select class="form-select" id="u_condominio">
+              <select class="form-select" id="u_condominio" onchange="carregarUsuarios(this.value)">
                 <option value="">Selecione...</option>
               </select>
             </div>
@@ -740,9 +740,10 @@ async function carregarCondominios() {
     </tr>`).join('');
 }
 
-async function carregarUsuarios() {
-  const { data } = await db.from('usuarios').select('*, condominios(nome)')
-    .order('created_at', { ascending: false });
+async function carregarUsuarios(condoId) {
+  let query = db.from('usuarios').select('*, condominios(nome)').order('nome_completo', { ascending: true });
+  if (condoId) query = query.eq('condominio_id', condoId);
+  const { data } = await query;
   const tbody = document.getElementById('usuariosBody');
   if (!data || data.length === 0) {
     tbody.innerHTML = '<tr><td colspan="6"><div class="empty">Nenhum usuário.</div></td></tr>';
@@ -853,7 +854,7 @@ async function criarUsuario() {
   document.getElementById('userMsg').classList.add('show');
   setTimeout(() => document.getElementById('userMsg').classList.remove('show'), 3000);
   ['u_nome','u_email','u_senha'].forEach(id => document.getElementById(id).value = '');
-  await carregarUsuarios();
+  await carregarUsuarios(document.getElementById('u_condominio').value);
 }
 
 async function excluirUsuario(id, nome) {
@@ -861,7 +862,7 @@ async function excluirUsuario(id, nome) {
   const { error } = await db.from('usuarios').update({ ativo: false }).eq('id', id);
   if (error) { alert('Erro ao desativar: ' + error.message); return; }
   alert(`Usuário "${nome}" desativado com sucesso.`);
-  await carregarUsuarios();
+  await carregarUsuarios(document.getElementById('u_condominio').value);
 }
 </script>
 </body>
