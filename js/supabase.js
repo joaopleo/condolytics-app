@@ -32,8 +32,8 @@ async function logout() {
 }
 
 async function trocarUsuario() {
-  await db.auth.signOut();
-  window.location.href = 'index.html';
+  // Não faz logout — mantém a sessão e volta para a seleção de condomínio
+  window.location.href = 'index.html?trocar=1';
 }
 
 // Retorna o usuário logado

@@ -1463,6 +1463,43 @@ const PERFIL_REDIRECT = {
   admin:     'admin.html',
 };
 
+/* ── Detecção de ?trocar=1 — abre seleção de condomínio sem re-login ── */
+(async () => {
+  if (new URLSearchParams(window.location.search).get('trocar') !== '1') return;
+  history.replaceState({}, '', 'index.html'); // limpa o parâmetro da URL
+
+  const { data: { session } } = await db.auth.getSession();
+  if (!session?.user) return; // sem sessão: fica na tela normal de login
+
+  const [userRes, vinculosRes] = await Promise.all([
+    db.from('usuarios').select('perfil').eq('id', session.user.id).single(),
+    db.from('usuario_condominios')
+      .select('condominio_id, condominios(id, nome)')
+      .eq('usuario_id', session.user.id)
+  ]);
+
+  if (userRes.error || !userRes.data) return;
+
+  _loginUser     = session.user;
+  _loginPerfil   = userRes.data.perfil;
+  _loginVinculos = vinculosRes.data || [];
+
+  const destino = PERFIL_REDIRECT[_loginPerfil];
+  if (!destino) return;
+
+  document.getElementById('modalLogin').classList.add('open');
+
+  if (_loginVinculos.length > 1) {
+    mostrarSelecaoCondo(_loginVinculos, destino);
+  } else {
+    // Só um vínculo — redireciona direto sem mostrar seleção
+    const condoId = _loginVinculos[0]?.condominio_id || null;
+    localStorage.setItem('condolytics_condo_id',   condoId || '');
+    localStorage.setItem('condolytics_condo_nome', _loginVinculos[0]?.condominios?.nome || '');
+    window.location.href = destino;
+  }
+})();
+
 /* ── estado do login em progresso ── */
 let _loginUser     = null;
 let _loginPerfil   = null;
