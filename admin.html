@@ -779,36 +779,64 @@ async function carregarCondominios() {
 }
 
 async function carregarUsuarios(condoId) {
-  // condominios!condominio_id(nome) — hint explícita de FK para evitar HTTP 300 (ambiguidade com usuario_condominios)
-  let query = db.from('usuarios').select('*, condominios!condominio_id(nome)').order('nome_completo', { ascending: true });
-  if (condoId) query = query.eq('condominio_id', condoId);
-  const { data } = await query;
-  const tbody = document.getElementById('usuariosBody');
-  if (!data || data.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6"><div class="empty">Nenhum usuário.</div></td></tr>';
-    return;
-  }
   const perfilBadge = {
     admin: 'badge-amber', sindico: 'badge-green',
     conselho: 'badge-gray', condomino: 'badge-gray'
   };
-  tbody.innerHTML = data.map(u => `
-    <tr>
-      <td style="color:var(--off-white);">${u.nome_completo}</td>
-      <td>${u.email}</td>
-      <td><span class="badge ${perfilBadge[u.perfil] || 'badge-gray'}">${u.perfil}</span></td>
-      <td>${u.condominios?.nome || '—'}</td>
-      <td><span class="badge ${u.ativo ? 'badge-green' : 'badge-red'}">${u.ativo ? 'ativo' : 'inativo'}</span></td>
-      <td>
-        <button class="btn-edit" onclick="abrirModalCondominio('${u.id}', '${u.nome_completo.replace(/'/g, "\\'")}', '${u.condominio_id || ''}')">
-          Editar
-        </button>
-        ${u.perfil !== 'admin' ? `
-          <button class="btn-danger" onclick="excluirUsuario('${u.id}', '${u.nome_completo.replace(/'/g, "\\'")}')">
-            Desativar
-          </button>` : '—'}
-      </td>
-    </tr>`).join('');
+  const tbody = document.getElementById('usuariosBody');
+
+  /* Busca todos os vínculos (1 linha por user×condo) */
+  let vinculosQuery = db.from('usuario_condominios')
+    .select('usuario_id, condominio_id, perfil, ativo, usuarios(id, nome_completo, email, ativo), condominios(nome)');
+  if (condoId) vinculosQuery = vinculosQuery.eq('condominio_id', condoId);
+  const { data: vinculos } = await vinculosQuery;
+
+  /* Busca admins (sem vínculo em usuario_condominios) — só mostra quando sem filtro de condo */
+  let admins = [];
+  if (!condoId) {
+    const { data: adm } = await db.from('usuarios').select('id,nome_completo,email,perfil,ativo').eq('perfil','admin').order('nome_completo');
+    admins = adm || [];
+  }
+
+  /* Monta linhas — vinculos em ordem alfabética */
+  const rows = [];
+  const vinculosSorted = (vinculos || []).sort((a, b) =>
+    (a.usuarios?.nome_completo || '').localeCompare(b.usuarios?.nome_completo || '', 'pt-BR')
+  );
+
+  vinculosSorted.forEach(v => {
+    const u   = v.usuarios || {};
+    const nom = (u.nome_completo || '').replace(/'/g, "\\'");
+    rows.push(`
+      <tr>
+        <td style="color:var(--off-white);">${u.nome_completo || '—'}</td>
+        <td>${u.email || '—'}</td>
+        <td><span class="badge ${perfilBadge[v.perfil] || 'badge-gray'}">${v.perfil}</span></td>
+        <td>${v.condominios?.nome || '—'}</td>
+        <td><span class="badge ${v.ativo ? 'badge-green' : 'badge-red'}">${v.ativo ? 'ativo' : 'inativo'}</span></td>
+        <td>
+          <button class="btn-edit" onclick="abrirModalCondominio('${u.id}','${nom}','${v.condominio_id}')">Editar</button>
+          <button class="btn-danger" onclick="excluirUsuario('${u.id}','${v.condominio_id}','${nom}')">Desativar</button>
+        </td>
+      </tr>`);
+  });
+
+  admins.forEach(u => {
+    const nom = u.nome_completo.replace(/'/g, "\\'");
+    rows.push(`
+      <tr>
+        <td style="color:var(--off-white);">${u.nome_completo}</td>
+        <td>${u.email}</td>
+        <td><span class="badge badge-amber">admin</span></td>
+        <td>—</td>
+        <td><span class="badge ${u.ativo ? 'badge-green' : 'badge-red'}">${u.ativo ? 'ativo' : 'inativo'}</span></td>
+        <td><button class="btn-edit" onclick="abrirModalCondominio('${u.id}','${nom}','')">Editar</button> —</td>
+      </tr>`);
+  });
+
+  tbody.innerHTML = rows.length
+    ? rows.join('')
+    : '<tr><td colspan="6"><div class="empty">Nenhum usuário.</div></td></tr>';
 }
 
 async function carregarAlertasTabela() {
@@ -905,11 +933,14 @@ async function criarUsuario() {
   await carregarUsuarios(document.getElementById('u_condominio').value);
 }
 
-async function excluirUsuario(id, nome) {
-  if (!confirm(`Desativar o usuário "${nome}"?\n\nO usuário perderá acesso imediatamente. Para exclusão completa, remova também em Authentication → Users no Supabase.`)) return;
-  const { error } = await db.from('usuarios').update({ ativo: false }).eq('id', id);
+async function excluirUsuario(userId, condoId, nome) {
+  if (!confirm(`Desativar o vínculo de "${nome}" com este condomínio?\n\nO usuário perderá acesso a este condomínio específico.`)) return;
+  const { error } = await db.from('usuario_condominios')
+    .update({ ativo: false })
+    .eq('usuario_id', userId)
+    .eq('condominio_id', condoId);
   if (error) { alert('Erro ao desativar: ' + error.message); return; }
-  alert(`Usuário "${nome}" desativado com sucesso.`);
+  alert(`Vínculo de "${nome}" desativado com sucesso.`);
   await carregarUsuarios(document.getElementById('u_condominio').value);
 }
 
