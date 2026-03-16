@@ -496,22 +496,13 @@
 
     <!-- DASHBOARD -->
     <section class="section active" id="sec-dashboard">
-      <!-- Banner de resposta do conselho (aparece só quando há ocorrências aprovadas/rejeitadas não resolvidas) -->
-      <div id="bannerConselho" style="display:none;margin-bottom:20px;padding:14px 20px;
-        background:rgba(224,92,58,0.1);border:1px solid rgba(224,92,58,0.45);
-        border-radius:10px;display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <span style="font-size:18px;">🔔</span>
-          <div>
-            <div style="font-size:13px;font-weight:600;color:#E05C3A;" id="bannerConselhoTexto">O conselho respondeu a uma ocorrência</div>
-            <div style="font-size:11px;color:var(--gray);margin-top:2px;">Acesse Ocorrências para ver a resposta e tomar as providências necessárias.</div>
-          </div>
+      <!-- Banner de respostas do conselho — cards individuais por ocorrência -->
+      <div id="bannerConselho" style="display:none;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <span style="font-size:16px;">🔔</span>
+          <span style="font-size:12px;font-weight:600;color:#E05C3A;text-transform:uppercase;letter-spacing:0.08em;">Conselho respondeu — aguarda sua providência</span>
         </div>
-        <button onclick="mostrarSecao('ocorrencias', document.querySelector('.nav-item[onclick*=ocorrencias]'))"
-          style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;
-          background:#E05C3A;color:#fff;border:none;border-radius:6px;padding:9px 18px;cursor:pointer;flex-shrink:0;">
-          Ver Ocorrências →
-        </button>
+        <div id="bannerConselhoCards" style="display:flex;flex-direction:column;gap:10px;"></div>
       </div>
 
       <div class="kpi-grid" id="kpiGrid">
@@ -909,23 +900,105 @@ window.addEventListener('load', async () => {
 
 async function verificarRespostasConselho() {
   const { data } = await db.from('ocorrencias')
-    .select('id, titulo, status, aprovado_em')
+    .select('id, titulo, tipo, status, aprovado_em, observacoes_aprovacao')
     .eq('condominio_id', condoAtual)
     .in('status', ['aprovado', 'rejeitado'])
-    .is('resolvido_em', null); // respondidas mas ainda não resolvidas
+    .is('resolvido_em', null)
+    .order('aprovado_em', { ascending: false });
 
   const banner = document.getElementById('bannerConselho');
-  if (!banner) return;
-  if (data?.length) {
-    const qtd = data.length;
-    document.getElementById('bannerConselhoTexto').textContent =
-      qtd === 1
-        ? `O conselho respondeu a 1 ocorrência — aguarda sua providência`
-        : `O conselho respondeu a ${qtd} ocorrências — aguardam sua providência`;
-    banner.style.display = 'flex';
-  } else {
-    banner.style.display = 'none';
-  }
+  const cards  = document.getElementById('bannerConselhoCards');
+  if (!banner || !cards) return;
+
+  if (!data?.length) { banner.style.display = 'none'; return; }
+
+  const tipoLabel = { manutencao:'Manutenção', emergencia:'Emergência', seguranca:'Segurança',
+    higiene:'Higiene/Limpeza', administrativo:'Administrativo', prestador:'Prestador', outro:'Outro' };
+
+  cards.innerHTML = data.map(o => {
+    const aprovado = o.status === 'aprovado';
+    const cor   = aprovado ? '#4CAF50' : '#E05C3A';
+    const label = aprovado ? '✔ Aprovado pelo Conselho' : '✘ Rejeitado pelo Conselho';
+    const obsConselho = o.observacoes_aprovacao
+      ? `<div style="font-size:11px;color:#9CA3AF;margin-top:4px;font-style:italic">"${o.observacoes_aprovacao}"</div>` : '';
+    const dataResp = o.aprovado_em
+      ? new Date(o.aprovado_em).toLocaleDateString('pt-BR') : '';
+    // Formulário de resolução (só aparece para aprovadas)
+    const formResolver = aprovado ? `
+      <div id="formResolver_${o.id}" style="display:none;margin-top:12px;padding-top:12px;
+        border-top:1px solid rgba(255,255,255,0.06);display:none;flex-direction:column;gap:8px;">
+        <input id="bobs_${o.id}" placeholder="Observação da resolução (opcional)"
+          style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;
+          color:#E8E6E0;font-size:11px;padding:8px 12px;outline:none;width:100%;box-sizing:border-box;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <input id="bvreal_${o.id}" type="number" placeholder="Valor realizado R$ (opcional)"
+            style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;
+            color:#E8E6E0;font-size:11px;padding:8px 12px;outline:none;flex:1;min-width:140px;box-sizing:border-box;">
+          <button onclick="confirmarResolucaoDashboard('${o.id}')"
+            style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;
+            background:#4CAF50;color:#fff;border:none;border-radius:6px;padding:9px 18px;cursor:pointer;font-weight:700;">
+            ✓ Confirmar Resolução
+          </button>
+          <button onclick="document.getElementById('formResolver_${o.id}').style.display='none'"
+            style="font-family:var(--font-mono);font-size:10px;background:transparent;color:#6B7280;
+            border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:9px 14px;cursor:pointer;">
+            Cancelar
+          </button>
+        </div>
+      </div>` : '';
+    return `
+    <div id="cardBanner_${o.id}" style="background:rgba(224,92,58,0.07);border:1px solid rgba(224,92,58,0.35);
+      border-radius:10px;padding:14px 18px;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <span style="font-size:12px;font-weight:700;color:${cor};white-space:nowrap;">${label}</span>
+            <span style="font-size:11px;color:#6B7280;">${tipoLabel[o.tipo]||o.tipo}${dataResp ? ' · '+dataResp : ''}</span>
+          </div>
+          <div style="font-size:13px;font-weight:600;color:#E8E6E0;">${o.titulo}</div>
+          ${obsConselho}
+        </div>
+        ${aprovado
+          ? `<button onclick="toggleFormResolver('${o.id}')"
+              style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;
+              background:#B8872A;color:#0A0C0F;border:none;border-radius:6px;padding:9px 16px;cursor:pointer;
+              font-weight:700;white-space:nowrap;flex-shrink:0;">
+              ✓ Marcar Resolvida
+            </button>`
+          : `<span style="font-size:11px;color:#6B7280;font-style:italic;flex-shrink:0;">Nenhuma ação necessária</span>`
+        }
+      </div>
+      ${formResolver}
+    </div>`;
+  }).join('');
+
+  banner.style.display = 'block';
+}
+
+function toggleFormResolver(id) {
+  const form = document.getElementById('formResolver_' + id);
+  if (!form) return;
+  form.style.display = form.style.display === 'none' ? 'flex' : 'none';
+}
+
+async function confirmarResolucaoDashboard(id) {
+  const obs   = document.getElementById('bobs_'   + id)?.value.trim() || null;
+  const vreal = parseFloat(document.getElementById('bvreal_' + id)?.value) || null;
+  const { error } = await db.from('ocorrencias').update({
+    status: 'resolvido',
+    observacoes_resolucao: obs,
+    valor_realizado: vreal,
+    resolvido_em: new Date().toISOString()
+  }).eq('id', id);
+  if (error) { alert('Erro: ' + error.message); return; }
+  // Remove o card do dashboard imediatamente
+  const card = document.getElementById('cardBanner_' + id);
+  if (card) card.remove();
+  // Esconde banner se não sobrar cards
+  const cardsEl = document.getElementById('bannerConselhoCards');
+  if (!cardsEl?.children.length) document.getElementById('bannerConselho').style.display = 'none';
+  // Atualiza a lista de ocorrências (seção Ocorrências)
+  await carregarOcorrencias();
 }
 
 async function carregarTudo() {
@@ -1385,10 +1458,17 @@ function renderOcorrencias() {
       </div>
       ${aprovInfo}
       ${o.observacoes_resolucao ? `<div style="font-size:11px;color:var(--green);padding:6px 10px;background:rgba(76,175,130,0.06);border-radius:6px;">✓ ${o.observacoes_resolucao}</div>` : ''}
-      ${podeResolver ? `<div style="display:flex;gap:8px;flex-wrap:wrap;padding-top:4px;border-top:1px solid rgba(255,255,255,0.05);">
-        <input class="com-input" id="obs_${o.id}" placeholder="Observação da resolução (opcional)" style="flex:1;min-width:180px;font-size:11px;padding:6px 10px;">
-        <input class="com-input" id="vreal_${o.id}" type="number" placeholder="Valor real (R$)" style="width:130px;font-size:11px;padding:6px 10px;">
-        <button class="com-btn" onclick="resolverOcorrencia('${o.id}')" style="padding:6px 14px;font-size:10px;">Marcar Resolvida</button>
+      ${podeResolver ? `<div style="padding-top:8px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+          <input class="com-input" id="obs_${o.id}" placeholder="Observação da resolução (opcional)" style="flex:1;min-width:180px;font-size:11px;padding:6px 10px;">
+          <input class="com-input" id="vreal_${o.id}" type="number" placeholder="Valor realizado R$ (opcional)" style="width:150px;font-size:11px;padding:6px 10px;">
+        </div>
+        <button onclick="resolverOcorrencia('${o.id}')"
+          style="width:100%;padding:10px;font-family:var(--font-mono);font-size:11px;letter-spacing:0.08em;
+          text-transform:uppercase;font-weight:700;background:#B8872A;color:#0A0C0F;border:none;
+          border-radius:7px;cursor:pointer;">
+          ✓ Marcar como Resolvida
+        </button>
       </div>` : ''}
     </div>`;
   }).join('');

@@ -739,23 +739,11 @@
         <div style="font-size:11px;color:var(--text-dim,#9CA3AF);margin-top:2px;">O síndico aguarda resposta do conselho para prosseguir.</div>
       </div>
     </div>
-    <button onclick="mostrarSecao('aprovacoes', document.getElementById('btnAprovacoes'))"
+    <button onclick="(function(){ var s=document.getElementById('secOcorrenciasConselho'); s.style.display='block'; setTimeout(function(){ s.scrollIntoView({behavior:'smooth'}); },60); })()"
       style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;
       background:#E05C3A;color:#fff;border:none;border-radius:6px;padding:9px 18px;cursor:pointer;flex-shrink:0;
       animation:aprov-pulse 2s infinite;">
       Ver Aprovações →
-    </button>
-  </div>
-
-  <!-- APROVAÇÕES (acima dos meses) -->
-  <div class="aprov-bar">
-    <button class="aprov-nav-btn" id="btnAprovacoes" onclick="mostrarSecao('aprovacoes',this)">
-      <svg viewBox="0 0 16 16" fill="none" width="14" height="14">
-        <path d="M2 8h9M8 5l3 3-3 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="13" cy="8" r="2" stroke="currentColor" stroke-width="1.3"/>
-      </svg>
-      Aprovações
-      <span id="aprovBadge" class="aprov-badge"></span>
     </button>
   </div>
 
