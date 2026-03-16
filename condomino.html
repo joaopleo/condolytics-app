@@ -403,9 +403,10 @@
   padding:4px 10px; border-radius:4px; border:1px solid rgba(255,255,255,0.08);
   background:transparent; color:var(--gray); cursor:pointer; transition:all 0.15s; }
 .cat-tab:hover { color:var(--off-white); border-color:rgba(255,255,255,0.18); }
-.cat-tab.cat-active { background:var(--gold); color:var(--bg); border-color:var(--gold); font-weight:700; }
-.cat-info { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-faint); margin-bottom: 5px; }
-.cat-info span:first-child { color: var(--off-white); }
+.cat-tab.cat-active { background:rgba(255,255,255,0.14); color:#fff; border-color:rgba(255,255,255,0.5); font-weight:700; }
+.cat-info { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-faint); margin-bottom: 5px; }
+.cat-info span:first-child { color: var(--off-white); flex: 1; }
+.cat-info span:last-child { flex-shrink: 0; }
 .cat-pct { font-family: var(--font-mono); font-size: 9px; color: var(--gray); text-align: right; margin-top: 3px; }
 
 /* Alertas públicos */
@@ -1068,6 +1069,7 @@ const CAT_LABEL = {
 };
 let _catPeriodos  = [];   // períodos disponíveis (desc)
 let _catSelecionado = null;
+let _catHistory = {}; // { [categoria]: { [periodo]: valor } }
 
 async function carregarGastosCategorias() {
   const el = document.getElementById('categoriasGrid');
@@ -1079,6 +1081,18 @@ async function carregarGastosCategorias() {
 
   _catPeriodos    = ind.map(i => i.periodo); // já desc (mais recente primeiro)
   _catSelecionado = _catPeriodos[0];
+
+  // Carrega histórico completo para sparklines
+  const { data: hist } = await db.from('lancamentos_categoria')
+    .select('categoria, valor, periodo')
+    .eq('condominio_id', condoAtual)
+    .in('periodo', _catPeriodos)
+    .eq('tipo', 'despesa');
+  _catHistory = {};
+  (hist || []).forEach(h => {
+    if (!_catHistory[h.categoria]) _catHistory[h.categoria] = {};
+    _catHistory[h.categoria][h.periodo] = Number(h.valor);
+  });
 
   renderCatTabs();
   await renderCategoriasGrid(_catSelecionado);
@@ -1116,9 +1130,33 @@ async function renderCategoriasGrid(periodo) {
   const total = data.reduce((s, d) => s + Number(d.valor), 0);
   el.innerHTML = data.map(d => {
     const pct = total ? Math.round((Number(d.valor) / total) * 100) : 0;
+    // sparkline
+    const hist = _catHistory[d.categoria] || {};
+    const periodoAsc = [..._catPeriodos].reverse(); // ascendente para o gráfico
+    const vals = periodoAsc.map(p => hist[p] || 0);
+    const hasData = vals.some(v => v > 0);
+    let spark = '';
+    if (hasData) {
+      const mn = Math.min(...vals);
+      const mx = Math.max(...vals);
+      const range = mx - mn || 1;
+      const W = 60, H = 18, pad = 2;
+      const pts = vals.map((v, i) => {
+        const x = (i / (vals.length - 1)) * (W - pad*2) + pad;
+        const y = H - pad - ((v - mn) / range) * (H - pad*2);
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      }).join(' ');
+      const first = vals.find(v => v > 0) || 0;
+      const last  = [...vals].reverse().find(v => v > 0) || 0;
+      const cor   = last > first ? '#E05C3A' : '#4CAF50';
+      spark = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="flex-shrink:0;">
+        <polyline points="${pts}" fill="none" stroke="${cor}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+      </svg>`;
+    }
     return `<div class="cat-row">
       <div class="cat-info">
         <span>${CAT_LABEL[d.categoria] || d.categoria}</span>
+        ${spark}
         <span>R$ ${Number(d.valor).toLocaleString('pt-BR')}</span>
       </div>
       <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:#B8872A;"></div></div>

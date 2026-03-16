@@ -291,6 +291,47 @@
     background:linear-gradient(90deg,var(--green),var(--amber),var(--red));
     transition:width 1s ease;
   }
+
+/* ── Comunicados / Avisos ── */
+.com-tabs { display:flex; gap:2px; border-bottom:1px solid rgba(255,255,255,0.06); margin-bottom:24px; }
+.com-tab { font-family:var(--font-mono); font-size:10px; letter-spacing:0.08em; text-transform:uppercase;
+  padding:8px 16px; background:none; border:none; color:var(--gray); cursor:pointer;
+  border-bottom:2px solid transparent; margin-bottom:-1px; transition:all 0.15s; }
+.com-tab:hover { color:var(--off-white); }
+.com-tab.active { color:var(--gold); border-bottom-color:var(--gold); }
+.com-pane { display:none; }
+.com-pane.active { display:block; }
+.com-form { background:var(--surface); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:20px 24px; margin-bottom:24px; }
+.com-form-title { font-family:var(--font-mono); font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--gray); margin-bottom:16px; }
+.com-field { margin-bottom:14px; }
+.com-label { font-family:var(--font-mono); font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--gray); display:block; margin-bottom:6px; }
+.com-input, .com-select, .com-textarea {
+  width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+  border-radius:6px; color:var(--off-white); font-family:var(--font-sans); font-size:13px;
+  padding:8px 12px; outline:none; transition:border-color 0.15s; box-sizing:border-box; }
+.com-input:focus, .com-select:focus, .com-textarea:focus { border-color:rgba(201,168,76,0.4); }
+.com-textarea { resize:vertical; min-height:90px; }
+.com-select option { background:#1a1a1a; }
+.com-row { display:flex; gap:12px; }
+.com-row .com-field { flex:1; }
+.com-btn { font-family:var(--font-mono); font-size:10px; letter-spacing:0.08em; text-transform:uppercase;
+  background:var(--gold); color:var(--bg); border:none; border-radius:6px; padding:9px 20px;
+  cursor:pointer; transition:opacity 0.15s; }
+.com-btn:hover { opacity:0.85; }
+.com-btn:disabled { opacity:0.5; cursor:not-allowed; }
+.com-list { display:flex; flex-direction:column; gap:10px; }
+.com-item { background:var(--surface); border:1px solid rgba(255,255,255,0.06); border-radius:10px;
+  padding:14px 18px; display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+.com-item-title { font-size:13px; font-weight:600; color:var(--off-white); margin-bottom:4px; }
+.com-item-meta { font-family:var(--font-mono); font-size:9px; color:var(--gray); display:flex; gap:10px; flex-wrap:wrap; }
+.com-item-body { font-size:12px; color:var(--text-faint); margin-top:6px; line-height:1.5; }
+.com-badge { font-family:var(--font-mono); font-size:9px; padding:2px 8px; border-radius:10px; flex-shrink:0; }
+.com-badge-pub { background:rgba(76,175,80,0.15); color:#4CAF50; }
+.com-badge-ras { background:rgba(255,255,255,0.06); color:var(--gray); }
+.com-badge-pub-vis { background:rgba(201,168,76,0.15); color:var(--gold); }
+.com-badge-int-vis { background:rgba(255,255,255,0.06); color:var(--gray); }
+.com-del { background:none; border:none; color:var(--gray); cursor:pointer; font-size:16px; padding:0 2px; opacity:0.5; }
+.com-del:hover { color:var(--red); opacity:1; }
 </style>
 </head>
 <body>
@@ -329,6 +370,13 @@
         <path d="M6 5h4M6 8h4M6 11h2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
       </svg>
       Documentos
+    </button>
+    <button class="nav-item" onclick="mostrarSecao('comunicados',this)">
+      <svg viewBox="0 0 16 16" fill="none">
+        <path d="M2 4h12v8a1 1 0 01-1 1H3a1 1 0 01-1-1V4z" stroke="currentColor" stroke-width="1.3"/>
+        <path d="M2 4l6 5 6-5" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+      </svg>
+      Comunicados
     </button>
     <button class="nav-item" onclick="mostrarSecao('alertas',this)">
       <svg viewBox="0 0 16 16" fill="none">
@@ -474,6 +522,83 @@
               </td></tr>
             </tbody>
           </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMUNICADOS E AVISOS -->
+    <section class="section" id="sec-comunicados">
+      <div class="com-tabs">
+        <button class="com-tab active" onclick="mostrarComPane('comunicados',this)">Comunicados e Destaques</button>
+        <button class="com-tab" onclick="mostrarComPane('avisos',this)">Avisos</button>
+      </div>
+
+      <!-- PANE: COMUNICADOS -->
+      <div class="com-pane active" id="pane-comunicados">
+        <div class="com-form">
+          <div class="com-form-title">Novo comunicado / destaque</div>
+          <div class="com-field">
+            <label class="com-label" for="comTitulo">Título</label>
+            <input class="com-input" id="comTitulo" placeholder="Ex: Resultados da reunião de março">
+          </div>
+          <div class="com-field">
+            <label class="com-label" for="comConteudo">Conteúdo</label>
+            <textarea class="com-textarea" id="comConteudo" placeholder="Descreva os destaques, decisões ou informações relevantes..."></textarea>
+          </div>
+          <div class="com-row">
+            <div class="com-field">
+              <label class="com-label" for="comTipo">Tipo</label>
+              <select class="com-select" id="comTipo">
+                <option value="comunicado">Comunicado</option>
+                <option value="destaque">Destaque de Ata</option>
+                <option value="ata">Ata Completa</option>
+              </select>
+            </div>
+            <div class="com-field" style="display:flex;align-items:flex-end;">
+              <button class="com-btn" id="btnSalvarCom" onclick="salvarComunicado()">Publicar</button>
+            </div>
+          </div>
+        </div>
+        <div class="com-list" id="comList">
+          <div class="loading"><div class="spinner"></div>Carregando...</div>
+        </div>
+      </div>
+
+      <!-- PANE: AVISOS -->
+      <div class="com-pane" id="pane-avisos">
+        <div class="com-form">
+          <div class="com-form-title">Novo aviso</div>
+          <div class="com-field">
+            <label class="com-label" for="avisoTitulo">Título</label>
+            <input class="com-input" id="avisoTitulo" placeholder="Ex: Manutenção do elevador">
+          </div>
+          <div class="com-field">
+            <label class="com-label" for="avisoDesc">Descrição</label>
+            <textarea class="com-textarea" id="avisoDesc" placeholder="Detalhes do aviso..."></textarea>
+          </div>
+          <div class="com-row">
+            <div class="com-field">
+              <label class="com-label" for="avisoVisibilidade">Visibilidade</label>
+              <select class="com-select" id="avisoVisibilidade">
+                <option value="publico">Público (todos veem)</option>
+                <option value="interno">Interno (só conselho/síndico)</option>
+              </select>
+            </div>
+            <div class="com-field">
+              <label class="com-label" for="avisoSeveridade">Severidade</label>
+              <select class="com-select" id="avisoSeveridade">
+                <option value="info">Informativo</option>
+                <option value="alerta">Alerta</option>
+                <option value="critico">Crítico</option>
+              </select>
+            </div>
+            <div class="com-field" style="display:flex;align-items:flex-end;">
+              <button class="com-btn" id="btnSalvarAviso" onclick="salvarAviso()">Publicar</button>
+            </div>
+          </div>
+        </div>
+        <div class="com-list" id="avisosList">
+          <div class="loading"><div class="spinner"></div>Carregando...</div>
         </div>
       </div>
     </section>
@@ -632,13 +757,18 @@ function mostrarSecao(nome, el) {
   document.getElementById('sec-'+nome).classList.add('active');
   el.classList.add('active');
   const titulos = {
-    dashboard:  'Dashboard <span>Condominial</span>',
-    financeiro: 'Dados <span>Financeiros</span>',
-    documentos: 'Documentos <span>do Condomínio</span>',
-    alertas:    'Central de <span>Alertas</span>',
-    relatorios: 'Relatórios <span>Condolytics</span>'
+    dashboard:   'Dashboard <span>Condominial</span>',
+    financeiro:  'Dados <span>Financeiros</span>',
+    documentos:  'Documentos <span>do Condomínio</span>',
+    comunicados: 'Comunicados e <span>Avisos</span>',
+    alertas:     'Central de <span>Alertas</span>',
+    relatorios:  'Relatórios <span>Condolytics</span>'
   };
   document.getElementById('pageTitle').innerHTML = titulos[nome] || nome;
+  if (nome === 'comunicados') {
+    carregarComunicados();
+    carregarAvisos();
+  }
 }
 
 async function carregarKPIs() {
@@ -863,6 +993,117 @@ async function carregarRelatorios() {
           : '<span style="color:var(--gray);font-size:11px;">Indisponível</span>'}
       </td>
     </tr>`).join('');
+}
+
+// ── Comunicados / Avisos ──
+function mostrarComPane(nome, el) {
+  document.querySelectorAll('.com-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.com-pane').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('pane-' + nome).classList.add('active');
+}
+
+async function carregarComunicados() {
+  const { data } = await db.from('comunicados')
+    .select('*').eq('condominio_id', condoAtual)
+    .order('created_at', { ascending: false });
+  const el = document.getElementById('comList');
+  if (!data?.length) { el.innerHTML = '<div style="color:var(--gray);font-size:12px;padding:8px 0;">Nenhum comunicado publicado.</div>'; return; }
+  const tipoLabel = { comunicado:'Comunicado', destaque:'Destaque de Ata', ata:'Ata' };
+  el.innerHTML = data.map(c => {
+    const dt = new Date(c.created_at).toLocaleDateString('pt-BR');
+    return `<div class="com-item">
+      <div style="flex:1">
+        <div class="com-item-title">${c.titulo}</div>
+        <div class="com-item-meta">
+          <span>${tipoLabel[c.tipo] || c.tipo}</span>
+          <span>${dt}</span>
+        </div>
+        ${c.conteudo ? `<div class="com-item-body">${c.conteudo}</div>` : ''}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+        <span class="com-badge ${c.publicado ? 'com-badge-pub' : 'com-badge-ras'}">${c.publicado ? 'publicado' : 'rascunho'}</span>
+        <button class="com-del" onclick="excluirComunicado('${c.id}')" title="Excluir">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function salvarComunicado() {
+  const titulo   = document.getElementById('comTitulo').value.trim();
+  const conteudo = document.getElementById('comConteudo').value.trim();
+  const tipo     = document.getElementById('comTipo').value;
+  if (!titulo) { alert('Informe o título.'); return; }
+  const btn = document.getElementById('btnSalvarCom');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  const { error } = await db.from('comunicados').insert({
+    condominio_id: condoAtual, titulo, conteudo, tipo, publicado: true,
+    publicado_em: new Date().toISOString()
+  });
+  btn.disabled = false; btn.textContent = 'Publicar';
+  if (error) { alert('Erro: ' + error.message); return; }
+  document.getElementById('comTitulo').value   = '';
+  document.getElementById('comConteudo').value = '';
+  await carregarComunicados();
+}
+
+async function excluirComunicado(id) {
+  if (!confirm('Excluir este comunicado?')) return;
+  await db.from('comunicados').delete().eq('id', id);
+  await carregarComunicados();
+}
+
+async function carregarAvisos() {
+  const { data } = await db.from('alertas')
+    .select('*').eq('condominio_id', condoAtual)
+    .order('created_at', { ascending: false });
+  const el = document.getElementById('avisosList');
+  if (!data?.length) { el.innerHTML = '<div style="color:var(--gray);font-size:12px;padding:8px 0;">Nenhum aviso publicado.</div>'; return; }
+  const sevCor = { info:'#4CAF50', alerta:'#FFB300', critico:'#E05C3A' };
+  el.innerHTML = data.map(a => {
+    const dt = new Date(a.created_at).toLocaleDateString('pt-BR');
+    const vis = a.visibilidade === 'publico' ? 'com-badge-pub-vis' : 'com-badge-int-vis';
+    const visLabel = a.visibilidade === 'publico' ? 'público' : 'interno';
+    return `<div class="com-item" style="border-left:3px solid ${sevCor[a.severidade]||'var(--gray)'};">
+      <div style="flex:1">
+        <div class="com-item-title">${a.titulo}</div>
+        <div class="com-item-meta">
+          <span>${a.severidade || 'info'}</span>
+          <span>${dt}</span>
+        </div>
+        ${a.descricao ? `<div class="com-item-body">${a.descricao}</div>` : ''}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+        <span class="com-badge ${vis}">${visLabel}</span>
+        <button class="com-del" onclick="excluirAviso('${a.id}')" title="Excluir">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function salvarAviso() {
+  const titulo      = document.getElementById('avisoTitulo').value.trim();
+  const descricao   = document.getElementById('avisoDesc').value.trim();
+  const visibilidade = document.getElementById('avisoVisibilidade').value;
+  const severidade  = document.getElementById('avisoSeveridade').value;
+  if (!titulo) { alert('Informe o título.'); return; }
+  const btn = document.getElementById('btnSalvarAviso');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  const { error } = await db.from('alertas').insert({
+    condominio_id: condoAtual, titulo, descricao, visibilidade, severidade,
+    tipo: 'manual', origem: 'sindico', lido: false
+  });
+  btn.disabled = false; btn.textContent = 'Publicar';
+  if (error) { alert('Erro: ' + error.message); return; }
+  document.getElementById('avisoTitulo').value = '';
+  document.getElementById('avisoDesc').value   = '';
+  await carregarAvisos();
+}
+
+async function excluirAviso(id) {
+  if (!confirm('Excluir este aviso?')) return;
+  await db.from('alertas').delete().eq('id', id);
+  await carregarAvisos();
 }
 </script>
 </body>
