@@ -905,18 +905,31 @@ async function carregarSaude() {
   const recEfic    = ((d.receita_realizada/d.receita_prevista)*100).toFixed(1);
   const inadCor    = d.inadimplencia_pct<3?'var(--green)':d.inadimplencia_pct<5?'var(--amber-l)':'var(--red)';
   const budgetCor  = execBudget<=100?'var(--green)':'var(--red)';
+  const mkRing = (pct, cor) => `
+    <svg viewBox="0 0 36 36" width="52" height="52" style="flex-shrink:0;">
+      <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="3.5"/>
+      <circle cx="18" cy="18" r="15.9" fill="none" stroke="${cor}" stroke-width="3.5"
+        stroke-dasharray="${Math.min(pct,100)} 100" stroke-linecap="round"
+        transform="rotate(-90 18 18)"/>
+    </svg>`;
   document.getElementById('saudeGrid').innerHTML = `
-    <div class="saude-item">
-      <div class="saude-titulo">Execução Orçamentária</div>
-      <div class="saude-valor" style="color:${budgetCor};">${execBudget}%</div>
-      <div class="saude-desc">${execBudget<=100?'Dentro do orçamento.':'Acima do previsto.'}</div>
-      <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(execBudget,100)}%;background:${budgetCor};"></div></div>
+    <div class="saude-card">
+      <div style="flex:1;min-width:0;">
+        <div class="saude-label">Execução Orçamentária</div>
+        <div class="saude-val" style="color:${budgetCor};">${execBudget}%</div>
+        <div class="saude-sub">${execBudget<=100?'Dentro do orçamento.':'Acima do previsto.'}</div>
+        <div class="saude-bar-bg"><div class="saude-bar-fill" style="width:${Math.min(execBudget,100)}%;background:${budgetCor};"></div></div>
+      </div>
+      ${mkRing(execBudget, budgetCor)}
     </div>
-    <div class="saude-item">
-      <div class="saude-titulo">Eficiência de Arrecadação</div>
-      <div class="saude-valor" style="color:var(--amber-l);">${recEfic}%</div>
-      <div class="saude-desc">Inadimplência: <strong style="color:${inadCor};">${d.inadimplencia_pct}%</strong></div>
-      <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(recEfic,100)}%;background:var(--amber);"></div></div>
+    <div class="saude-card">
+      <div style="flex:1;min-width:0;">
+        <div class="saude-label">Eficiência de Arrecadação</div>
+        <div class="saude-val" style="color:var(--amber-l);">${recEfic}%</div>
+        <div class="saude-sub">Inadimplência: <strong style="color:${inadCor};">${d.inadimplencia_pct}%</strong></div>
+        <div class="saude-bar-bg"><div class="saude-bar-fill" style="width:${Math.min(recEfic,100)}%;background:var(--amber);"></div></div>
+      </div>
+      ${mkRing(recEfic, 'var(--amber)')}
     </div>
   `;
 }
