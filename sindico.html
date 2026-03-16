@@ -496,6 +496,24 @@
 
     <!-- DASHBOARD -->
     <section class="section active" id="sec-dashboard">
+      <!-- Banner de resposta do conselho (aparece só quando há ocorrências aprovadas/rejeitadas não resolvidas) -->
+      <div id="bannerConselho" style="display:none;margin-bottom:20px;padding:14px 20px;
+        background:rgba(224,92,58,0.1);border:1px solid rgba(224,92,58,0.45);
+        border-radius:10px;display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:18px;">🔔</span>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:#E05C3A;" id="bannerConselhoTexto">O conselho respondeu a uma ocorrência</div>
+            <div style="font-size:11px;color:var(--gray);margin-top:2px;">Acesse Ocorrências para ver a resposta e tomar as providências necessárias.</div>
+          </div>
+        </div>
+        <button onclick="mostrarSecao('ocorrencias', document.querySelector('.nav-item[onclick*=ocorrencias]'))"
+          style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;
+          background:#E05C3A;color:#fff;border:none;border-radius:6px;padding:9px 18px;cursor:pointer;flex-shrink:0;">
+          Ver Ocorrências →
+        </button>
+      </div>
+
       <div class="kpi-grid" id="kpiGrid">
         <div class="loading"><div class="spinner"></div>Carregando...</div>
       </div>
@@ -889,6 +907,27 @@ window.addEventListener('load', async () => {
   await carregarTudo();
 });
 
+async function verificarRespostasConselho() {
+  const { data } = await db.from('ocorrencias')
+    .select('id, titulo, status, aprovado_em')
+    .eq('condominio_id', condoAtual)
+    .in('status', ['aprovado', 'rejeitado'])
+    .is('resolvido_em', null); // respondidas mas ainda não resolvidas
+
+  const banner = document.getElementById('bannerConselho');
+  if (!banner) return;
+  if (data?.length) {
+    const qtd = data.length;
+    document.getElementById('bannerConselhoTexto').textContent =
+      qtd === 1
+        ? `O conselho respondeu a 1 ocorrência — aguarda sua providência`
+        : `O conselho respondeu a ${qtd} ocorrências — aguardam sua providência`;
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
 async function carregarTudo() {
   await Promise.all([
     carregarKPIs(),
@@ -898,7 +937,8 @@ async function carregarTudo() {
     carregarFinanceiro(),
     carregarDocumentos(),
     carregarAlertasTabela(),
-    carregarRelatorios()
+    carregarRelatorios(),
+    verificarRespostasConselho()
   ]);
 }
 
@@ -1412,7 +1452,7 @@ async function resolverOcorrencia(id) {
     resolvido_em: new Date().toISOString()
   }).eq('id', id);
   if (error) { alert('Erro: ' + error.message); return; }
-  await carregarOcorrencias();
+  await Promise.all([carregarOcorrencias(), verificarRespostasConselho()]);
 }
 
 async function excluirOcorrencia(id) {
