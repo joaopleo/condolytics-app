@@ -333,6 +333,15 @@
 .com-del { background:none; border:none; color:var(--gray); cursor:pointer; font-size:16px; padding:0 2px; opacity:0.5; }
 .com-del:hover { color:var(--red); opacity:1; }
 
+/* Ocorrências status badges */
+.oc-status { font-family:var(--font-mono); font-size:9px; padding:3px 9px; border-radius:10px; white-space:nowrap; }
+.oc-aberto            { background:rgba(255,255,255,0.06); color:var(--gray); }
+.oc-aguardando_aprovacao { background:rgba(255,179,0,0.15); color:#FFB300; }
+.oc-autorizado_sindico   { background:rgba(76,175,130,0.12); color:var(--green); }
+.oc-aprovado          { background:rgba(76,175,130,0.2); color:var(--green); font-weight:700; }
+.oc-rejeitado         { background:rgba(224,92,58,0.12); color:var(--red); }
+.oc-resolvido         { background:rgba(100,100,100,0.15); color:var(--gray-l); }
+
 /* ── Mobile ── */
 .btn-menu {
   display:none; align-items:center; justify-content:center;
@@ -425,6 +434,13 @@
         <path d="M2 4l6 5 6-5" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
       </svg>
       Comunicados
+    </button>
+    <button class="nav-item" onclick="mostrarSecao('ocorrencias',this)">
+      <svg viewBox="0 0 16 16" fill="none">
+        <path d="M8 2v4M8 10v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M3 13l5-10 5 10H3z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+      </svg>
+      Ocorrências
     </button>
     <button class="nav-item" onclick="mostrarSecao('alertas',this)">
       <svg viewBox="0 0 16 16" fill="none">
@@ -582,6 +598,95 @@
           </table>
         </div>
       </div>
+    </section>
+
+    <!-- OCORRÊNCIAS -->
+    <section class="section" id="sec-ocorrencias">
+
+      <!-- Formulário nova ocorrência -->
+      <div class="com-form" id="formOcorrencia">
+        <div class="com-form-title">Nova Ocorrência / Autorização</div>
+        <div class="com-row">
+          <div class="com-field" style="flex:2">
+            <label class="com-label" for="ocTitulo">Título *</label>
+            <input class="com-input" id="ocTitulo" placeholder="Ex: Portão da garagem com defeito">
+          </div>
+          <div class="com-field">
+            <label class="com-label" for="ocTipo">Tipo *</label>
+            <select class="com-select" id="ocTipo">
+              <option value="manutencao">Manutenção</option>
+              <option value="emergencia">Emergência</option>
+              <option value="seguranca">Segurança</option>
+              <option value="higiene">Higiene / Limpeza</option>
+              <option value="administrativo">Administrativo</option>
+              <option value="prestador">Prestador de Serviço</option>
+              <option value="outro">Outro</option>
+            </select>
+          </div>
+        </div>
+        <div class="com-row">
+          <div class="com-field">
+            <label class="com-label" for="ocLocal">Local</label>
+            <input class="com-input" id="ocLocal" placeholder="Ex: Garagem, Elevador, Área comum...">
+          </div>
+          <div class="com-field">
+            <label class="com-label" for="ocFornecedor">Fornecedor / Prestador</label>
+            <input class="com-input" id="ocFornecedor" placeholder="Nome da empresa ou pessoa">
+          </div>
+        </div>
+        <div class="com-field">
+          <label class="com-label" for="ocDescricao">Descrição detalhada *</label>
+          <textarea class="com-textarea" id="ocDescricao" placeholder="Descreva a ocorrência, o que foi feito ou o que precisa ser feito..."></textarea>
+        </div>
+        <div class="com-row">
+          <div class="com-field">
+            <label class="com-label" for="ocValorEstimado">Valor Estimado (R$)</label>
+            <input class="com-input" id="ocValorEstimado" type="number" step="0.01" placeholder="0,00">
+          </div>
+          <div class="com-field">
+            <label class="com-label" for="ocFormaPgto">Forma de Pagamento</label>
+            <select class="com-select" id="ocFormaPgto">
+              <option value="nao_aplicavel">Não se aplica</option>
+              <option value="nota_fiscal">Nota Fiscal</option>
+              <option value="recibo">Recibo</option>
+              <option value="pix">PIX</option>
+              <option value="dinheiro">Dinheiro</option>
+              <option value="pendente">Pendente</option>
+            </select>
+          </div>
+          <div class="com-field">
+            <label class="com-label" for="ocOrcamentos">Exige 3 Orçamentos?</label>
+            <select class="com-select" id="ocOrcamentos">
+              <option value="nao">Não</option>
+              <option value="sim">Sim</option>
+            </select>
+          </div>
+        </div>
+        <div class="com-field" id="wrapDispensa" style="display:none">
+          <label class="com-label" for="ocDispensa">Justificativa de Dispensa de Orçamentos</label>
+          <input class="com-input" id="ocDispensa" placeholder="Ex: Urgência, fornecedor exclusivo, valor abaixo do limite...">
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;">
+          <button class="com-btn" onclick="salvarOcorrencia('autorizado_sindico')">✓ Autorizo como Síndico</button>
+          <button class="com-btn" onclick="salvarOcorrencia('aguardando_aprovacao')" style="background:transparent;color:var(--amber-l);border:1px solid rgba(184,135,42,0.4);">⇡ Solicitar Aprovação do Conselho</button>
+        </div>
+      </div>
+
+      <!-- Lista de ocorrências -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+        <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray);">Histórico</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="com-tab active" onclick="filtrarOcorrencias('todos',this)" style="padding:4px 10px;">Todos</button>
+          <button class="com-tab" onclick="filtrarOcorrencias('aguardando_aprovacao',this)" style="padding:4px 10px;">Aguardando</button>
+          <button class="com-tab" onclick="filtrarOcorrencias('autorizado_sindico',this)" style="padding:4px 10px;">Autorizado</button>
+          <button class="com-tab" onclick="filtrarOcorrencias('aprovado',this)" style="padding:4px 10px;">Aprovado</button>
+          <button class="com-tab" onclick="filtrarOcorrencias('resolvido',this)" style="padding:4px 10px;">Resolvido</button>
+        </div>
+      </div>
+      <div class="com-list" id="ocorrenciasList">
+        <div class="loading"><div class="spinner"></div>Carregando...</div>
+      </div>
+
     </section>
 
     <!-- COMUNICADOS E AVISOS -->
@@ -824,6 +929,7 @@ function mostrarSecao(nome, el) {
     financeiro:  'Dados <span>Financeiros</span>',
     documentos:  'Documentos <span>do Condomínio</span>',
     comunicados: 'Comunicados e <span>Avisos</span>',
+    ocorrencias: 'Ocorrências e <span>Autorizações</span>',
     alertas:     'Central de <span>Alertas</span>',
     relatorios:  'Relatórios <span>Condolytics</span>'
   };
@@ -831,6 +937,9 @@ function mostrarSecao(nome, el) {
   if (nome === 'comunicados') {
     carregarComunicados();
     carregarAvisos();
+  }
+  if (nome === 'ocorrencias') {
+    carregarOcorrencias();
   }
 }
 
@@ -1167,6 +1276,149 @@ async function excluirAviso(id) {
   if (!confirm('Excluir este aviso?')) return;
   await db.from('alertas').delete().eq('id', id);
   await carregarAvisos();
+}
+
+// ── Ocorrências ──
+let _ocFiltro = 'todos';
+let _ocDados  = [];
+
+document.getElementById('ocOrcamentos').addEventListener('change', function() {
+  document.getElementById('wrapDispensa').style.display = this.value === 'nao' ? 'none' : 'block';
+});
+
+async function carregarOcorrencias() {
+  const el = document.getElementById('ocorrenciasList');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Carregando...</div>';
+  const { data } = await db.from('ocorrencias')
+    .select('*, aprovador:aprovado_por(nome_completo)')
+    .eq('condominio_id', condoAtual)
+    .order('created_at', { ascending: false });
+  _ocDados = data || [];
+  renderOcorrencias();
+}
+
+function filtrarOcorrencias(filtro, el) {
+  _ocFiltro = filtro;
+  document.querySelectorAll('#sec-ocorrencias .com-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderOcorrencias();
+}
+
+function renderOcorrencias() {
+  const el = document.getElementById('ocorrenciasList');
+  const lista = _ocFiltro === 'todos' ? _ocDados : _ocDados.filter(o => o.status === _ocFiltro);
+  if (!lista.length) { el.innerHTML = '<div style="color:var(--gray);font-size:12px;padding:8px 0;">Nenhuma ocorrência encontrada.</div>'; return; }
+
+  const tipoLabel = { manutencao:'Manutenção', emergencia:'Emergência', seguranca:'Segurança',
+    higiene:'Higiene/Limpeza', administrativo:'Administrativo', prestador:'Prestador', outro:'Outro' };
+  const statusLabel = { aberto:'Aberto', aguardando_aprovacao:'Aguardando Conselho',
+    autorizado_sindico:'Autorizado pelo Síndico', aprovado:'Aprovado', rejeitado:'Rejeitado', resolvido:'Resolvido' };
+  const pgtoLabel = { nota_fiscal:'Nota Fiscal', recibo:'Recibo', pix:'PIX',
+    dinheiro:'Dinheiro', pendente:'Pendente', nao_aplicavel:'—' };
+
+  el.innerHTML = lista.map(o => {
+    const dt = new Date(o.created_at).toLocaleDateString('pt-BR');
+    const valor = o.valor_estimado ? `R$ ${Number(o.valor_estimado).toLocaleString('pt-BR', {minimumFractionDigits:2})}` : '—';
+    const valorReal = o.valor_realizado ? `R$ ${Number(o.valor_realizado).toLocaleString('pt-BR', {minimumFractionDigits:2})}` : null;
+    const podeResolver = ['autorizado_sindico','aprovado'].includes(o.status);
+    const aprovInfo = o.aprovado_por ? `<span style="color:var(--green);font-size:11px;">✓ Aprovado por ${o.aprovador?.nome_completo || '—'} em ${new Date(o.aprovado_em).toLocaleDateString('pt-BR')}</span>` : '';
+    return `<div class="com-item" style="flex-direction:column;align-items:stretch;gap:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;">
+            <span class="oc-status oc-${o.status}">${statusLabel[o.status]||o.status}</span>
+            <span style="font-family:var(--font-mono);font-size:9px;color:var(--gray);">${tipoLabel[o.tipo]||o.tipo}</span>
+            <span style="font-family:var(--font-mono);font-size:9px;color:var(--gray);">${dt}</span>
+          </div>
+          <div class="com-item-title">${o.titulo}</div>
+          ${o.local_ocorrencia ? `<div style="font-size:11px;color:var(--gray);margin-top:2px;">📍 ${o.local_ocorrencia}</div>` : ''}
+        </div>
+        <button class="com-del" onclick="excluirOcorrencia('${o.id}')" title="Excluir">✕</button>
+      </div>
+      ${o.descricao ? `<div class="com-item-body">${o.descricao}</div>` : ''}
+      <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--gray);">
+        ${o.fornecedor ? `<span>Fornecedor: <strong style="color:var(--off-white)">${o.fornecedor}</strong></span>` : ''}
+        <span>Valor est.: <strong style="color:var(--off-white)">${valor}</strong></span>
+        ${valorReal ? `<span>Valor real: <strong style="color:var(--amber-l)">${valorReal}</strong></span>` : ''}
+        ${o.forma_pagamento && o.forma_pagamento !== 'nao_aplicavel' ? `<span>Pgto: <strong style="color:var(--off-white)">${pgtoLabel[o.forma_pagamento]||o.forma_pagamento}</strong></span>` : ''}
+        ${o.requer_orcamentos ? `<span style="color:var(--amber);">⚠ Exige 3 orçamentos</span>` : ''}
+      </div>
+      ${aprovInfo}
+      ${o.observacoes_resolucao ? `<div style="font-size:11px;color:var(--green);padding:6px 10px;background:rgba(76,175,130,0.06);border-radius:6px;">✓ ${o.observacoes_resolucao}</div>` : ''}
+      ${podeResolver ? `<div style="display:flex;gap:8px;flex-wrap:wrap;padding-top:4px;border-top:1px solid rgba(255,255,255,0.05);">
+        <input class="com-input" id="obs_${o.id}" placeholder="Observação da resolução (opcional)" style="flex:1;min-width:180px;font-size:11px;padding:6px 10px;">
+        <input class="com-input" id="vreal_${o.id}" type="number" placeholder="Valor real (R$)" style="width:130px;font-size:11px;padding:6px 10px;">
+        <button class="com-btn" onclick="resolverOcorrencia('${o.id}')" style="padding:6px 14px;font-size:10px;">Marcar Resolvida</button>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+async function salvarOcorrencia(status) {
+  const titulo    = document.getElementById('ocTitulo').value.trim();
+  const tipo      = document.getElementById('ocTipo').value;
+  const descricao = document.getElementById('ocDescricao').value.trim();
+  if (!titulo || !descricao) { alert('Preencha título e descrição.'); return; }
+
+  const payload = {
+    condominio_id:       condoAtual,
+    sindico_id:          usuario.id,
+    titulo, tipo, descricao, status,
+    local_ocorrencia:    document.getElementById('ocLocal').value.trim() || null,
+    fornecedor:          document.getElementById('ocFornecedor').value.trim() || null,
+    valor_estimado:      parseFloat(document.getElementById('ocValorEstimado').value) || null,
+    forma_pagamento:     document.getElementById('ocFormaPgto').value,
+    requer_orcamentos:   document.getElementById('ocOrcamentos').value === 'sim',
+    justificativa_dispensa: document.getElementById('ocDispensa').value.trim() || null,
+  };
+
+  const { error } = await db.from('ocorrencias').insert(payload);
+  if (error) { alert('Erro ao salvar: ' + error.message); return; }
+
+  // Envia e-mail se solicitar aprovação
+  if (status === 'aguardando_aprovacao') {
+    fetch('https://mritzsidaqngexgijoqc.supabase.co/functions/v1/notify-aprovacao', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        condominio_id: condoAtual,
+        titulo, tipo, descricao,
+        valor_estimado: payload.valor_estimado,
+        local_ocorrencia: payload.local_ocorrencia,
+        sindico_nome: usuario.nome_completo
+      })
+    }).catch(() => {});
+    alert('Aprovação solicitada! O conselho receberá um e-mail.');
+  }
+
+  // Limpa formulário
+  ['ocTitulo','ocLocal','ocFornecedor','ocDescricao','ocValorEstimado','ocDispensa'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('ocOrcamentos').value = 'nao';
+  document.getElementById('ocFormaPgto').value  = 'nao_aplicavel';
+  document.getElementById('wrapDispensa').style.display = 'none';
+
+  await carregarOcorrencias();
+}
+
+async function resolverOcorrencia(id) {
+  const obs   = document.getElementById('obs_' + id)?.value.trim() || null;
+  const vreal = parseFloat(document.getElementById('vreal_' + id)?.value) || null;
+  const { error } = await db.from('ocorrencias').update({
+    status: 'resolvido',
+    observacoes_resolucao: obs,
+    valor_realizado: vreal,
+    resolvido_em: new Date().toISOString()
+  }).eq('id', id);
+  if (error) { alert('Erro: ' + error.message); return; }
+  await carregarOcorrencias();
+}
+
+async function excluirOcorrencia(id) {
+  if (!confirm('Excluir esta ocorrência?')) return;
+  await db.from('ocorrencias').delete().eq('id', id);
+  await carregarOcorrencias();
 }
 </script>
 </body>

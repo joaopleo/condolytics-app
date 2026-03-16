@@ -614,6 +614,15 @@
     </div>
   </div>
 
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Ocorrências Resolvidas</span>
+    </div>
+    <div class="panel-body" id="ocResolvidasList">
+      <div class="loading"><div class="spinner"></div>Carregando...</div>
+    </div>
+  </div>
+
 </section>
 
     <!-- FINANCEIRO -->
@@ -812,8 +821,36 @@ async function carregarTudo() {
     carregarAlertasPublicos(),
     carregarFinanceiro(),
     carregarDocumentos(),
-    carregarRelatorios()
+    carregarRelatorios(),
+    carregarOcorrenciasResolvidas()
   ]);
+}
+
+async function carregarOcorrenciasResolvidas() {
+  const el = document.getElementById('ocResolvidasList');
+  const { data } = await db.from('ocorrencias')
+    .select('titulo, tipo, resolvido_em, observacoes_resolucao')
+    .eq('condominio_id', condoAtual)
+    .eq('status', 'resolvido')
+    .order('resolvido_em', { ascending: false })
+    .limit(10);
+
+  if (!data?.length) { el.innerHTML = '<div class="empty">Nenhuma ocorrência resolvida.</div>'; return; }
+
+  const tipoLabel = { manutencao:'Manutenção', emergencia:'Emergência', seguranca:'Segurança',
+    higiene:'Higiene/Limpeza', administrativo:'Administrativo', prestador:'Prestador', outro:'Outro' };
+
+  el.innerHTML = data.map(o => {
+    const dt = o.resolvido_em ? new Date(o.resolvido_em).toLocaleDateString('pt-BR') : '—';
+    return `<div style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+      <div>
+        <div style="font-size:13px;font-weight:500;color:var(--off-white);margin-bottom:3px;">${o.titulo}</div>
+        <div style="font-size:11px;color:var(--gray);">${tipoLabel[o.tipo]||o.tipo} · Resolvido em ${dt}</div>
+        ${o.observacoes_resolucao ? `<div style="font-size:11px;color:var(--gray-l);margin-top:3px;">${o.observacoes_resolucao}</div>` : ''}
+      </div>
+      <span style="font-size:10px;background:rgba(76,175,130,0.1);color:var(--green);padding:3px 8px;border-radius:8px;flex-shrink:0;">✓</span>
+    </div>`;
+  }).join('');
 }
 
 async function trocarCondominio(novoId) {
