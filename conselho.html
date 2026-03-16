@@ -1099,12 +1099,12 @@ window.addEventListener('load', async () => {
   _usuario = await protegerPagina(['conselho', 'admin']);
   if (!_usuario) return;
 
-  const nome = _usuario.nome_completo || 'Conselheiro';
+  const nomeExibido = pul(_usuario.nome_completo) || 'Conselheiro';
   ['userName','respNome','upopName'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.textContent = nome;
+    const el = document.getElementById(id); if (el) el.textContent = nomeExibido;
   });
   const av = document.getElementById('userAvatar');
-  if (av) av.textContent = nome[0].toUpperCase();
+  if (av) av.textContent = (_usuario.nome_completo||'C')[0].toUpperCase();
   const perfEl = document.getElementById('upopPerfil');
   if (perfEl) perfEl.textContent = ({conselho:'Conselho Fiscal',sindico:'Síndico',admin:'Administrador'})[_usuario.perfil] || 'Conselho Fiscal';
 
@@ -1477,6 +1477,7 @@ document.getElementById('modalBackdrop').onclick = () => mainModal.classList.rem
 document.addEventListener('keydown', e => { if (e.key === 'Escape') mainModal.classList.remove('modal-open'); });
 
 /* ── POPOVER USUÁRIO ── */
+function pul(n) { if (!n) return ''; const p = n.trim().split(/\s+/); return p.length <= 2 ? n : p[0]+' '+p[p.length-1]; }
 function toggleUserPopover() { document.getElementById('userPopover').classList.toggle('pop-open'); }
 document.addEventListener('click', e => {
   const pill = document.querySelector('.user-pill');

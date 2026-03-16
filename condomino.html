@@ -404,9 +404,9 @@
   background:transparent; color:var(--gray); cursor:pointer; transition:all 0.15s; }
 .cat-tab:hover { color:var(--off-white); border-color:rgba(255,255,255,0.18); }
 .cat-tab.cat-active { background:rgba(255,255,255,0.14); color:#fff; border-color:rgba(255,255,255,0.5); font-weight:700; }
-.cat-info { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-faint); margin-bottom: 5px; }
+.cat-info { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-faint); margin-bottom: 5px; }
 .cat-info span:first-child { color: var(--off-white); flex: 1; }
-.cat-info span:last-child { flex-shrink: 0; }
+.cat-info span:nth-child(2) { flex-shrink: 0; }
 .cat-pct { font-family: var(--font-mono); font-size: 9px; color: var(--gray); text-align: right; margin-top: 3px; }
 
 /* Alertas públicos */
@@ -745,7 +745,7 @@ const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov'
 window.addEventListener('load', async () => {
   usuario = await protegerPagina(['condomino','sindico','conselho','admin']);
   if (!usuario) return;
-  document.getElementById('userName').textContent = usuario.nome_completo || 'Condômino';
+  document.getElementById('userName').textContent = pul(usuario.nome_completo) || 'Condômino';
   document.getElementById('userAvatar').textContent = (usuario.nome_completo||'C')[0].toUpperCase();
 
   /* Busca todos os condomínios vinculados ao usuário */
@@ -799,6 +799,8 @@ window.addEventListener('load', async () => {
 
   await carregarTudo();
 });
+
+function pul(n) { if (!n) return ''; const p = n.trim().split(/\s+/); return p.length <= 2 ? n : p[0]+' '+p[p.length-1]; }
 
 async function carregarTudo() {
   await Promise.all([
@@ -1127,37 +1129,28 @@ async function renderCategoriasGrid(periodo) {
 
   if (!data?.length) { el.innerHTML = '<div class="empty">Sem dados de categoria.</div>'; return; }
 
+  // Período anterior (desc: index + 1)
+  const idxAtual = _catPeriodos.indexOf(periodo);
+  const periodoAnterior = _catPeriodos[idxAtual + 1] || null;
+
   const total = data.reduce((s, d) => s + Number(d.valor), 0);
   el.innerHTML = data.map(d => {
     const pct = total ? Math.round((Number(d.valor) / total) * 100) : 0;
-    // sparkline
-    const hist = _catHistory[d.categoria] || {};
-    const periodoAsc = [..._catPeriodos].reverse(); // ascendente para o gráfico
-    const vals = periodoAsc.map(p => hist[p] || 0);
-    const hasData = vals.some(v => v > 0);
-    let spark = '';
-    if (hasData) {
-      const mn = Math.min(...vals);
-      const mx = Math.max(...vals);
-      const range = mx - mn || 1;
-      const W = 60, H = 18, pad = 2;
-      const pts = vals.map((v, i) => {
-        const x = (i / (vals.length - 1)) * (W - pad*2) + pad;
-        const y = H - pad - ((v - mn) / range) * (H - pad*2);
-        return `${x.toFixed(1)},${y.toFixed(1)}`;
-      }).join(' ');
-      const first = vals.find(v => v > 0) || 0;
-      const last  = [...vals].reverse().find(v => v > 0) || 0;
-      const cor   = last > first ? '#E05C3A' : '#4CAF50';
-      spark = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="flex-shrink:0;">
-        <polyline points="${pts}" fill="none" stroke="${cor}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
-      </svg>`;
+    // seta comparativa com mês anterior
+    let seta = '';
+    if (periodoAnterior) {
+      const atual = _catHistory[d.categoria]?.[periodo]       || 0;
+      const prev  = _catHistory[d.categoria]?.[periodoAnterior] || 0;
+      if (prev > 0) {
+        if (atual > prev)      seta = `<span style="color:#E05C3A;font-size:13px;flex-shrink:0;">↑</span>`;
+        else if (atual < prev) seta = `<span style="color:#4CAF50;font-size:13px;flex-shrink:0;">↓</span>`;
+      }
     }
     return `<div class="cat-row">
       <div class="cat-info">
         <span>${CAT_LABEL[d.categoria] || d.categoria}</span>
-        ${spark}
         <span>R$ ${Number(d.valor).toLocaleString('pt-BR')}</span>
+        ${seta}
       </div>
       <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:#B8872A;"></div></div>
       <div class="cat-pct">${pct}% do total</div>

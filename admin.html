@@ -597,7 +597,7 @@ window.addEventListener('load', async () => {
   usuarioAtual = await protegerPagina(['admin']);
   if (!usuarioAtual) return;
 
-  document.getElementById('userName').textContent = usuarioAtual.nome_completo || 'Admin';
+  document.getElementById('userName').textContent = pul(usuarioAtual.nome_completo) || 'Admin';
   document.getElementById('userAvatar').textContent = (usuarioAtual.nome_completo || 'A')[0].toUpperCase();
 
   // Mostrar "Trocar usuário" apenas se o admin tiver mais de 1 vínculo
@@ -618,6 +618,8 @@ window.addEventListener('load', async () => {
     carregarRelatorios()
   ]);
 });
+
+function pul(n) { if (!n) return ''; const p = n.trim().split(/\s+/); return p.length <= 2 ? n : p[0]+' '+p[p.length-1]; }
 
 function mostrarSecao(nome, el) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));

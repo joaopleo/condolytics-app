@@ -671,7 +671,7 @@ window.addEventListener('load', async () => {
   usuario = await protegerPagina(['sindico','admin']);
   if (!usuario) return;
 
-  document.getElementById('userName').textContent = usuario.nome_completo || 'Síndico';
+  document.getElementById('userName').textContent = pul(usuario.nome_completo) || 'Síndico';
   document.getElementById('userAvatar').textContent = (usuario.nome_completo||'S')[0].toUpperCase();
 
   /* Busca todos os condomínios vinculados ao usuário */
@@ -750,6 +750,8 @@ async function trocarCondominio(novoId) {
   /* Recarrega todos os dados com o novo condomínio */
   await carregarTudo();
 }
+
+function pul(n) { if (!n) return ''; const p = n.trim().split(/\s+/); return p.length <= 2 ? n : p[0]+' '+p[p.length-1]; }
 
 function mostrarSecao(nome, el) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
