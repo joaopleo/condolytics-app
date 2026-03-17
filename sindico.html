@@ -609,6 +609,31 @@
       </div>
     </section>
 
+    <!-- AUDITORIA LES ALPES 2026 -->
+    <section class="section" id="sec-auditoria">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;">Auditoria Fiscal</div>
+          <div style="font-size:15px;font-weight:600;color:var(--text);">Les Alpes 2026
+            <a href="https://app.asana.com/1/1200601379438709/project/1213716080339729" target="_blank" rel="noopener"
+              style="font-family:var(--font-mono);font-size:9px;color:var(--gold,#B8872A);text-decoration:none;margin-left:8px;
+              padding:2px 7px;border:1px solid rgba(184,135,42,0.35);border-radius:4px;vertical-align:middle;">
+              ↗ Asana
+            </a>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div id="auditoriaStats" style="font-size:11px;color:var(--text-dim);margin-bottom:5px;">carregando…</div>
+          <div style="width:160px;height:5px;background:var(--border2);border-radius:4px;overflow:hidden;">
+            <div id="auditoriaProgress" style="height:100%;background:var(--gold,#B8872A);border-radius:4px;width:0%;transition:width 0.7s ease;"></div>
+          </div>
+        </div>
+      </div>
+      <div id="auditoriaLista">
+        <div style="color:var(--text-dim);font-size:12px;padding:8px 0;">Carregando tarefas…</div>
+      </div>
+    </section>
+
     <!-- OCORRÊNCIAS -->
     <section class="section" id="sec-ocorrencias">
 
@@ -1011,8 +1036,119 @@ async function carregarTudo() {
     carregarDocumentos(),
     carregarAlertasTabela(),
     carregarRelatorios(),
-    verificarRespostasConselho()
+    verificarRespostasConselho(),
+    carregarAuditoria()
   ]);
+}
+
+// ── Auditoria Les Alpes 2026 (Asana) ──
+async function carregarAuditoria() {
+  const container  = document.getElementById('auditoriaLista');
+  const progressEl = document.getElementById('auditoriaProgress');
+  const statsEl    = document.getElementById('auditoriaStats');
+  if (!container) return;
+
+  const EDGE_URL = 'https://mritzsidaqngexgijoqc.supabase.co/functions/v1/asana-auditoria';
+
+  try {
+    const sess = (await db.auth.getSession()).data.session;
+    const res  = await fetch(EDGE_URL, {
+      headers: {
+        'apikey':        SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${sess?.access_token ?? ''}`,
+      }
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    const { tasks, total, done } = data;
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    if (progressEl) progressEl.style.width = pct + '%';
+    if (statsEl)    statsEl.textContent = `${done} de ${total} concluídas (${pct}%)`;
+
+    const SEC_ORDER  = [
+      '🔴 Crítico — Ação Imediata',
+      '🟠 Alta Prioridade — Prazo 10 dias úteis',
+      '🔵 Média Prioridade — Prazo 15 dias úteis',
+      '✅ Concluído',
+    ];
+    const SEC_COLOR  = {
+      '🔴 Crítico — Ação Imediata':                '#E05C3A',
+      '🟠 Alta Prioridade — Prazo 10 dias úteis':  '#FF8C00',
+      '🔵 Média Prioridade — Prazo 15 dias úteis': '#4A9EDD',
+      '✅ Concluído':                               '#4CAF50',
+    };
+    const SEC_LABEL  = {
+      '🔴 Crítico — Ação Imediata':                '🔴 Crítico — Ação Imediata',
+      '🟠 Alta Prioridade — Prazo 10 dias úteis':  '🟠 Alta Prioridade',
+      '🔵 Média Prioridade — Prazo 15 dias úteis': '🔵 Média Prioridade',
+      '✅ Concluído':                               '✅ Concluído',
+    };
+
+    // agrupar por seção
+    const bySection = {};
+    for (const t of tasks) {
+      if (!bySection[t.section]) bySection[t.section] = [];
+      bySection[t.section].push(t);
+    }
+
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    let html = '';
+
+    for (const sec of SEC_ORDER) {
+      const list = bySection[sec];
+      if (!list || !list.length) continue;
+      const color    = SEC_COLOR[sec]  || '#888';
+      const label    = SEC_LABEL[sec]  || sec;
+      const doneQty  = list.filter(t => t.completed).length;
+
+      html += `<div style="margin-bottom:18px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.07em;text-transform:uppercase;color:${color};">${label}</span>
+          <span style="font-size:10px;color:var(--text-dim);">${doneQty}/${list.length}</span>
+        </div>`;
+
+      for (const t of list) {
+        const code  = (t.name.match(/^([A-Z]{2,3}-\d+(?:\/[A-Z\d]+)*)/) || [])[1] || '';
+        const title = code ? t.name.slice(code.length).replace(/^[:\s]+/, '') : t.name;
+        const due   = t.due_on ? t.due_on.split('-') : null;
+        const dueStr = due ? `${due[2]}/${due[1]}` : '';
+        const overdue = due && !t.completed && new Date(t.due_on) < hoje;
+
+        html += `<a href="${t.url}" target="_blank" rel="noopener"
+          style="display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:8px;
+          background:${t.completed ? 'rgba(76,175,80,0.04)' : 'var(--surface)'};
+          border:1px solid ${t.completed ? 'rgba(76,175,80,0.14)' : 'var(--border2)'};
+          margin-bottom:6px;text-decoration:none;transition:border-color 0.15s;"
+          onmouseover="this.style.borderColor='${color}55'"
+          onmouseout="this.style.borderColor='${t.completed ? 'rgba(76,175,80,0.14)' : 'var(--border2)'}'">
+          <div style="margin-top:2px;width:14px;height:14px;flex-shrink:0;border-radius:50%;
+            border:1.5px solid ${t.completed ? '#4CAF50' : color};
+            background:${t.completed ? '#4CAF50' : 'transparent'};
+            display:flex;align-items:center;justify-content:center;">
+            ${t.completed ? '<svg width="8" height="6" viewBox="0 0 8 6"><polyline points="1,3 3,5 7,1" stroke="#0A0C0F" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+          </div>
+          <div style="flex:1;min-width:0;">
+            ${code ? `<span style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.04em;
+              color:${color};background:${color}18;padding:1px 6px;border-radius:4px;margin-right:6px;">${code}</span>` : ''}
+            <span style="font-size:12px;color:${t.completed ? 'var(--text-dim)' : 'var(--text)'};
+              ${t.completed ? 'text-decoration:line-through;opacity:0.6;' : ''}">${title}</span>
+          </div>
+          ${dueStr ? `<span style="flex-shrink:0;font-family:var(--font-mono);font-size:10px;
+            padding:2px 7px;border-radius:5px;
+            color:${overdue ? '#E05C3A' : 'var(--text-dim)'};
+            background:${overdue ? 'rgba(224,92,58,0.12)' : 'rgba(255,255,255,0.04)'};
+            border:1px solid ${overdue ? 'rgba(224,92,58,0.35)' : 'transparent'};">${dueStr}</span>` : ''}
+        </a>`;
+      }
+      html += '</div>';
+    }
+
+    container.innerHTML = html || '<div style="color:var(--text-dim);font-size:12px;">Nenhuma tarefa encontrada.</div>';
+  } catch (e) {
+    container.innerHTML = `<div style="color:var(--red,#E05C3A);font-size:12px;padding:6px 0;">
+      Erro ao carregar auditoria: ${e.message}</div>`;
+  }
 }
 
 async function trocarCondominio(novoId) {
