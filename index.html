@@ -612,7 +612,7 @@ footer {
 ════════════════════════════ */
 .modal-overlay {
   display: none; position: fixed; inset: 0; z-index: 2000;
-  background: rgba(0,0,0,0.72); backdrop-filter: blur(8px);
+  background: var(--bg); backdrop-filter: none;
   align-items: center; justify-content: center; padding: 20px;
 }
 .modal-overlay.open { display: flex; }
@@ -862,6 +862,13 @@ footer {
 </style>
 </head>
 <body>
+
+<!-- ══════════════════════════════════════════════════════════════
+     LANDING PAGE OCULTA — para reativar, remova a div abaixo
+     e mude class="modal-overlay open" para class="modal-overlay"
+     no div #modalLogin
+══════════════════════════════════════════════════════════════ -->
+<div id="landing-oculta" style="display:none">
 
 <!-- ════ HEADER ════ -->
 <header id="header">
@@ -1368,8 +1375,10 @@ footer {
   </div>
 </footer>
 
-<!-- ════ MODAL LOGIN ════ -->
-<div class="modal-overlay" id="modalLogin">
+</div><!-- fim #landing-oculta -->
+
+<!-- ════ LOGIN ════ -->
+<div class="modal-overlay open" id="modalLogin">
   <div class="modal-box">
     <div class="modal-top">
       <div>
@@ -1388,7 +1397,8 @@ footer {
         <div class="modal-title">Acesso à plataforma</div>
         <div class="modal-sub">Entre com seu email e senha cadastrados</div>
       </div>
-      <button class="modal-close" onclick="fecharLogin()">✕</button>
+      <!-- botão fechar oculto enquanto landing page estiver desativada -->
+      <button class="modal-close" onclick="fecharLogin()" style="display:none">✕</button>
     </div>
     <div class="modal-body">
       <div class="modal-error" id="modalErro"></div>
@@ -1408,9 +1418,12 @@ footer {
         </svg>
       </button>
       <div class="modal-sep"></div>
+      <!-- link "Solicite uma demo" oculto enquanto landing page estiver desativada -->
+      <!--
       <div class="modal-switch">
         Não tem acesso? <a onclick="scrollToForm()">Solicite uma demonstração</a>
       </div>
+      -->
     </div>
   </div>
 </div>
