@@ -611,11 +611,15 @@ footer {
    MODAL LOGIN
 ════════════════════════════ */
 .modal-overlay {
-  display: none; position: fixed; inset: 0; z-index: 2000;
-  background: var(--bg); backdrop-filter: none;
-  align-items: center; justify-content: center; padding: 20px;
+  display: none;
 }
-.modal-overlay.open { display: flex; }
+.modal-overlay.open {
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
 .modal-box {
   background: #111318; border: 1px solid rgba(201,168,76,0.2);
   border-radius: 18px; width: 100%; max-width: 400px;
@@ -1444,7 +1448,6 @@ function abrirLogin() {
   document.getElementById('loginEmail').value = '';
   document.getElementById('loginSenha').value = '';
   document.getElementById('modalLogin').classList.add('open');
-  document.body.style.overflow = 'hidden';
   setTimeout(() => document.getElementById('loginEmail').focus(), 300);
 }
 
@@ -1454,7 +1457,6 @@ function fecharLogin() {
   const landingOculta = document.getElementById('landing-oculta');
   if (landingOculta && landingOculta.style.display === 'none') return;
   document.getElementById('modalLogin').classList.remove('open');
-  document.body.style.overflow = '';
 }
 
 /* clique fora da caixa não fecha o modal enquanto landing page estiver oculta */
