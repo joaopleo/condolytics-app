@@ -1453,9 +1453,10 @@ function fecharLogin() {
   document.body.style.overflow = '';
 }
 
-document.getElementById('modalLogin').addEventListener('click', e => {
-  if (e.target === document.getElementById('modalLogin')) fecharLogin();
-});
+/* clique fora da caixa não fecha o modal enquanto landing page estiver oculta */
+// document.getElementById('modalLogin').addEventListener('click', e => {
+//   if (e.target === document.getElementById('modalLogin')) fecharLogin();
+// });
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') fecharLogin();
