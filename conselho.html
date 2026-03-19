@@ -685,8 +685,8 @@
   </div>
 
   <div class="header-center">
-    <div class="condo-name">Les Alpes Residence Bellevue</div>
-    <div class="condo-period">Conselho Fiscal &nbsp;·&nbsp; Gestão 2026/2027 &nbsp;·&nbsp; Condomínio Bellevue - Les Alpes</div>
+    <div class="condo-name" id="headerCondoNome">—</div>
+    <div class="condo-period" id="headerCondoPeriodo">Conselho Fiscal &nbsp;·&nbsp; Condomínio</div>
   </div>
 
   <div class="header-right">
@@ -1292,6 +1292,14 @@ async function inicializar() {
 
   /* Começa no mês mais recente (último dos 6) */
   _periodoIdx = _dadosDB[_condoAtual].periodos6.length - 1;
+
+  /* Atualiza cabeçalho com nome real do condomínio */
+  const condoAtualObj = _condos.find(c => c.id === _condoAtual);
+  const nomeCondominio = condoAtualObj?.nome || '—';
+  const elNome = document.getElementById('headerCondoNome');
+  const elPer  = document.getElementById('headerCondoPeriodo');
+  if (elNome) elNome.textContent = nomeCondominio;
+  if (elPer)  elPer.innerHTML   = `Conselho Fiscal &nbsp;·&nbsp; Gestão 2026/2027 &nbsp;·&nbsp; ${nomeCondominio}`;
 
   construirTabs();
   renderizarTudo();
