@@ -1449,6 +1449,10 @@ function abrirLogin() {
 }
 
 function fecharLogin() {
+  /* Se a landing page estiver oculta, não permite fechar o modal —
+     não há nada por baixo para mostrar */
+  const landingOculta = document.getElementById('landing-oculta');
+  if (landingOculta && landingOculta.style.display === 'none') return;
   document.getElementById('modalLogin').classList.remove('open');
   document.body.style.overflow = '';
 }
