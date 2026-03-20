@@ -1795,19 +1795,19 @@ function renderAnaliseResultado(d) {
 
       <!-- KPIs: 2 colunas em mobile -->
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
-        <div class="panel" style="padding:14px;">
+        <div class="panel" style="padding:14px;margin-bottom:0;">
           <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.07em;text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:5px;">Receitas</div>
           <div style="font-size:16px;font-weight:700;color:#4CAF7D;word-break:break-all;">${fmt(r.receitas_total)}</div>
         </div>
-        <div class="panel" style="padding:14px;">
+        <div class="panel" style="padding:14px;margin-bottom:0;">
           <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.07em;text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:5px;">Despesas</div>
           <div style="font-size:16px;font-weight:700;color:#E05C3A;word-break:break-all;">${fmt(r.despesas_total)}</div>
         </div>
-        <div class="panel" style="padding:14px;">
+        <div class="panel" style="padding:14px;margin-bottom:0;">
           <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.07em;text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:5px;">${supLabel}</div>
           <div style="font-size:16px;font-weight:700;color:${supColor};word-break:break-all;">${fmt(Math.abs(sup))}</div>
         </div>
-        <div class="panel" style="padding:16px;">
+        <div class="panel" style="padding:16px;margin-bottom:0;">
           <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:6px;">Saldo Final</div>
           <div style="font-size:18px;font-weight:700;color:var(--text,#E8E6E0);">${fmt(r.saldo_final)}</div>
         </div>
@@ -1816,7 +1816,7 @@ function renderAnaliseResultado(d) {
 
     <!-- Inadimplência + Fundo -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
-      <div class="panel" style="padding:14px;">
+      <div class="panel" style="padding:14px;margin-bottom:0;">
         <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.07em;text-transform:uppercase;
              color:var(--text-dim,#9A9690);margin-bottom:8px;">Inadimplência</div>
         <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">
@@ -1825,7 +1825,7 @@ function renderAnaliseResultado(d) {
         </div>
         <div style="font-size:11px;color:var(--text-dim,#9A9690);margin-top:3px;">${fmt(r.inadimplencia_valor)}</div>
       </div>
-      <div class="panel" style="padding:14px;">
+      <div class="panel" style="padding:14px;margin-bottom:0;">
         <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.07em;text-transform:uppercase;
              color:var(--text-dim,#9A9690);margin-bottom:8px;">Fundo de Reserva</div>
         <div style="font-size:18px;font-weight:800;color:var(--gold,#C9A84C);word-break:break-all;">${fmt(r.fundo_reserva)}</div>
