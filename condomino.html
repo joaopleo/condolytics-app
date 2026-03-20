@@ -26,6 +26,8 @@
     color:var(--off-white);
     min-height:100vh;
     display:flex;
+    overflow-x:hidden;
+    max-width:100vw;
   }
 
   /* ── SIDEBAR (desktop) ── */
@@ -433,7 +435,7 @@
     .btn-menu { display: flex; }
 
     /* Main sem margem lateral */
-    .main { margin-left: 0; }
+    .main { margin-left: 0; width: 100%; max-width: 100vw; overflow-x: hidden; }
 
     /* Topbar e conteúdo */
     .topbar { padding: 0 16px; }
