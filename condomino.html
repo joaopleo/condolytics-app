@@ -514,6 +514,13 @@
       </svg>
       Calendário
     </button>
+    <button class="nav-item" onclick="mostrarSecao('analise',this)" style="border-top:1px solid rgba(201,168,76,0.15);margin-top:4px;padding-top:12px;">
+      <svg viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="6.5" stroke="#C9A84C" stroke-width="1.3"/>
+        <path d="M5 8.5l2 2 4-4" stroke="#C9A84C" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span style="color:#C9A84C;font-weight:600;">Análise PDF</span>
+    </button>
   </nav>
   <div class="sidebar-footer">
     <div class="user-info">
@@ -692,6 +699,77 @@
       </div>
     </section>
 
+
+    <!-- ANÁLISE PDF -->
+    <section class="section" id="sec-analise">
+      <div id="analise-upload-area">
+        <div class="panel" style="text-align:center;padding:40px 24px;">
+          <div style="width:56px;height:56px;border-radius:50%;background:rgba(201,168,76,0.12);
+               display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+            <svg viewBox="0 0 24 24" fill="none" width="28" height="28">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                stroke="#C9A84C" stroke-width="1.5" stroke-linecap="round"/>
+              <polyline points="14,2 14,8 20,8" stroke="#C9A84C" stroke-width="1.5" stroke-linecap="round"/>
+              <line x1="12" y1="18" x2="12" y2="12" stroke="#C9A84C" stroke-width="1.5" stroke-linecap="round"/>
+              <polyline points="9,15 12,12 15,15" stroke="#C9A84C" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div style="font-family:var(--font-mono,monospace);font-size:11px;letter-spacing:0.1em;
+               color:var(--gold,#C9A84C);text-transform:uppercase;margin-bottom:10px;">
+            Análise de Prestação de Contas
+          </div>
+          <div style="font-size:20px;font-weight:700;color:var(--text,#E8E6E0);margin-bottom:10px;">
+            Analise sua prestação de contas aqui
+          </div>
+          <div style="font-size:13px;color:var(--text-dim,#9A9690);max-width:420px;margin:0 auto 32px;line-height:1.6;">
+            Faça o upload do PDF da prestação de contas do seu condomínio. Nossa IA analisa os dados financeiros, identifica inconsistências e gera um relatório completo em segundos.
+          </div>
+
+          <!-- Drop Zone -->
+          <div id="analise-dropzone"
+            style="border:2px dashed rgba(201,168,76,0.3);border-radius:12px;padding:32px 24px;
+                   cursor:pointer;transition:all 0.2s;max-width:480px;margin:0 auto 20px;"
+            onclick="document.getElementById('analise-file-input').click()"
+            ondragover="event.preventDefault();this.style.borderColor='#C9A84C';this.style.background='rgba(201,168,76,0.06)'"
+            ondragleave="this.style.borderColor='rgba(201,168,76,0.3)';this.style.background=''"
+            ondrop="event.preventDefault();this.style.borderColor='rgba(201,168,76,0.3)';this.style.background='';analisarPDF(event.dataTransfer.files[0])">
+            <svg viewBox="0 0 24 24" fill="none" width="36" height="36" style="margin:0 auto 12px;display:block;opacity:0.5;">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <polyline points="17,8 12,3 7,8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <line x1="12" y1="3" x2="12" y2="15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <div style="font-size:14px;color:var(--text-dim,#9A9690);">
+              Arraste o PDF aqui ou <span style="color:#C9A84C;font-weight:600;">clique para selecionar</span>
+            </div>
+            <div style="font-size:11px;color:var(--text-faint,#52504C);margin-top:6px;">Apenas arquivos .pdf</div>
+          </div>
+          <input type="file" id="analise-file-input" accept=".pdf" style="display:none"
+            onchange="if(this.files[0]) analisarPDF(this.files[0])">
+          <div id="analise-erro" style="display:none;color:#E05C3A;font-size:13px;margin-top:12px;"></div>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div id="analise-loading" style="display:none;">
+        <div class="panel" style="text-align:center;padding:60px 24px;">
+          <div style="width:64px;height:64px;margin:0 auto 24px;position:relative;">
+            <svg viewBox="0 0 64 64" width="64" height="64" style="animation:spin 1.2s linear infinite;">
+              <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(201,168,76,0.15)" stroke-width="4"/>
+              <path d="M32 4 A28 28 0 0 1 60 32" fill="none" stroke="#C9A84C" stroke-width="4" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div style="font-size:16px;font-weight:600;color:var(--text,#E8E6E0);margin-bottom:8px;">
+            Analisando sua prestação de contas...
+          </div>
+          <div style="font-size:13px;color:var(--text-dim,#9A9690)" id="analise-loading-msg">
+            Lendo o documento e extraindo dados financeiros
+          </div>
+        </div>
+      </div>
+
+      <!-- Resultado -->
+      <div id="analise-resultado" style="display:none;"></div>
+    </section>
 
     <!-- CALENDÁRIO -->
     <section class="section" id="sec-calendario">
@@ -1423,6 +1501,218 @@ function calRenderizarProximos() {
   }).join('');
 }
 
+
+
+/* ── ANÁLISE PDF ── */
+async function analisarPDF(file) {
+  if (!file || file.type !== 'application/pdf') {
+    const el = document.getElementById('analise-erro');
+    el.textContent = 'Por favor, selecione um arquivo PDF válido.';
+    el.style.display = 'block';
+    return;
+  }
+  document.getElementById('analise-erro').style.display = 'none';
+  document.getElementById('analise-upload-area').style.display = 'none';
+  document.getElementById('analise-loading').style.display = 'block';
+  document.getElementById('analise-resultado').style.display = 'none';
+
+  const msgs = [
+    'Lendo o documento e extraindo dados financeiros',
+    'Identificando categorias de receitas e despesas',
+    'Verificando consistência dos números',
+    'Executando auditoria inteligente',
+    'Montando seu relatório personalizado'
+  ];
+  let mi = 0;
+  const msgEl = document.getElementById('analise-loading-msg');
+  const msgTimer = setInterval(() => { mi = (mi+1) % msgs.length; msgEl.textContent = msgs[mi]; }, 2500);
+
+  try {
+    const formData = new FormData();
+    formData.append('pdf', file);
+
+    const { data: { session } } = await db.auth.getSession();
+    const token = session?.access_token || '';
+
+    const res = await fetch(
+      'https://mritzsidaqngexgijoqc.supabase.co/functions/v1/analisar-pdf',
+      { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData }
+    );
+    const json = await res.json();
+    clearInterval(msgTimer);
+
+    if (json.error) throw new Error(json.error);
+
+    document.getElementById('analise-loading').style.display = 'none';
+    document.getElementById('analise-resultado').style.display = 'block';
+    renderAnaliseResultado(json);
+  } catch (err) {
+    clearInterval(msgTimer);
+    document.getElementById('analise-loading').style.display = 'none';
+    document.getElementById('analise-upload-area').style.display = 'block';
+    const el = document.getElementById('analise-erro');
+    el.textContent = 'Erro ao analisar: ' + (err.message || 'tente novamente.');
+    el.style.display = 'block';
+  }
+}
+
+function renderAnaliseResultado(d) {
+  const fmt = v => v != null ? 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:2}) : '—';
+  const pct = v => v != null ? Number(v).toFixed(1) + '%' : '—';
+  const r = d.resumo || {};
+  const sup = (r.superavit_deficit || 0);
+  const supColor = sup >= 0 ? '#4CAF7D' : '#E05C3A';
+  const supLabel = sup >= 0 ? 'Superávit' : 'Déficit';
+  const score = d.auditoria?.score || 0;
+  const scoreColor = score >= 80 ? '#4CAF7D' : score >= 60 ? '#C9A84C' : '#E05C3A';
+  const scoreLabel = score >= 80 ? 'Saúde Excelente' : score >= 60 ? 'Atenção' : 'Situação Crítica';
+
+  const nivelColor = { info:'#5B9BD5', aviso:'#C9A84C', critico:'#E05C3A' };
+  const nivelIcon  = { info:'ℹ', aviso:'⚠', critico:'🚨' };
+
+  const alertasHTML = (d.auditoria?.alertas || []).map(a => `
+    <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 16px;
+         background:rgba(255,255,255,0.03);border-left:3px solid ${nivelColor[a.nivel]||'#9A9690'};
+         border-radius:0 8px 8px 0;margin-bottom:8px;">
+      <span style="font-size:16px;line-height:1.4;">${nivelIcon[a.nivel]||'•'}</span>
+      <div>
+        <div style="font-weight:600;font-size:13px;color:${nivelColor[a.nivel]||'#E8E6E0'};margin-bottom:3px;">${a.titulo}</div>
+        <div style="font-size:12px;color:var(--text-dim,#9A9690);line-height:1.5;">${a.descricao}</div>
+      </div>
+    </div>`).join('');
+
+  const positivosHTML = (d.auditoria?.pontos_positivos || []).map(p => `
+    <div style="display:flex;gap:10px;align-items:flex-start;font-size:12px;color:var(--text-dim,#9A9690);margin-bottom:6px;">
+      <span style="color:#4CAF7D;font-size:14px;line-height:1.3;">✓</span>${p}
+    </div>`).join('');
+
+  const desp = d.despesas || [];
+  const maxDesp = Math.max(...desp.map(x => x.valor || 0), 1);
+
+  const despHTML = desp.sort((a,b) => b.valor - a.valor).map(c => `
+    <div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
+        <span style="color:var(--text,#E8E6E0);">${c.categoria}</span>
+        <span style="color:var(--text-dim,#9A9690);">${fmt(c.valor)} <span style="color:var(--text-faint,#52504C);">(${pct(c.percentual)})</span></span>
+      </div>
+      <div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">
+        <div style="height:100%;width:${Math.round((c.valor/maxDesp)*100)}%;background:#B8872A;border-radius:3px;transition:width 0.6s ease;"></div>
+      </div>
+    </div>`).join('');
+
+  const recHTML = (d.receitas || []).sort((a,b) => b.valor - a.valor).map(c => `
+    <div style="display:flex;justify-content:space-between;align-items:center;
+         padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+      <span style="font-size:12px;color:var(--text,#E8E6E0);">${c.categoria}</span>
+      <div style="text-align:right;">
+        <span style="font-size:12px;color:#4CAF7D;">${fmt(c.valor)}</span>
+        <span style="font-size:10px;color:var(--text-faint,#52504C);margin-left:6px;">${pct(c.percentual)}</span>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('analise-resultado').innerHTML = `
+  <div style="max-width:800px;">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px;">
+      <div>
+        <div style="font-family:var(--font-mono,monospace);font-size:10px;letter-spacing:0.1em;
+             color:var(--gold,#C9A84C);text-transform:uppercase;margin-bottom:4px;">
+          Análise — ${d.periodo || ''}
+        </div>
+        <div style="font-size:18px;font-weight:700;color:var(--text,#E8E6E0);">${d.condominio || 'Condomínio'}</div>
+        <div style="font-size:12px;color:var(--text-dim,#9A9690);">${d.administradora || ''}</div>
+      </div>
+      <button onclick="document.getElementById('analise-upload-area').style.display='block';document.getElementById('analise-resultado').style.display='none';"
+        style="font-family:var(--font-mono,monospace);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;
+               padding:8px 16px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);background:transparent;
+               color:var(--text-dim,#9A9690);cursor:pointer;">
+        ← Nova Análise
+      </button>
+    </div>
+
+    <!-- Score + KPIs -->
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:16px;margin-bottom:16px;align-items:stretch;">
+      <div class="panel" style="text-align:center;padding:20px 24px;min-width:130px;">
+        <div style="font-size:48px;font-weight:800;color:${scoreColor};line-height:1;">${score}</div>
+        <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.08em;
+             text-transform:uppercase;color:${scoreColor};margin-top:6px;">${scoreLabel}</div>
+        <div style="font-size:10px;color:var(--text-faint,#52504C);margin-top:4px;">Score de saúde</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;">
+        <div class="panel" style="padding:16px;">
+          <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:6px;">Receitas</div>
+          <div style="font-size:18px;font-weight:700;color:#4CAF7D;">${fmt(r.receitas_total)}</div>
+        </div>
+        <div class="panel" style="padding:16px;">
+          <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:6px;">Despesas</div>
+          <div style="font-size:18px;font-weight:700;color:#E05C3A;">${fmt(r.despesas_total)}</div>
+        </div>
+        <div class="panel" style="padding:16px;">
+          <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:6px;">${supLabel} do Mês</div>
+          <div style="font-size:18px;font-weight:700;color:${supColor};">${fmt(Math.abs(sup))}</div>
+        </div>
+        <div class="panel" style="padding:16px;">
+          <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:6px;">Saldo Final</div>
+          <div style="font-size:18px;font-weight:700;color:var(--text,#E8E6E0);">${fmt(r.saldo_final)}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inadimplência + Fundo -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+      <div class="panel" style="padding:16px;">
+        <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.08em;text-transform:uppercase;
+             color:var(--text-dim,#9A9690);margin-bottom:10px;">Inadimplência</div>
+        <div style="display:flex;align-items:baseline;gap:8px;">
+          <span style="font-size:28px;font-weight:800;color:${(r.inadimplencia_percentual||0)>10?'#E05C3A':(r.inadimplencia_percentual||0)>5?'#C9A84C':'#4CAF7D'};">${pct(r.inadimplencia_percentual)}</span>
+          <span style="font-size:12px;color:var(--text-dim,#9A9690);">${r.inadimplencia_unidades||0} unid.</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-dim,#9A9690);margin-top:4px;">${fmt(r.inadimplencia_valor)}</div>
+      </div>
+      <div class="panel" style="padding:16px;">
+        <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.08em;text-transform:uppercase;
+             color:var(--text-dim,#9A9690);margin-bottom:10px;">Fundo de Reserva</div>
+        <div style="font-size:28px;font-weight:800;color:var(--gold,#C9A84C);">${fmt(r.fundo_reserva)}</div>
+      </div>
+    </div>
+
+    <!-- Despesas e Receitas -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+      <div class="panel" style="padding:20px;">
+        <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.08em;
+             text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:16px;">Despesas por Categoria</div>
+        ${despHTML}
+      </div>
+      <div class="panel" style="padding:20px;">
+        <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.08em;
+             text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:16px;">Receitas por Categoria</div>
+        ${recHTML}
+      </div>
+    </div>
+
+    <!-- Auditoria -->
+    <div class="panel" style="padding:20px;margin-bottom:16px;">
+      <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.08em;
+           text-transform:uppercase;color:var(--gold,#C9A84C);margin-bottom:16px;">
+        ⚖ Auditoria Inteligente
+      </div>
+      ${alertasHTML || '<div style="font-size:12px;color:var(--text-dim,#9A9690);">Nenhum alerta identificado.</div>'}
+      ${positivosHTML ? `
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.08em;
+               text-transform:uppercase;color:#4CAF7D;margin-bottom:10px;">Pontos Positivos</div>
+          ${positivosHTML}
+        </div>` : ''}
+      ${d.auditoria?.resumo_auditoria ? `
+        <div style="margin-top:16px;padding:14px;background:rgba(255,255,255,0.03);border-radius:8px;
+             font-size:13px;color:var(--text-dim,#9A9690);line-height:1.6;">
+          ${d.auditoria.resumo_auditoria}
+        </div>` : ''}
+    </div>
+
+  </div>`;
+}
 </script>
 </body>
 </html>
