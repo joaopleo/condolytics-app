@@ -1546,9 +1546,14 @@ async function fazerLogin() {
   btn.disabled = true;
   btn.innerHTML = '<span style="opacity:0.6">Autenticando...</span>';
 
+  const timeout = ms => new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms));
+
   try {
-    /* 1. Login via SDK */
-    const { data, error } = await db.auth.signInWithPassword({ email, password: senha });
+    /* 1. Login via SDK — timeout de 10s para evitar botão preso */
+    const { data, error } = await Promise.race([
+      db.auth.signInWithPassword({ email, password: senha }),
+      timeout(10000)
+    ]);
     if (error) throw new Error('credenciais');
 
     /* 2. Buscar perfil + vínculos em paralelo */
@@ -1591,7 +1596,9 @@ async function fazerLogin() {
     }
 
   } catch (e) {
-    const msg = e.message === 'perfil'
+    const msg = e.message === 'timeout'
+      ? 'Tempo de resposta excedido. Verifique sua conexão e tente novamente.'
+      : e.message === 'perfil'
       ? 'Perfil não reconhecido. Entre em contato com o administrador.'
       : 'Email ou senha incorretos. Verifique seus dados.';
     erro.textContent = msg;
