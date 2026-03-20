@@ -26,8 +26,6 @@
     color:var(--off-white);
     min-height:100vh;
     display:flex;
-    overflow-x:hidden;
-    max-width:100vw;
   }
 
   /* ── SIDEBAR (desktop) ── */
@@ -105,7 +103,7 @@
   @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 6px var(--green);}50%{opacity:0.4;box-shadow:none;}}
 
   /* ── CONTENT ── */
-  .content{padding:32px 36px;flex:1;overflow-x:hidden;min-width:0;}
+  .content{padding:32px 36px;flex:1;}
   .section{display:none;}
   .section.active{display:block;}
 
@@ -435,7 +433,7 @@
     .btn-menu { display: flex; }
 
     /* Main sem margem lateral */
-    .main { margin-left: 0; width: 100%; max-width: 100vw; overflow-x: hidden; }
+    .main { margin-left: 0; }
 
     /* Topbar e conteúdo */
     .topbar { padding: 0 16px; }
@@ -1571,46 +1569,45 @@ async function carregarAnalisesPDF() {
              text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:10px;">
           Análises disponíveis
         </div>
-        <div style="display:flex;flex-direction:column;gap:6px;">
+        <div style="display:flex;flex-direction:column;gap:10px;">
         ${lista.map(a => {
           const r = a.resultado?.resumo || {};
           const score = a.resultado?.auditoria?.score || 0;
           const sc = score >= 80 ? '#4CAF7D' : score >= 60 ? '#C9A84C' : '#E05C3A';
           const sup = r.superavit_deficit || 0;
-          const fmt = v => v != null ? 'R$\u00a0' + Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
+          const fmt = v => v != null ? 'R$ ' + Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2}) : '—';
           const explic = a.resultado?.auditoria?.score_explicacao || '';
           return `<div onclick="verAnalise('${a.id}')"
-            style="display:flex;align-items:center;gap:10px;padding:12px 14px;
-                   background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);
-                   border-radius:10px;cursor:pointer;transition:border-color 0.15s;
-                   width:100%;box-sizing:border-box;overflow:hidden;"
+            class="panel"
+            style="display:flex;align-items:center;gap:14px;padding:14px 16px;
+                   cursor:pointer;transition:border-color 0.15s;flex-wrap:wrap;"
             onmouseover="this.style.borderColor='rgba(201,168,76,0.3)'"
             onmouseout="this.style.borderColor='rgba(255,255,255,0.06)'">
             <!-- Score -->
-            <div style="width:44px;height:44px;border-radius:10px;
+            <div style="width:48px;height:48px;border-radius:12px;
                  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);
                  display:flex;flex-direction:column;align-items:center;justify-content:center;
                  flex-shrink:0;">
-              <div style="font-size:16px;font-weight:800;color:${sc};line-height:1;">${score}</div>
-              <div style="font-size:8px;color:${sc};opacity:0.7;font-family:var(--font-mono,monospace);">score</div>
+              <div style="font-size:17px;font-weight:800;color:${sc};line-height:1;">${score}</div>
+              <div style="font-size:8px;color:${sc};opacity:0.7;font-family:var(--font-mono,monospace);letter-spacing:0.04em;">score</div>
             </div>
             <!-- Info -->
-            <div style="flex:1;min-width:0;overflow:hidden;">
-              <div style="font-size:13px;font-weight:700;color:var(--text,#E8E6E0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${a.periodo}</div>
-              <div style="font-size:10px;color:var(--text-dim,#9A9690);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${explic || a.nome_arquivo || ''}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:14px;font-weight:700;color:var(--text,#E8E6E0);">${a.periodo}</div>
+              <div style="font-size:11px;color:var(--text-dim,#9A9690);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${explic || a.nome_arquivo || ''}</div>
             </div>
             <!-- KPIs -->
-            <div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;gap:2px;">
-              <div style="display:flex;align-items:baseline;gap:4px;">
-                <span style="font-size:9px;font-family:var(--font-mono,monospace);text-transform:uppercase;color:var(--text-faint,#52504C);">${sup>=0?'Super.':'Déf.'}</span>
-                <span style="font-size:12px;font-weight:600;color:${sup>=0?'#4CAF7D':'#E05C3A'};">${fmt(Math.abs(sup))}</span>
+            <div style="display:flex;gap:16px;flex-shrink:0;">
+              <div style="text-align:right;">
+                <div style="font-size:9px;font-family:var(--font-mono,monospace);letter-spacing:0.06em;text-transform:uppercase;color:var(--text-faint,#52504C);">${sup>=0?'Superávit':'Déficit'}</div>
+                <div style="font-size:13px;font-weight:600;color:${sup>=0?'#4CAF7D':'#E05C3A'};">${fmt(Math.abs(sup))}</div>
               </div>
-              <div style="display:flex;align-items:baseline;gap:4px;">
-                <span style="font-size:9px;font-family:var(--font-mono,monospace);text-transform:uppercase;color:var(--text-faint,#52504C);">Inadimp.</span>
-                <span style="font-size:12px;font-weight:600;color:var(--text,#E8E6E0);">${r.inadimplencia_percentual != null ? Number(r.inadimplencia_percentual).toFixed(1)+'%' : '—'}</span>
+              <div style="text-align:right;">
+                <div style="font-size:9px;font-family:var(--font-mono,monospace);letter-spacing:0.06em;text-transform:uppercase;color:var(--text-faint,#52504C);">Inadimp.</div>
+                <div style="font-size:13px;font-weight:600;color:var(--text,#E8E6E0);">${r.inadimplencia_percentual != null ? Number(r.inadimplencia_percentual).toFixed(1)+'%' : '—'}</div>
               </div>
             </div>
-            <svg viewBox="0 0 16 16" fill="none" width="12" height="12" style="opacity:0.3;flex-shrink:0;">
+            <svg viewBox="0 0 16 16" fill="none" width="14" height="14" style="opacity:0.3;flex-shrink:0;">
               <path d="M6 3l4 5-4 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>`;
@@ -1774,11 +1771,11 @@ function renderAnaliseResultado(d) {
       <!-- botão Nova Análise removido daqui — está no header da seção -->
     </div>
 
-    <!-- Todos os boxes com gap uniforme de 10px -->
-    <div style="display:flex;flex-direction:column;gap:10px;">
+    <!-- Score + KPIs — mobile: 1 coluna, desktop: lado a lado -->
+    <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:16px;">
 
       <!-- Score -->
-      <div class="panel" style="padding:20px;margin-bottom:0;display:flex;align-items:center;gap:20px;">
+      <div class="panel" style="padding:20px;display:flex;align-items:center;gap:20px;">
         <div style="text-align:center;min-width:80px;">
           <div style="font-size:52px;font-weight:800;color:${scoreColor};line-height:1;">${score}</div>
           <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.07em;
@@ -1793,60 +1790,61 @@ function renderAnaliseResultado(d) {
         </div>
       </div>
 
-      <!-- KPIs: 2x2 -->
+      <!-- KPIs: 2 colunas em mobile -->
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
-        <div class="panel" style="padding:14px;margin-bottom:0;">
+        <div class="panel" style="padding:14px;">
           <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.07em;text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:5px;">Receitas</div>
           <div style="font-size:16px;font-weight:700;color:#4CAF7D;word-break:break-all;">${fmt(r.receitas_total)}</div>
         </div>
-        <div class="panel" style="padding:14px;margin-bottom:0;">
+        <div class="panel" style="padding:14px;">
           <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.07em;text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:5px;">Despesas</div>
           <div style="font-size:16px;font-weight:700;color:#E05C3A;word-break:break-all;">${fmt(r.despesas_total)}</div>
         </div>
-        <div class="panel" style="padding:14px;margin-bottom:0;">
+        <div class="panel" style="padding:14px;">
           <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.07em;text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:5px;">${supLabel}</div>
           <div style="font-size:16px;font-weight:700;color:${supColor};word-break:break-all;">${fmt(Math.abs(sup))}</div>
         </div>
-        <div class="panel" style="padding:16px;margin-bottom:0;">
+        <div class="panel" style="padding:16px;">
           <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:6px;">Saldo Final</div>
           <div style="font-size:18px;font-weight:700;color:var(--text,#E8E6E0);">${fmt(r.saldo_final)}</div>
         </div>
       </div>
+    </div>
 
-      <!-- Inadimplência + Fundo -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div class="panel" style="padding:14px;margin-bottom:0;">
-          <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.07em;text-transform:uppercase;
-               color:var(--text-dim,#9A9690);margin-bottom:8px;">Inadimplência</div>
-          <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">
-            <span style="font-size:24px;font-weight:800;color:${(r.inadimplencia_percentual||0)>10?'#E05C3A':(r.inadimplencia_percentual||0)>5?'#C9A84C':'#4CAF7D'};">${pct(r.inadimplencia_percentual)}</span>
-            <span style="font-size:11px;color:var(--text-dim,#9A9690);">${r.inadimplencia_unidades||0} unid.</span>
-          </div>
-          <div style="font-size:11px;color:var(--text-dim,#9A9690);margin-top:3px;">${fmt(r.inadimplencia_valor)}</div>
+    <!-- Inadimplência + Fundo -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div class="panel" style="padding:14px;">
+        <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.07em;text-transform:uppercase;
+             color:var(--text-dim,#9A9690);margin-bottom:8px;">Inadimplência</div>
+        <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">
+          <span style="font-size:24px;font-weight:800;color:${(r.inadimplencia_percentual||0)>10?'#E05C3A':(r.inadimplencia_percentual||0)>5?'#C9A84C':'#4CAF7D'};">${pct(r.inadimplencia_percentual)}</span>
+          <span style="font-size:11px;color:var(--text-dim,#9A9690);">${r.inadimplencia_unidades||0} unid.</span>
         </div>
-        <div class="panel" style="padding:14px;margin-bottom:0;">
-          <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.07em;text-transform:uppercase;
-               color:var(--text-dim,#9A9690);margin-bottom:8px;">Fundo de Reserva</div>
-          <div style="font-size:18px;font-weight:800;color:var(--gold,#C9A84C);word-break:break-all;">${fmt(r.fundo_reserva)}</div>
-        </div>
+        <div style="font-size:11px;color:var(--text-dim,#9A9690);margin-top:3px;">${fmt(r.inadimplencia_valor)}</div>
       </div>
+      <div class="panel" style="padding:14px;">
+        <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.07em;text-transform:uppercase;
+             color:var(--text-dim,#9A9690);margin-bottom:8px;">Fundo de Reserva</div>
+        <div style="font-size:18px;font-weight:800;color:var(--gold,#C9A84C);word-break:break-all;">${fmt(r.fundo_reserva)}</div>
+      </div>
+    </div>
 
-      <!-- Despesas por Categoria -->
-      <div class="panel" style="padding:20px;margin-bottom:0;">
+    <!-- Despesas e Receitas — empilhados no mobile -->
+    <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:12px;">
+      <div class="panel" style="padding:20px;">
         <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.08em;
              text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:16px;">Despesas por Categoria</div>
         ${despHTML}
       </div>
-
-      <!-- Receitas por Categoria -->
-      <div class="panel" style="padding:20px;margin-bottom:0;">
+      <div class="panel" style="padding:20px;">
         <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.08em;
              text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:16px;">Receitas por Categoria</div>
         ${recHTML}
       </div>
+    </div>
 
-      <!-- Auditoria -->
-      <div class="panel" style="padding:20px;margin-bottom:0;">
+    <!-- Auditoria -->
+    <div class="panel" style="padding:20px;margin-bottom:16px;">
       <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.08em;
            text-transform:uppercase;color:var(--gold,#C9A84C);margin-bottom:16px;">
         ⚖ Auditoria Inteligente
@@ -1864,8 +1862,6 @@ function renderAnaliseResultado(d) {
           ${d.auditoria.resumo_auditoria}
         </div>` : ''}
     </div>
-
-    </div><!-- fim flex-column gap:10px -->
 
   </div>`;
 }
