@@ -1774,11 +1774,11 @@ function renderAnaliseResultado(d) {
       <!-- botão Nova Análise removido daqui — está no header da seção -->
     </div>
 
-    <!-- Score + KPIs — mobile: 1 coluna, desktop: lado a lado -->
-    <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:16px;">
+    <!-- Todos os boxes com gap uniforme de 10px -->
+    <div style="display:flex;flex-direction:column;gap:10px;">
 
       <!-- Score -->
-      <div class="panel" style="padding:20px;display:flex;align-items:center;gap:20px;">
+      <div class="panel" style="padding:20px;margin-bottom:0;display:flex;align-items:center;gap:20px;">
         <div style="text-align:center;min-width:80px;">
           <div style="font-size:52px;font-weight:800;color:${scoreColor};line-height:1;">${score}</div>
           <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.07em;
@@ -1793,7 +1793,7 @@ function renderAnaliseResultado(d) {
         </div>
       </div>
 
-      <!-- KPIs: 2 colunas em mobile -->
+      <!-- KPIs: 2x2 -->
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
         <div class="panel" style="padding:14px;margin-bottom:0;">
           <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.07em;text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:5px;">Receitas</div>
@@ -1812,42 +1812,41 @@ function renderAnaliseResultado(d) {
           <div style="font-size:18px;font-weight:700;color:var(--text,#E8E6E0);">${fmt(r.saldo_final)}</div>
         </div>
       </div>
-    </div>
 
-    <!-- Inadimplência + Fundo -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
-      <div class="panel" style="padding:14px;margin-bottom:0;">
-        <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.07em;text-transform:uppercase;
-             color:var(--text-dim,#9A9690);margin-bottom:8px;">Inadimplência</div>
-        <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">
-          <span style="font-size:24px;font-weight:800;color:${(r.inadimplencia_percentual||0)>10?'#E05C3A':(r.inadimplencia_percentual||0)>5?'#C9A84C':'#4CAF7D'};">${pct(r.inadimplencia_percentual)}</span>
-          <span style="font-size:11px;color:var(--text-dim,#9A9690);">${r.inadimplencia_unidades||0} unid.</span>
+      <!-- Inadimplência + Fundo -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="panel" style="padding:14px;margin-bottom:0;">
+          <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.07em;text-transform:uppercase;
+               color:var(--text-dim,#9A9690);margin-bottom:8px;">Inadimplência</div>
+          <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">
+            <span style="font-size:24px;font-weight:800;color:${(r.inadimplencia_percentual||0)>10?'#E05C3A':(r.inadimplencia_percentual||0)>5?'#C9A84C':'#4CAF7D'};">${pct(r.inadimplencia_percentual)}</span>
+            <span style="font-size:11px;color:var(--text-dim,#9A9690);">${r.inadimplencia_unidades||0} unid.</span>
+          </div>
+          <div style="font-size:11px;color:var(--text-dim,#9A9690);margin-top:3px;">${fmt(r.inadimplencia_valor)}</div>
         </div>
-        <div style="font-size:11px;color:var(--text-dim,#9A9690);margin-top:3px;">${fmt(r.inadimplencia_valor)}</div>
+        <div class="panel" style="padding:14px;margin-bottom:0;">
+          <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.07em;text-transform:uppercase;
+               color:var(--text-dim,#9A9690);margin-bottom:8px;">Fundo de Reserva</div>
+          <div style="font-size:18px;font-weight:800;color:var(--gold,#C9A84C);word-break:break-all;">${fmt(r.fundo_reserva)}</div>
+        </div>
       </div>
-      <div class="panel" style="padding:14px;margin-bottom:0;">
-        <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.07em;text-transform:uppercase;
-             color:var(--text-dim,#9A9690);margin-bottom:8px;">Fundo de Reserva</div>
-        <div style="font-size:18px;font-weight:800;color:var(--gold,#C9A84C);word-break:break-all;">${fmt(r.fundo_reserva)}</div>
-      </div>
-    </div>
 
-    <!-- Despesas e Receitas — empilhados no mobile -->
-    <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:12px;">
-      <div class="panel" style="padding:20px;">
+      <!-- Despesas por Categoria -->
+      <div class="panel" style="padding:20px;margin-bottom:0;">
         <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.08em;
              text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:16px;">Despesas por Categoria</div>
         ${despHTML}
       </div>
-      <div class="panel" style="padding:20px;">
+
+      <!-- Receitas por Categoria -->
+      <div class="panel" style="padding:20px;margin-bottom:0;">
         <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.08em;
              text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:16px;">Receitas por Categoria</div>
         ${recHTML}
       </div>
-    </div>
 
-    <!-- Auditoria -->
-    <div class="panel" style="padding:20px;margin-bottom:16px;">
+      <!-- Auditoria -->
+      <div class="panel" style="padding:20px;margin-bottom:0;">
       <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.08em;
            text-transform:uppercase;color:var(--gold,#C9A84C);margin-bottom:16px;">
         ⚖ Auditoria Inteligente
@@ -1865,6 +1864,8 @@ function renderAnaliseResultado(d) {
           ${d.auditoria.resumo_auditoria}
         </div>` : ''}
     </div>
+
+    </div><!-- fim flex-column gap:10px -->
 
   </div>`;
 }
