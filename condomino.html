@@ -1569,45 +1569,46 @@ async function carregarAnalisesPDF() {
              text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:10px;">
           Análises disponíveis
         </div>
-        <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;flex-direction:column;gap:6px;">
         ${lista.map(a => {
           const r = a.resultado?.resumo || {};
           const score = a.resultado?.auditoria?.score || 0;
           const sc = score >= 80 ? '#4CAF7D' : score >= 60 ? '#C9A84C' : '#E05C3A';
           const sup = r.superavit_deficit || 0;
-          const fmt = v => v != null ? 'R$ ' + Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2}) : '—';
+          const fmt = v => v != null ? 'R$\u00a0' + Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
           const explic = a.resultado?.auditoria?.score_explicacao || '';
           return `<div onclick="verAnalise('${a.id}')"
-            class="panel"
-            style="display:flex;align-items:center;gap:14px;padding:14px 16px;
-                   cursor:pointer;transition:border-color 0.15s;flex-wrap:wrap;"
+            style="display:flex;align-items:center;gap:10px;padding:12px 14px;
+                   background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);
+                   border-radius:10px;cursor:pointer;transition:border-color 0.15s;
+                   width:100%;box-sizing:border-box;overflow:hidden;"
             onmouseover="this.style.borderColor='rgba(201,168,76,0.3)'"
             onmouseout="this.style.borderColor='rgba(255,255,255,0.06)'">
             <!-- Score -->
-            <div style="width:48px;height:48px;border-radius:12px;
+            <div style="width:44px;height:44px;border-radius:10px;
                  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);
                  display:flex;flex-direction:column;align-items:center;justify-content:center;
                  flex-shrink:0;">
-              <div style="font-size:17px;font-weight:800;color:${sc};line-height:1;">${score}</div>
-              <div style="font-size:8px;color:${sc};opacity:0.7;font-family:var(--font-mono,monospace);letter-spacing:0.04em;">score</div>
+              <div style="font-size:16px;font-weight:800;color:${sc};line-height:1;">${score}</div>
+              <div style="font-size:8px;color:${sc};opacity:0.7;font-family:var(--font-mono,monospace);">score</div>
             </div>
             <!-- Info -->
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:14px;font-weight:700;color:var(--text,#E8E6E0);">${a.periodo}</div>
-              <div style="font-size:11px;color:var(--text-dim,#9A9690);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${explic || a.nome_arquivo || ''}</div>
+            <div style="flex:1;min-width:0;overflow:hidden;">
+              <div style="font-size:13px;font-weight:700;color:var(--text,#E8E6E0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${a.periodo}</div>
+              <div style="font-size:10px;color:var(--text-dim,#9A9690);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${explic || a.nome_arquivo || ''}</div>
             </div>
             <!-- KPIs -->
-            <div style="display:flex;gap:16px;flex-shrink:0;">
-              <div style="text-align:right;">
-                <div style="font-size:9px;font-family:var(--font-mono,monospace);letter-spacing:0.06em;text-transform:uppercase;color:var(--text-faint,#52504C);">${sup>=0?'Superávit':'Déficit'}</div>
-                <div style="font-size:13px;font-weight:600;color:${sup>=0?'#4CAF7D':'#E05C3A'};">${fmt(Math.abs(sup))}</div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;gap:2px;">
+              <div style="display:flex;align-items:baseline;gap:4px;">
+                <span style="font-size:9px;font-family:var(--font-mono,monospace);text-transform:uppercase;color:var(--text-faint,#52504C);">${sup>=0?'Super.':'Déf.'}</span>
+                <span style="font-size:12px;font-weight:600;color:${sup>=0?'#4CAF7D':'#E05C3A'};">${fmt(Math.abs(sup))}</span>
               </div>
-              <div style="text-align:right;">
-                <div style="font-size:9px;font-family:var(--font-mono,monospace);letter-spacing:0.06em;text-transform:uppercase;color:var(--text-faint,#52504C);">Inadimp.</div>
-                <div style="font-size:13px;font-weight:600;color:var(--text,#E8E6E0);">${r.inadimplencia_percentual != null ? Number(r.inadimplencia_percentual).toFixed(1)+'%' : '—'}</div>
+              <div style="display:flex;align-items:baseline;gap:4px;">
+                <span style="font-size:9px;font-family:var(--font-mono,monospace);text-transform:uppercase;color:var(--text-faint,#52504C);">Inadimp.</span>
+                <span style="font-size:12px;font-weight:600;color:var(--text,#E8E6E0);">${r.inadimplencia_percentual != null ? Number(r.inadimplencia_percentual).toFixed(1)+'%' : '—'}</span>
               </div>
             </div>
-            <svg viewBox="0 0 16 16" fill="none" width="14" height="14" style="opacity:0.3;flex-shrink:0;">
+            <svg viewBox="0 0 16 16" fill="none" width="12" height="12" style="opacity:0.3;flex-shrink:0;">
               <path d="M6 3l4 5-4 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>`;
