@@ -1549,10 +1549,13 @@ async function fazerLogin() {
   const timeout = ms => new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms));
 
   try {
-    /* 1. Login via SDK — timeout de 10s para evitar botão preso */
+    /* 1. Limpa sessão local antiga (evita bloqueio por token expirado no localStorage) */
+    await db.auth.signOut({ scope: 'local' }).catch(() => {});
+
+    /* 2. Login via SDK — timeout de 20s */
     const { data, error } = await Promise.race([
       db.auth.signInWithPassword({ email, password: senha }),
-      timeout(10000)
+      timeout(20000)
     ]);
     if (error) throw new Error('credenciais');
 
