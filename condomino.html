@@ -1533,7 +1533,15 @@ async function carregarAnalisesPDF() {
   ['analise-lista-topo','analise-lista-rodape'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
-    if (!lista.length) { el.innerHTML = ''; return; }
+    if (!lista.length) {
+      if (id === 'analise-lista-topo') {
+        el.innerHTML = `<div style="font-size:12px;color:var(--text-faint,#52504C);
+          padding:10px 4px 16px;text-align:center;">
+          Nenhuma análise salva ainda. Envie o primeiro PDF abaixo.
+        </div>`;
+      } else { el.innerHTML = ''; }
+      return;
+    }
     const isRodape = id === 'analise-lista-rodape';
     el.innerHTML = `
       <div class="panel" style="padding:16px;${isRodape ? 'margin-top:16px;' : 'margin-bottom:16px;'}">
