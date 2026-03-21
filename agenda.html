@@ -24,9 +24,9 @@
     @keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
 
     /* HAMBURGER */
-    .btn-hamburger{display:none;background:none;border:none;color:var(--text-dim);cursor:pointer;padding:8px;position:fixed;top:14px;left:16px;z-index:200;}
+    .btn-hamburger{display:none;background:none;border:none;color:var(--text-dim);cursor:pointer;padding:6px;flex-shrink:0;}
     .btn-hamburger svg{width:22px;height:22px;}
-    @media(max-width:767px){.btn-hamburger{display:flex;}header{padding-left:52px;}}
+    @media(max-width:767px){.btn-hamburger{display:flex;}}
 
     .mobile-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:150;}
     .mobile-overlay.show{display:block;}
@@ -120,12 +120,10 @@
   </div>
 </div>
 
-<!-- Hamburger button -->
-<button class="btn-hamburger" onclick="abrirDrawer()">
-  <svg viewBox="0 0 22 22" fill="none"><path d="M3 6h16M3 11h16M3 16h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-</button>
-
 <header>
+  <button class="btn-hamburger" onclick="abrirDrawer()">
+    <svg viewBox="0 0 22 22" fill="none"><path d="M3 6h16M3 11h16M3 16h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+  </button>
   <a class="logo-link" href="conselho.html">
     <svg width="28" height="28" viewBox="0 0 44 44" fill="none">
       <polygon points="22,2 39,11.5 39,32.5 22,42 5,32.5 5,11.5" fill="#0A0C0F" stroke="#C9A84C" stroke-width="2"/>
