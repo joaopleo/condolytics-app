@@ -26,6 +26,8 @@
     color:var(--off-white);
     min-height:100vh;
     display:flex;
+    overflow-x:hidden;
+    max-width:100vw;
   }
 
   /* ── SIDEBAR (desktop) ── */
@@ -83,7 +85,7 @@
   .btn-logout:hover{border-color:var(--red);color:var(--red);background:rgba(224,92,58,0.05);}
 
   /* ── MAIN ── */
-  .main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh;}
+  .main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh;overflow-x:hidden;min-width:0;}
 
   /* ── TOPBAR ── */
   .topbar{
@@ -103,7 +105,7 @@
   @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 6px var(--green);}50%{opacity:0.4;box-shadow:none;}}
 
   /* ── CONTENT ── */
-  .content{padding:32px 36px;flex:1;}
+  .content{padding:32px 36px;flex:1;overflow-x:hidden;min-width:0;}
   .section{display:none;}
   .section.active{display:block;}
 
