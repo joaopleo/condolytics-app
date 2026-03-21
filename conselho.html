@@ -1251,8 +1251,8 @@
     </div>
   </section>
 
-  <!-- ── ANÁLISE PDF ── -->
-  <section id="sec-analise-conselho" style="margin-top:40px;">
+  <!-- ── ANÁLISE PDF (oculta — acessível via menu) ── -->
+  <section id="sec-analise-conselho" style="display:none;margin-top:40px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
       <div style="display:flex;align-items:center;gap:12px;">
         <div style="width:36px;height:36px;background:var(--gold-dim);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -1308,8 +1308,8 @@
     <div id="analise-resultado-conselho"></div>
   </section>
 
-  <!-- ── AGENDA DO CONDOMÍNIO ── -->
-  <section id="sec-agenda-conselho" style="margin-top:40px;">
+  <!-- ── AGENDA DO CONDOMÍNIO (oculta — acessível via menu) ── -->
+  <section id="sec-agenda-conselho" style="display:none;margin-top:40px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
       <div style="display:flex;align-items:center;gap:12px;">
         <div style="width:36px;height:36px;background:rgba(91,155,213,0.12);border:1px solid rgba(91,155,213,0.2);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -2205,6 +2205,13 @@ function fecharDrawer() {
 }
 function irParaSecao(nome, event) {
   fecharDrawer();
+  // Seções que ficam ocultas e aparecem apenas quando chamadas pelo menu
+  const secoesOcultas = ['sec-analise-conselho', 'sec-agenda-conselho'];
+  secoesOcultas.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+
   const secMap = {
     dashboard: 'secFinanceiro',
     ocorrencias: 'secOcorrenciasConselho',
@@ -2214,7 +2221,10 @@ function irParaSecao(nome, event) {
   const id = secMap[nome];
   if (id) {
     const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
+    if (el) {
+      el.style.display = '';
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
   }
   document.querySelectorAll('.mobile-nav-item').forEach(b => b.classList.remove('active'));
   if (event && event.currentTarget) event.currentTarget.classList.add('active');
