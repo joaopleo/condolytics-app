@@ -829,6 +829,7 @@
 <!-- ═══ SHELL ═══ -->
 <div class="shell">
 
+<div id="conselho-dashboard">
   <!-- BANNER pendências de aprovação -->
   <div id="bannerAprovacao" style="display:none;margin-bottom:12px;padding:14px 20px;
     background:rgba(224,92,58,0.1);border:1px solid rgba(224,92,58,0.45);
@@ -1250,6 +1251,8 @@
       </div>
     </div>
   </section>
+
+</div><!-- /conselho-dashboard -->
 
   <!-- ── ANÁLISE PDF (oculta — acessível via menu) ── -->
   <section id="sec-analise-conselho" style="display:none;margin-top:40px;">
@@ -2205,40 +2208,36 @@ function fecharDrawer() {
 }
 function irParaSecao(nome, event) {
   fecharDrawer();
-  // Seções que ficam ocultas e aparecem apenas quando chamadas pelo menu
-  const secoesOcultas = ['sec-analise-conselho', 'sec-agenda-conselho'];
-  secoesOcultas.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = 'none';
-  });
 
-  const secMap = {
-    dashboard: 'secFinanceiro',
-    ocorrencias: 'secOcorrenciasConselho',
-    analise: 'sec-analise-conselho',
-    agenda: 'sec-agenda-conselho'
-  };
-  const id = secMap[nome];
-  if (id) {
-    const el = document.getElementById(id);
-    if (el) {
-      el.style.display = '';
-      // Pequeno delay para o display:'' ser aplicado antes do scroll
-      setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
-    }
-  }
-  document.querySelectorAll('.mobile-nav-item').forEach(b => b.classList.remove('active'));
-  if (event && event.currentTarget) event.currentTarget.classList.add('active');
+  const dashboard = document.getElementById('conselho-dashboard');
+  const analise   = document.getElementById('sec-analise-conselho');
+  const agenda    = document.getElementById('sec-agenda-conselho');
 
-  if (nome === 'analise') {
+  // Oculta tudo
+  if (dashboard) dashboard.style.display = 'none';
+  if (analise)   analise.style.display   = 'none';
+  if (agenda)    agenda.style.display    = 'none';
+
+  // Mostra só o que foi pedido
+  if (nome === 'dashboard' || nome === 'ocorrencias') {
+    if (dashboard) dashboard.style.display = '';
+    // Rola até a seção correta dentro do dashboard
+    const alvo = nome === 'ocorrencias'
+      ? document.getElementById('secOcorrenciasConselho')
+      : document.getElementById('secFinanceiro');
+    if (alvo) setTimeout(() => alvo.scrollIntoView({ behavior:'smooth', block:'start' }), 80);
+  } else if (nome === 'analise') {
+    if (analise) { analise.style.display = ''; window.scrollTo({ top: 0, behavior:'smooth' }); }
     carregarAnalisesConselho();
-  }
-  if (nome === 'agenda') {
-    // Abre o formulário automaticamente ao entrar na Agenda
+  } else if (nome === 'agenda') {
+    if (agenda) { agenda.style.display = ''; window.scrollTo({ top: 0, behavior:'smooth' }); }
     const form = document.getElementById('agenda-form-wrap');
     if (form) form.style.display = 'block';
     carregarAgendaConselho();
   }
+
+  document.querySelectorAll('.mobile-nav-item').forEach(b => b.classList.remove('active'));
+  if (event && event.currentTarget) event.currentTarget.classList.add('active');
 }
 
 // ── Análise PDF (conselho) ────────────────────────────────────────
