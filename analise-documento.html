@@ -16,7 +16,7 @@
       --border:rgba(201,168,76,0.12); --border2:rgba(255,255,255,0.06);
       --gold:#C9A84C; --gold-dim:rgba(201,168,76,0.18);
       --text:#E8E6E0; --text-dim:#9A9690; --text-faint:#52504C;
-      --red:#E05C3A; --green:#4CAF7D; --blue:#5B9BD5;
+      --red:#E05C3A; --green:#4CAF7D;
       --font-sans:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter","Helvetica Neue",Arial,sans-serif;
       --font-mono:'IBM Plex Mono',ui-monospace,"SF Mono",monospace;
     }
@@ -24,43 +24,37 @@
     @keyframes spin{to{transform:rotate(360deg)}}
     @keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
 
+    /* HAMBURGER */
+    .btn-hamburger{display:none;background:none;border:none;color:var(--text-dim);cursor:pointer;padding:8px;position:fixed;top:14px;left:16px;z-index:200;}
+    .btn-hamburger svg{width:22px;height:22px;}
+    @media(max-width:767px){.btn-hamburger{display:flex;}header{padding-left:52px;}}
+
+    .mobile-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:150;}
+    .mobile-overlay.show{display:block;}
+    .mobile-drawer{position:fixed;top:0;left:-280px;bottom:0;width:260px;background:var(--surface);border-right:1px solid var(--border);z-index:160;transition:left 0.3s ease;display:flex;flex-direction:column;overflow-y:auto;}
+    .mobile-drawer.open{left:0;}
+    .mobile-drawer-header{padding:24px 20px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+    .mobile-nav{padding:12px;flex:1;}
+    .mobile-nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;font-size:13px;color:var(--text-dim);cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:all 0.15s;}
+    .mobile-nav-item:hover{background:rgba(255,255,255,0.04);color:var(--text);}
+    .mobile-nav-item.active{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(201,168,76,0.2);}
+    .mobile-nav-item svg{width:16px;height:16px;flex-shrink:0;}
+    .mobile-nav-section{font-family:var(--font-mono);font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-faint);padding:12px 12px 6px;margin-top:4px;}
+    .mobile-nav-footer{padding:12px;border-top:1px solid var(--border);}
+
     /* HEADER */
-    header{
-      display:flex;align-items:center;justify-content:space-between;
-      padding:14px 20px;border-bottom:1px solid var(--border);
-      position:sticky;top:0;z-index:100;
-      background:rgba(10,12,15,0.94);backdrop-filter:blur(20px);
-      animation:slideDown 0.4s ease forwards;
-    }
+    header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;background:rgba(10,12,15,0.94);backdrop-filter:blur(20px);animation:slideDown 0.4s ease forwards;}
     .logo-link{display:flex;align-items:center;gap:10px;text-decoration:none;}
-    .back-btn{
-      display:flex;align-items:center;gap:6px;padding:7px 14px;
-      background:var(--surface);border:1px solid var(--border2);border-radius:8px;
-      font-family:var(--font-sans);font-size:12px;color:var(--text-dim);cursor:pointer;text-decoration:none;
-      transition:border-color 0.15s,color 0.15s;
-    }
-    .back-btn:hover{border-color:rgba(201,168,76,0.3);color:var(--gold);}
 
     /* CONTENT */
     .page{max-width:720px;margin:0 auto;padding:32px 20px 60px;}
-
-    /* SECTION HEADER */
     .sec-header{display:flex;align-items:center;gap:12px;margin-bottom:24px;}
     .sec-icon{width:40px;height:40px;background:var(--gold-dim);border:1px solid var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-    .sec-title{font-size:20px;font-weight:600;color:var(--text);letter-spacing:-0.01em;}
-    .sec-sub{font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-top:2px;}
 
     /* UPLOAD BOX */
     .upload-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin-bottom:20px;}
     .upload-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
-    .upload-text{flex:1;min-width:180px;}
-    .upload-text strong{font-size:13px;font-weight:500;color:var(--text);display:block;margin-bottom:3px;}
-    .upload-text span{font-size:12px;color:var(--text-dim);}
-    .btn-upload{
-      display:flex;align-items:center;gap:8px;padding:9px 20px;
-      background:var(--gold);color:#0A0C0F;border:none;border-radius:8px;
-      font-family:var(--font-sans);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;
-    }
+    .btn-upload{display:flex;align-items:center;gap:8px;padding:9px 20px;background:var(--gold);color:#0A0C0F;border:none;border-radius:8px;font-family:var(--font-sans);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;}
     .loading-row{display:none;align-items:center;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.05);}
     .spinner{width:16px;height:16px;border:2px solid rgba(201,168,76,0.2);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0;}
     .erro-box{display:none;margin-top:12px;padding:10px 14px;background:rgba(224,92,58,0.1);border:1px solid rgba(224,92,58,0.3);border-radius:8px;font-size:12px;color:var(--red);}
@@ -68,11 +62,7 @@
     /* TABS */
     .tab-label{font-family:var(--font-mono);font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;}
     .tabs-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;}
-    .tab-btn{
-      font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;
-      padding:6px 14px;border-radius:6px;background:var(--surface);border:1px solid var(--border2);
-      color:var(--text-dim);cursor:pointer;transition:all 0.18s;
-    }
+    .tab-btn{font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;padding:6px 14px;border-radius:6px;background:var(--surface);border:1px solid var(--border2);color:var(--text-dim);cursor:pointer;transition:all 0.18s;}
     .tab-btn.active{background:var(--gold-dim);border-color:rgba(201,168,76,0.4);color:var(--gold);}
 
     /* RESULTADO */
@@ -82,15 +72,61 @@
     .kpi-label{font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;}
     .kpi-val{font-size:20px;font-weight:600;}
     .score-box{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:20px 22px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
-    .score-num{font-size:48px;font-weight:700;line-height:1;}
-    .score-meta{flex:1;min-width:180px;}
-    .score-meta-label{font-family:var(--font-mono);font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;}
     .lista-box{background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px 18px;}
     .lista-titulo{font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;}
     .lista-item{font-size:12px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
   </style>
 </head>
 <body>
+
+<!-- Mobile overlay -->
+<div class="mobile-overlay" id="mobileOverlay" onclick="fecharDrawer()"></div>
+
+<!-- Mobile drawer -->
+<div class="mobile-drawer" id="mobileDrawer">
+  <div class="mobile-drawer-header">
+    <svg width="28" height="28" viewBox="0 0 44 44" fill="none">
+      <polygon points="22,2 39,11.5 39,32.5 22,42 5,32.5 5,11.5" fill="#0A0C0F" stroke="#C9A84C" stroke-width="2"/>
+      <rect x="9" y="26" width="4" height="9" rx="0.5" fill="#C9A84C"/>
+      <rect x="14" y="20" width="4" height="15" rx="0.5" fill="#C9A84C"/>
+      <rect x="19" y="13" width="4" height="22" rx="0.5" fill="#C9A84C"/>
+      <rect x="24" y="20" width="4" height="15" rx="0.5" fill="#C9A84C"/>
+      <rect x="29" y="26" width="4" height="9" rx="0.5" fill="#C9A84C"/>
+      <line x1="8" y1="35.5" x2="36" y2="35.5" stroke="#C9A84C" stroke-width="1.2"/>
+    </svg>
+    <div>
+      <div style="font-size:13px;font-weight:700;color:var(--text);">Condo<span style="color:var(--gold);font-weight:300">lytics</span></div>
+      <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);">Conselho</div>
+    </div>
+  </div>
+  <nav class="mobile-nav">
+    <div class="mobile-nav-section">Menu</div>
+    <button class="mobile-nav-item" onclick="window.location.href='conselho.html'">
+      <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="1" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/></svg>
+      Visão Geral
+    </button>
+    <button class="mobile-nav-item" onclick="window.location.href='conselho.html#ocorrencias'">
+      <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Ocorrências
+    </button>
+    <button class="mobile-nav-item active">
+      <svg viewBox="0 0 16 16" fill="none"><rect x="3" y="1" width="10" height="14" rx="1.5" stroke="#C9A84C" stroke-width="1.3"/><path d="M6 5h4M6 8h4M6 11h2" stroke="#C9A84C" stroke-width="1.3" stroke-linecap="round"/></svg>
+      <span style="color:#C9A84C;font-weight:600;">Análise de Documento</span>
+    </button>
+    <button class="mobile-nav-item" onclick="window.location.href='agenda.html'">
+      <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 1v4M11 1v4M2 7h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="5.5" cy="10.5" r="0.8" fill="currentColor"/><circle cx="8" cy="10.5" r="0.8" fill="currentColor"/><circle cx="10.5" cy="10.5" r="0.8" fill="currentColor"/></svg>
+      Agenda do Condomínio
+    </button>
+  </nav>
+  <div class="mobile-nav-footer">
+    <button onclick="logout()" style="width:100%;padding:8px;background:none;border:1px solid rgba(255,255,255,0.06);border-radius:6px;font-size:11px;color:var(--text-faint);cursor:pointer;">Sair da conta</button>
+  </div>
+</div>
+
+<!-- Hamburger button -->
+<button class="btn-hamburger" onclick="abrirDrawer()">
+  <svg viewBox="0 0 22 22" fill="none"><path d="M3 6h16M3 11h16M3 16h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+</button>
 
 <header>
   <a class="logo-link" href="conselho.html">
@@ -108,12 +144,6 @@
       <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);">Conselho</div>
     </div>
   </a>
-  <a class="back-btn" href="conselho.html">
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-      <path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    Voltar
-  </a>
 </header>
 
 <div class="page">
@@ -130,17 +160,17 @@
       </svg>
     </div>
     <div>
-      <div class="sec-title">Análise de Documento</div>
-      <div class="sec-sub">Prestação de contas via IA</div>
+      <div style="font-size:20px;font-weight:600;color:var(--text);letter-spacing:-0.01em;">Análise de Documento</div>
+      <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-top:2px;">Prestação de contas via IA</div>
     </div>
   </div>
 
   <!-- Upload -->
   <div class="upload-box">
     <div class="upload-row">
-      <div class="upload-text">
-        <strong>Analise sua prestação de contas aqui</strong>
-        <span>Faça upload do PDF mensal. Nossa IA extrai todos os dados e gera um relatório completo.</span>
+      <div style="flex:1;min-width:180px;">
+        <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px;">Analise sua prestação de contas aqui</div>
+        <div style="font-size:12px;color:var(--text-dim);">Faça upload do PDF mensal. Nossa IA extrai todos os dados e gera um relatório completo.</div>
       </div>
       <div>
         <input type="file" id="analise-input" accept=".pdf" style="display:none" onchange="analisarPDF(this.files[0])">
@@ -160,10 +190,10 @@
     <div class="erro-box" id="erro"></div>
   </div>
 
-  <!-- Tabs / lista de análises -->
+  <!-- Tabs -->
   <div class="tab-label">Análises Disponíveis</div>
   <div class="tabs-row" id="tabs">
-    <div style="color:var(--text-dim);font-size:13px;">Nenhuma análise ainda.</div>
+    <div style="color:var(--text-dim);font-size:13px;">Carregando...</div>
   </div>
 
   <!-- Resultado -->
@@ -172,19 +202,26 @@
 
 <script>
 let _condoAtual = null;
-let _usuario = null;
+let _usuario    = null;
+
+function abrirDrawer()  { document.getElementById('mobileDrawer').classList.add('open');    document.getElementById('mobileOverlay').classList.add('show'); }
+function fecharDrawer() { document.getElementById('mobileDrawer').classList.remove('open'); document.getElementById('mobileOverlay').classList.remove('show'); }
 
 window.addEventListener('load', async () => {
   _usuario = await protegerPagina(['conselho', 'admin']);
   if (!_usuario) return;
 
-  // Busca condomínio do usuário
-  const { data: vinc } = await db.from('usuarios_condominios')
-    .select('condominio_id')
-    .eq('usuario_id', _usuario.id)
-    .limit(1)
-    .single();
-  if (vinc) _condoAtual = vinc.condominio_id;
+  // Mesma lógica do conselho.html
+  const savedId = localStorage.getItem('condolytics_condo_id');
+  if (savedId) {
+    _condoAtual = savedId;
+  } else {
+    const { data: vinculos } = await db.from('usuario_condominios')
+      .select('condominio_id')
+      .eq('usuario_id', _usuario.id)
+      .limit(1);
+    _condoAtual = vinculos?.[0]?.condominio_id || _usuario.condominio_id || null;
+  }
 
   await carregarAnalises();
 });
@@ -200,10 +237,7 @@ async function analisarPDF(file) {
 
   try {
     const { data: exist } = await db.from('analises_pdf')
-      .select('id,periodo')
-      .eq('condominio_id', _condoAtual)
-      .eq('nome_arquivo', file.name)
-      .single();
+      .select('id,periodo').eq('condominio_id', _condoAtual).eq('nome_arquivo', file.name).single();
     if (exist) {
       erroEl.style.display = 'block';
       erroEl.textContent = `Este PDF já foi analisado (${exist.periodo}). Os dados já estão disponíveis abaixo.`;
@@ -217,12 +251,9 @@ async function analisarPDF(file) {
     fd.append('condominio_id', _condoAtual);
     fd.append('user_id', session?.user?.id || '');
 
-    const resp = await fetch('https://mritzsidaqngexgijoqc.supabase.co/functions/v1/analisar-pdf', {
-      method: 'POST', body: fd
-    });
+    const resp = await fetch('https://mritzsidaqngexgijoqc.supabase.co/functions/v1/analisar-pdf', { method:'POST', body:fd });
     const json = await resp.json();
     if (!resp.ok) throw new Error(json.error || 'Erro ao processar PDF');
-
     await carregarAnalises();
   } catch(e) {
     erroEl.style.display = 'block';
@@ -233,38 +264,39 @@ async function analisarPDF(file) {
 }
 
 async function carregarAnalises() {
-  if (!_condoAtual) return;
+  const tabsEl = document.getElementById('tabs');
+  if (!_condoAtual) {
+    tabsEl.innerHTML = '<div style="color:var(--text-dim);font-size:13px;">Condomínio não identificado.</div>';
+    return;
+  }
+
   const { data } = await db.from('analises_pdf')
     .select('id,periodo,periodo_key,resultado')
     .eq('condominio_id', _condoAtual)
     .order('periodo_key', { ascending: false })
     .limit(5);
 
-  const tabsEl = document.getElementById('tabs');
   if (!data?.length) {
     tabsEl.innerHTML = '<div style="color:var(--text-dim);font-size:13px;">Nenhuma análise ainda.</div>';
     document.getElementById('resultado').innerHTML = '';
     return;
   }
 
-  tabsEl.innerHTML = data.map((a, i) => {
-    return `<button class="tab-btn${i===0?' active':''}"
-      onclick="selecionarAnalise(this, '${JSON.stringify(a.resultado).replace(/'/g,"&#39;").replace(/"/g,"&quot;")}')"
+  tabsEl.innerHTML = data.map((a, i) =>
+    `<button class="tab-btn${i===0?' active':''}"
+      onclick="selecionarAnalise(this)"
       data-resultado='${JSON.stringify(a.resultado).replace(/'/g,"&#39;")}'>
       ${formatTab(a.periodo)}
-    </button>`;
-  }).join('');
+    </button>`
+  ).join('');
 
   if (data[0]) renderResultado(data[0].resultado);
 }
 
-function selecionarAnalise(btn, resultadoStr) {
+function selecionarAnalise(btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  try {
-    const d = JSON.parse(btn.dataset.resultado || '{}');
-    renderResultado(d);
-  } catch(e) {}
+  try { renderResultado(JSON.parse(btn.dataset.resultado || '{}')); } catch(e) {}
 }
 
 function formatTab(periodo) {
@@ -273,10 +305,7 @@ function formatTab(periodo) {
                  julho:'Jul',agosto:'Ago',setembro:'Set',outubro:'Out',novembro:'Nov',dezembro:'Dez'};
   const lower = periodo.toLowerCase();
   for (const [nome, abrev] of Object.entries(meses)) {
-    if (lower.startsWith(nome)) {
-      const ano = periodo.split('/')[1]?.slice(-2) || '';
-      return abrev + '/' + ano;
-    }
+    if (lower.startsWith(nome)) return abrev + '/' + (periodo.split('/')[1]?.slice(-2)||'');
   }
   const parts = periodo.split('/');
   if (parts.length === 2 && parts[1].length === 4) return parts[0].slice(0,3) + '/' + parts[1].slice(-2);
@@ -286,52 +315,36 @@ function formatTab(periodo) {
 function renderResultado(d) {
   const container = document.getElementById('resultado');
   if (!d || !container) return;
-  const r   = d.resumo || {};
+  const r   = d.resumo   || {};
   const aud = d.auditoria || {};
   const score = aud.score || 0;
   const scoreColor = score >= 80 ? '#4CAF7D' : score >= 60 ? '#C9A84C' : '#E05C3A';
-  const scoreLabel = score >= 80 ? 'ÓTIMO' : score >= 60 ? 'ATENÇÃO' : 'CRÍTICO';
+  const scoreLabel = score >= 80 ? 'ÓTIMO'   : score >= 60 ? 'ATENÇÃO' : 'CRÍTICO';
   const fmt = v => v != null ? 'R$ ' + parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2}) : '—';
 
   container.innerHTML = `
     <div class="score-box">
       <div style="flex-shrink:0;text-align:center;">
-        <div class="score-num" style="color:${scoreColor};">${score}</div>
+        <div style="font-size:48px;font-weight:700;color:${scoreColor};line-height:1;">${score}</div>
         <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:${scoreColor};margin-top:2px;">${scoreLabel}</div>
         <div style="font-family:var(--font-mono);font-size:8px;color:var(--text-dim);margin-top:1px;">SCORE</div>
       </div>
-      <div class="score-meta">
-        <div class="score-meta-label">Score de Saúde Financeira</div>
-        <div style="font-size:13px;color:var(--text);line-height:1.5;">${aud.score_explicacao || ''}</div>
+      <div style="flex:1;min-width:180px;">
+        <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;">Score de Saúde Financeira</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.5;">${aud.score_explicacao||''}</div>
       </div>
     </div>
-
     <div class="kpi-grid">
       <div class="kpi-card"><div class="kpi-label">Receitas</div><div class="kpi-val" style="color:#4CAF7D;">${fmt(r.receitas)}</div></div>
       <div class="kpi-card"><div class="kpi-label">Despesas</div><div class="kpi-val" style="color:#E05C3A;">${fmt(r.despesas)}</div></div>
       <div class="kpi-card"><div class="kpi-label">Superávit</div><div class="kpi-val" style="color:${(r.superavit||0)>=0?'#4CAF7D':'#E05C3A'};">${fmt(r.superavit)}</div></div>
       <div class="kpi-card"><div class="kpi-label">Saldo Final</div><div class="kpi-val">${fmt(r.saldo)}</div></div>
-      ${r.inadimplencia != null ? `<div class="kpi-card"><div class="kpi-label">Inadimplência</div><div class="kpi-val" style="color:#C9A84C;">${parseFloat(r.inadimplencia).toFixed(1)}%</div></div>` : ''}
-      ${r.fundo_reserva != null ? `<div class="kpi-card"><div class="kpi-label">Fundo de Reserva</div><div class="kpi-val">${fmt(r.fundo_reserva)}</div></div>` : ''}
+      ${r.inadimplencia!=null?`<div class="kpi-card"><div class="kpi-label">Inadimplência</div><div class="kpi-val" style="color:#C9A84C;">${parseFloat(r.inadimplencia).toFixed(1)}%</div></div>`:''}
+      ${r.fundo_reserva!=null?`<div class="kpi-card"><div class="kpi-label">Fundo de Reserva</div><div class="kpi-val">${fmt(r.fundo_reserva)}</div></div>`:''}
     </div>
-
-    ${aud.alertas?.length ? `
-    <div class="lista-box">
-      <div class="lista-titulo">⚠ Alertas</div>
-      ${aud.alertas.map(a=>`<div class="lista-item" style="color:#E05C3A;">• ${a}</div>`).join('')}
-    </div>` : ''}
-
-    ${aud.pontos_positivos?.length ? `
-    <div class="lista-box">
-      <div class="lista-titulo">✓ Pontos Positivos</div>
-      ${aud.pontos_positivos.map(p=>`<div class="lista-item" style="color:#4CAF7D;">• ${p}</div>`).join('')}
-    </div>` : ''}
-
-    ${aud.resumo_auditoria ? `
-    <div class="lista-box">
-      <div class="lista-titulo">Resumo da Auditoria</div>
-      <div style="font-size:13px;color:var(--text);line-height:1.6;">${aud.resumo_auditoria}</div>
-    </div>` : ''}
+    ${aud.alertas?.length?`<div class="lista-box"><div class="lista-titulo">⚠ Alertas</div>${aud.alertas.map(a=>`<div class="lista-item" style="color:#E05C3A;">• ${a}</div>`).join('')}</div>`:''}
+    ${aud.pontos_positivos?.length?`<div class="lista-box"><div class="lista-titulo">✓ Pontos Positivos</div>${aud.pontos_positivos.map(p=>`<div class="lista-item" style="color:#4CAF7D;">• ${p}</div>`).join('')}</div>`:''}
+    ${aud.resumo_auditoria?`<div class="lista-box"><div class="lista-titulo">Resumo da Auditoria</div><div style="font-size:13px;color:var(--text);line-height:1.6;">${aud.resumo_auditoria}</div></div>`:''}
   `;
 }
 </script>

@@ -23,45 +23,41 @@
     body{background:var(--bg);color:var(--text);font-family:var(--font-sans);font-size:14px;line-height:1.5;min-height:100vh;overflow-x:hidden;}
     @keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
 
+    /* HAMBURGER */
+    .btn-hamburger{display:none;background:none;border:none;color:var(--text-dim);cursor:pointer;padding:8px;position:fixed;top:14px;left:16px;z-index:200;}
+    .btn-hamburger svg{width:22px;height:22px;}
+    @media(max-width:767px){.btn-hamburger{display:flex;}header{padding-left:52px;}}
+
+    .mobile-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:150;}
+    .mobile-overlay.show{display:block;}
+    .mobile-drawer{position:fixed;top:0;left:-280px;bottom:0;width:260px;background:var(--surface);border-right:1px solid var(--border);z-index:160;transition:left 0.3s ease;display:flex;flex-direction:column;overflow-y:auto;}
+    .mobile-drawer.open{left:0;}
+    .mobile-drawer-header{padding:24px 20px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+    .mobile-nav{padding:12px;flex:1;}
+    .mobile-nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;font-size:13px;color:var(--text-dim);cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:all 0.15s;}
+    .mobile-nav-item:hover{background:rgba(255,255,255,0.04);color:var(--text);}
+    .mobile-nav-item.active{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(201,168,76,0.2);}
+    .mobile-nav-item svg{width:16px;height:16px;flex-shrink:0;}
+    .mobile-nav-section{font-family:var(--font-mono);font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-faint);padding:12px 12px 6px;margin-top:4px;}
+    .mobile-nav-footer{padding:12px;border-top:1px solid var(--border);}
+
     /* HEADER */
-    header{
-      display:flex;align-items:center;justify-content:space-between;
-      padding:14px 20px;border-bottom:1px solid var(--border);
-      position:sticky;top:0;z-index:100;
-      background:rgba(10,12,15,0.94);backdrop-filter:blur(20px);
-      animation:slideDown 0.4s ease forwards;
-    }
+    header{display:flex;align-items:center;padding:14px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;background:rgba(10,12,15,0.94);backdrop-filter:blur(20px);animation:slideDown 0.4s ease forwards;}
     .logo-link{display:flex;align-items:center;gap:10px;text-decoration:none;}
-    .back-btn{
-      display:flex;align-items:center;gap:6px;padding:7px 14px;
-      background:var(--surface);border:1px solid var(--border2);border-radius:8px;
-      font-family:var(--font-sans);font-size:12px;color:var(--text-dim);cursor:pointer;text-decoration:none;
-      transition:border-color 0.15s,color 0.15s;
-    }
-    .back-btn:hover{border-color:rgba(201,168,76,0.3);color:var(--gold);}
 
     /* CONTENT */
     .page{max-width:720px;margin:0 auto;padding:32px 20px 60px;}
-
-    /* SEC HEADER */
     .sec-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px;}
-    .sec-left{display:flex;align-items:center;gap:12px;}
     .sec-icon{width:40px;height:40px;background:rgba(91,155,213,0.12);border:1px solid rgba(91,155,213,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-    .sec-title{font-size:20px;font-weight:600;color:var(--text);letter-spacing:-0.01em;}
-    .sec-sub{font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#5B9BD5;margin-top:2px;}
 
     /* FORMULÁRIO */
     .form-box{background:var(--surface);border:1px solid var(--border2);border-radius:12px;margin-bottom:20px;overflow:hidden;}
     .form-header{padding:14px 18px;border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:8px;}
     .form-dot{width:7px;height:7px;border-radius:50%;background:#5B9BD5;flex-shrink:0;}
-    .form-header-title{font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim);}
     .form-body{padding:18px;}
     .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
-    .form-group label{font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:6px;}
-    .form-input{
-      width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;
-      padding:10px 12px;font-family:var(--font-sans);font-size:13px;color:var(--text);outline:none;
-    }
+    label{font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:6px;}
+    .form-input{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-family:var(--font-sans);font-size:13px;color:var(--text);outline:none;}
     .form-input:focus{border-color:rgba(201,168,76,0.4);}
     select.form-input{-webkit-appearance:none;color-scheme:dark;}
     input[type="date"].form-input,input[type="time"].form-input{color-scheme:dark;}
@@ -76,10 +72,58 @@
     .eventos-body{padding:4px 18px 18px;}
     .evento-row{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.04);align-items:flex-start;}
     .evento-row:last-child{border-bottom:none;}
-    .evento-data{flex-shrink:0;text-align:center;min-width:40px;}
   </style>
 </head>
 <body>
+
+<!-- Mobile overlay -->
+<div class="mobile-overlay" id="mobileOverlay" onclick="fecharDrawer()"></div>
+
+<!-- Mobile drawer -->
+<div class="mobile-drawer" id="mobileDrawer">
+  <div class="mobile-drawer-header">
+    <svg width="28" height="28" viewBox="0 0 44 44" fill="none">
+      <polygon points="22,2 39,11.5 39,32.5 22,42 5,32.5 5,11.5" fill="#0A0C0F" stroke="#C9A84C" stroke-width="2"/>
+      <rect x="9" y="26" width="4" height="9" rx="0.5" fill="#C9A84C"/>
+      <rect x="14" y="20" width="4" height="15" rx="0.5" fill="#C9A84C"/>
+      <rect x="19" y="13" width="4" height="22" rx="0.5" fill="#C9A84C"/>
+      <rect x="24" y="20" width="4" height="15" rx="0.5" fill="#C9A84C"/>
+      <rect x="29" y="26" width="4" height="9" rx="0.5" fill="#C9A84C"/>
+      <line x1="8" y1="35.5" x2="36" y2="35.5" stroke="#C9A84C" stroke-width="1.2"/>
+    </svg>
+    <div>
+      <div style="font-size:13px;font-weight:700;color:var(--text);">Condo<span style="color:var(--gold);font-weight:300">lytics</span></div>
+      <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);">Conselho</div>
+    </div>
+  </div>
+  <nav class="mobile-nav">
+    <div class="mobile-nav-section">Menu</div>
+    <button class="mobile-nav-item" onclick="window.location.href='conselho.html'">
+      <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="1" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/></svg>
+      Visão Geral
+    </button>
+    <button class="mobile-nav-item" onclick="window.location.href='conselho.html'">
+      <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Ocorrências
+    </button>
+    <button class="mobile-nav-item" onclick="window.location.href='analise-documento.html'">
+      <svg viewBox="0 0 16 16" fill="none"><rect x="3" y="1" width="10" height="14" rx="1.5" stroke="#C9A84C" stroke-width="1.3"/><path d="M6 5h4M6 8h4M6 11h2" stroke="#C9A84C" stroke-width="1.3" stroke-linecap="round"/></svg>
+      <span style="color:#C9A84C;font-weight:600;">Análise de Documento</span>
+    </button>
+    <button class="mobile-nav-item active">
+      <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 1v4M11 1v4M2 7h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="5.5" cy="10.5" r="0.8" fill="currentColor"/><circle cx="8" cy="10.5" r="0.8" fill="currentColor"/><circle cx="10.5" cy="10.5" r="0.8" fill="currentColor"/></svg>
+      Agenda do Condomínio
+    </button>
+  </nav>
+  <div class="mobile-nav-footer">
+    <button onclick="logout()" style="width:100%;padding:8px;background:none;border:1px solid rgba(255,255,255,0.06);border-radius:6px;font-size:11px;color:var(--text-faint);cursor:pointer;">Sair da conta</button>
+  </div>
+</div>
+
+<!-- Hamburger button -->
+<button class="btn-hamburger" onclick="abrirDrawer()">
+  <svg viewBox="0 0 22 22" fill="none"><path d="M3 6h16M3 11h16M3 16h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+</button>
 
 <header>
   <a class="logo-link" href="conselho.html">
@@ -97,17 +141,11 @@
       <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);">Conselho</div>
     </div>
   </a>
-  <a class="back-btn" href="conselho.html">
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-      <path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    Voltar
-  </a>
 </header>
 
 <div class="page">
   <div class="sec-header">
-    <div class="sec-left">
+    <div style="display:flex;align-items:center;gap:12px;">
       <div class="sec-icon">
         <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
           <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="#5B9BD5" stroke-width="1.3"/>
@@ -118,35 +156,35 @@
         </svg>
       </div>
       <div>
-        <div class="sec-title">Agenda do Condomínio</div>
-        <div class="sec-sub">Eventos e compromissos</div>
+        <div style="font-size:20px;font-weight:600;color:var(--text);letter-spacing:-0.01em;">Agenda do Condomínio</div>
+        <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#5B9BD5;margin-top:2px;">Eventos e compromissos</div>
       </div>
     </div>
     <button class="btn-novo" onclick="toggleForm()">+ Novo Evento</button>
   </div>
 
-  <!-- Formulário -->
+  <!-- Formulário (oculto por padrão, abre ao clicar + Novo Evento) -->
   <div class="form-box" id="form-wrap" style="display:none;">
     <div class="form-header">
       <div class="form-dot"></div>
-      <span class="form-header-title">Criar Evento</span>
+      <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim);">Criar Evento</span>
     </div>
     <div class="form-body">
       <div id="ev-feedback"></div>
       <div class="form-grid">
-        <div class="form-group" style="grid-column:1/-1;">
+        <div style="grid-column:1/-1;">
           <label>Título</label>
           <input id="ev-titulo" type="text" class="form-input" placeholder="Ex: Assembleia Ordinária">
         </div>
-        <div class="form-group">
+        <div>
           <label>Data</label>
           <input id="ev-data" type="date" class="form-input">
         </div>
-        <div class="form-group">
+        <div>
           <label>Horário</label>
           <input id="ev-hora" type="time" class="form-input">
         </div>
-        <div class="form-group">
+        <div>
           <label>Tipo</label>
           <select id="ev-tipo" class="form-input">
             <option value="assembleia">Assembleia</option>
@@ -156,20 +194,20 @@
             <option value="outro">Outro</option>
           </select>
         </div>
-        <div class="form-group">
+        <div>
           <label>Descrição (opcional)</label>
-          <textarea id="ev-desc" class="form-input" rows="2" placeholder="Detalhes do evento..."></textarea>
+          <textarea id="ev-desc" class="form-input" rows="2" placeholder="Detalhes..."></textarea>
         </div>
       </div>
       <button class="btn-salvar" onclick="criarEvento()">Salvar Evento</button>
     </div>
   </div>
 
-  <!-- Lista de eventos -->
+  <!-- Lista -->
   <div class="eventos-box">
     <div class="eventos-header">
       <div class="form-dot"></div>
-      <span class="form-header-title">Próximos Eventos</span>
+      <span style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim);">Próximos Eventos</span>
     </div>
     <div class="eventos-body" id="eventos-lista">
       <div style="color:var(--text-dim);font-size:13px;padding:14px 0;">Carregando...</div>
@@ -181,24 +219,27 @@
 let _condoAtual = null;
 let _usuario    = null;
 
+function abrirDrawer()  { document.getElementById('mobileDrawer').classList.add('open');    document.getElementById('mobileOverlay').classList.add('show'); }
+function fecharDrawer() { document.getElementById('mobileDrawer').classList.remove('open'); document.getElementById('mobileOverlay').classList.remove('show'); }
+function toggleForm()   { const w = document.getElementById('form-wrap'); w.style.display = w.style.display === 'none' ? 'block' : 'none'; }
+
 window.addEventListener('load', async () => {
   _usuario = await protegerPagina(['conselho', 'admin']);
   if (!_usuario) return;
 
-  const { data: vinc } = await db.from('usuarios_condominios')
-    .select('condominio_id')
-    .eq('usuario_id', _usuario.id)
-    .limit(1)
-    .single();
-  if (vinc) _condoAtual = vinc.condominio_id;
+  const savedId = localStorage.getItem('condolytics_condo_id');
+  if (savedId) {
+    _condoAtual = savedId;
+  } else {
+    const { data: vinculos } = await db.from('usuario_condominios')
+      .select('condominio_id')
+      .eq('usuario_id', _usuario.id)
+      .limit(1);
+    _condoAtual = vinculos?.[0]?.condominio_id || _usuario.condominio_id || null;
+  }
 
   await carregarEventos();
 });
-
-function toggleForm() {
-  const w = document.getElementById('form-wrap');
-  w.style.display = w.style.display === 'none' ? 'block' : 'none';
-}
 
 async function criarEvento() {
   const titulo = document.getElementById('ev-titulo').value.trim();
@@ -209,60 +250,43 @@ async function criarEvento() {
   const fb     = document.getElementById('ev-feedback');
 
   if (!titulo || !data) {
-    fb.style.display = 'block';
-    fb.style.background = 'rgba(224,92,58,0.1)';
-    fb.style.border = '1px solid rgba(224,92,58,0.3)';
-    fb.style.color = '#E05C3A';
+    fb.style.cssText = 'display:block;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;background:rgba(224,92,58,0.1);border:1px solid rgba(224,92,58,0.3);color:#E05C3A;';
     fb.textContent = 'Preencha pelo menos o título e a data.';
     return;
   }
 
   const { data: sessao } = await db.auth.getSession();
-  const userId = sessao?.session?.user?.id;
   const dataHora = hora ? `${data}T${hora}:00` : `${data}T00:00:00`;
 
   const { error } = await db.from('eventos_calendario').insert({
-    condominio_id: _condoAtual,
-    titulo, descricao: desc || null,
-    data_hora: dataHora, tipo,
-    criado_por: userId || null
+    condominio_id: _condoAtual, titulo,
+    descricao: desc || null, data_hora: dataHora, tipo,
+    criado_por: sessao?.session?.user?.id || null
   });
 
   if (error) {
-    fb.style.display = 'block';
-    fb.style.background = 'rgba(224,92,58,0.1)';
-    fb.style.border = '1px solid rgba(224,92,58,0.3)';
-    fb.style.color = '#E05C3A';
+    fb.style.cssText = 'display:block;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;background:rgba(224,92,58,0.1);border:1px solid rgba(224,92,58,0.3);color:#E05C3A;';
     fb.textContent = 'Erro: ' + error.message;
     return;
   }
 
-  fb.style.display = 'block';
-  fb.style.background = 'rgba(76,175,125,0.1)';
-  fb.style.border = '1px solid rgba(76,175,125,0.3)';
-  fb.style.color = '#4CAF7D';
+  fb.style.cssText = 'display:block;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;background:rgba(76,175,125,0.1);border:1px solid rgba(76,175,125,0.3);color:#4CAF7D;';
   fb.textContent = '✓ Evento criado com sucesso!';
+  ['ev-titulo','ev-data','ev-hora','ev-desc'].forEach(id => { document.getElementById(id).value = ''; });
 
-  document.getElementById('ev-titulo').value = '';
-  document.getElementById('ev-data').value   = '';
-  document.getElementById('ev-hora').value   = '';
-  document.getElementById('ev-desc').value   = '';
-
-  setTimeout(() => {
-    fb.style.display = 'none';
-    document.getElementById('form-wrap').style.display = 'none';
-  }, 2000);
-
+  setTimeout(() => { fb.style.display='none'; document.getElementById('form-wrap').style.display='none'; }, 2000);
   await carregarEventos();
 }
 
 async function carregarEventos() {
   const el = document.getElementById('eventos-lista');
-  if (!el || !_condoAtual) return;
-  el.innerHTML = '<div style="color:var(--text-dim);font-size:13px;padding:14px 0;">Carregando...</div>';
+  if (!_condoAtual) {
+    el.innerHTML = '<div style="color:var(--text-dim);font-size:13px;padding:14px 0;">Condomínio não identificado.</div>';
+    return;
+  }
 
   const hoje = new Date().toISOString();
-  const { data, error } = await db.from('eventos_calendario')
+  const { data } = await db.from('eventos_calendario')
     .select('titulo,descricao,data_hora,tipo')
     .eq('condominio_id', _condoAtual)
     .gte('data_hora', hoje)
@@ -282,14 +306,14 @@ async function carregarEventos() {
     const horaStr = dt.getHours() ? dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '';
     const cor = tipoColor[ev.tipo] || '#6B7280';
     return `<div class="evento-row">
-      <div class="evento-data">
+      <div style="flex-shrink:0;text-align:center;min-width:40px;">
         <div style="font-size:22px;font-weight:700;color:${cor};line-height:1;">${dt.getDate()}</div>
         <div style="font-family:var(--font-mono);font-size:9px;text-transform:uppercase;color:var(--text-dim);">${dt.toLocaleDateString('pt-BR',{month:'short'})}</div>
       </div>
       <div style="flex:1;min-width:0;">
         <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px;">${ev.titulo}</div>
         <div style="font-family:var(--font-mono);font-size:9px;color:${cor};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">${tipoLabel[ev.tipo]||ev.tipo}${horaStr?' · '+horaStr:''}</div>
-        ${ev.descricao ? `<div style="font-size:12px;color:var(--text-dim);">${ev.descricao}</div>` : ''}
+        ${ev.descricao?`<div style="font-size:12px;color:var(--text-dim);">${ev.descricao}</div>`:''}
       </div>
     </div>`;
   }).join('');
