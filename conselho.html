@@ -746,11 +746,11 @@
     </button>
     <button class="mobile-nav-item" onclick="irParaSecao('analise', event)">
       <svg viewBox="0 0 16 16" fill="none"><rect x="3" y="1" width="10" height="14" rx="1.5" stroke="#C9A84C" stroke-width="1.3"/><path d="M6 5h4M6 8h4M6 11h2" stroke="#C9A84C" stroke-width="1.3" stroke-linecap="round"/></svg>
-      <span style="color:#C9A84C;font-weight:600;">Análise PDF</span>
+      <span style="color:#C9A84C;font-weight:600;">Análise de Documento</span>
     </button>
-    <button class="mobile-nav-item" onclick="irParaSecao('admin', event)">
-      <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 1v4M11 1v4M2 7h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-      Admin
+    <button class="mobile-nav-item" onclick="irParaSecao('agenda', event)">
+      <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 1v4M11 1v4M2 7h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="5.5" cy="10.5" r="0.8" fill="currentColor"/><circle cx="8" cy="10.5" r="0.8" fill="currentColor"/><circle cx="10.5" cy="10.5" r="0.8" fill="currentColor"/></svg>
+      Agenda do Condomínio
     </button>
   </nav>
   <div class="mobile-nav-footer">
@@ -1308,73 +1308,87 @@
     <div id="analise-resultado-conselho"></div>
   </section>
 
-  <!-- ── ADMIN ── -->
-  <section id="sec-admin-conselho" style="margin-top:40px;">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
-      <div style="width:36px;height:36px;background:rgba(91,155,213,0.12);border:1px solid rgba(91,155,213,0.2);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-          <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="#5B9BD5" stroke-width="1.3"/>
-          <path d="M5 1v4M11 1v4M2 7h12" stroke="#5B9BD5" stroke-width="1.3" stroke-linecap="round"/>
-          <circle cx="5.5" cy="10.5" r="0.8" fill="#5B9BD5"/>
-          <circle cx="8" cy="10.5" r="0.8" fill="#5B9BD5"/>
-          <circle cx="10.5" cy="10.5" r="0.8" fill="#5B9BD5"/>
-        </svg>
+  <!-- ── AGENDA DO CONDOMÍNIO ── -->
+  <section id="sec-agenda-conselho" style="margin-top:40px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:36px;height:36px;background:rgba(91,155,213,0.12);border:1px solid rgba(91,155,213,0.2);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+            <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="#5B9BD5" stroke-width="1.3"/>
+            <path d="M5 1v4M11 1v4M2 7h12" stroke="#5B9BD5" stroke-width="1.3" stroke-linecap="round"/>
+            <circle cx="5.5" cy="10.5" r="0.8" fill="#5B9BD5"/>
+            <circle cx="8" cy="10.5" r="0.8" fill="#5B9BD5"/>
+            <circle cx="10.5" cy="10.5" r="0.8" fill="#5B9BD5"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-size:18px;font-weight:600;color:var(--text);letter-spacing:-0.01em;">Agenda do Condomínio</div>
+          <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#5B9BD5;margin-top:2px;">Eventos e compromissos</div>
+        </div>
       </div>
-      <div>
-        <div style="font-size:18px;font-weight:600;color:var(--text);letter-spacing:-0.01em;">Administração</div>
-        <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--blue,#5B9BD5);margin-top:2px;">Ferramentas do conselho</div>
+      <button onclick="document.getElementById('agenda-form-wrap').style.display = document.getElementById('agenda-form-wrap').style.display==='none'?'block':'none'"
+        style="padding:8px 16px;background:var(--gold);color:#0A0C0F;border:none;border-radius:8px;font-family:var(--font-sans);font-size:12px;font-weight:600;cursor:pointer;">
+        + Novo Evento
+      </button>
+    </div>
+
+    <!-- Formulário criar evento (colapsável) -->
+    <div id="agenda-form-wrap" style="display:none;margin-bottom:16px;">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title"><span class="panel-title-dot" style="background:#5B9BD5;"></span>Criar Evento</span>
+        </div>
+        <div class="panel-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+            <div style="grid-column:1/-1;">
+              <label style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:6px;">Título</label>
+              <input id="ev-titulo" type="text" placeholder="Ex: Assembleia Ordinária"
+                style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-family:var(--font-sans);font-size:13px;color:var(--text);outline:none;"
+                onfocus="this.style.borderColor='rgba(201,168,76,0.4)'" onblur="this.style.borderColor='var(--border2)'">
+            </div>
+            <div>
+              <label style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:6px;">Data</label>
+              <input id="ev-data" type="date" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-family:var(--font-sans);font-size:13px;color:var(--text);outline:none;color-scheme:dark;"
+                onfocus="this.style.borderColor='rgba(201,168,76,0.4)'" onblur="this.style.borderColor='var(--border2)'">
+            </div>
+            <div>
+              <label style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:6px;">Horário</label>
+              <input id="ev-hora" type="time" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-family:var(--font-sans);font-size:13px;color:var(--text);outline:none;color-scheme:dark;"
+                onfocus="this.style.borderColor='rgba(201,168,76,0.4)'" onblur="this.style.borderColor='var(--border2)'">
+            </div>
+            <div>
+              <label style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:6px;">Tipo</label>
+              <select id="ev-tipo" style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-family:var(--font-sans);font-size:13px;color:var(--text);outline:none;-webkit-appearance:none;">
+                <option value="assembleia">Assembleia</option>
+                <option value="manutencao">Manutenção</option>
+                <option value="reuniao">Reunião</option>
+                <option value="vencimento">Vencimento</option>
+                <option value="outro">Outro</option>
+              </select>
+            </div>
+            <div style="grid-column:1/-1;">
+              <label style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:6px;">Descrição (opcional)</label>
+              <textarea id="ev-desc" rows="2" placeholder="Detalhes do evento..."
+                style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-family:var(--font-sans);font-size:13px;color:var(--text);outline:none;resize:vertical;"
+                onfocus="this.style.borderColor='rgba(201,168,76,0.4)'" onblur="this.style.borderColor='var(--border2)'"></textarea>
+            </div>
+          </div>
+          <div id="ev-feedback" style="display:none;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;"></div>
+          <button onclick="criarEvento()"
+            style="padding:9px 22px;background:var(--gold,#C9A84C);color:#0A0C0F;border:none;border-radius:8px;font-family:var(--font-sans);font-size:13px;font-weight:600;cursor:pointer;">
+            Salvar Evento
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- Criar evento no calendário -->
+    <!-- Lista de eventos futuros -->
     <div class="panel">
       <div class="panel-header">
-        <span class="panel-title"><span class="panel-title-dot" style="background:#5B9BD5;"></span>Criar Evento no Calendário</span>
+        <span class="panel-title"><span class="panel-title-dot" style="background:#5B9BD5;"></span>Próximos Eventos</span>
       </div>
-      <div class="panel-body">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-          <div style="grid-column:1/-1;">
-            <label style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:6px;">Título do evento</label>
-            <input id="ev-titulo" type="text" placeholder="Ex: Assembleia Ordinária"
-              style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-family:var(--font-sans);font-size:13px;color:var(--text);outline:none;transition:border-color 0.15s;"
-              onfocus="this.style.borderColor='rgba(201,168,76,0.4)'" onblur="this.style.borderColor='var(--border2)'">
-          </div>
-          <div>
-            <label style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:6px;">Data</label>
-            <input id="ev-data" type="date"
-              style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-family:var(--font-sans);font-size:13px;color:var(--text);outline:none;transition:border-color 0.15s;color-scheme:dark;"
-              onfocus="this.style.borderColor='rgba(201,168,76,0.4)'" onblur="this.style.borderColor='var(--border2)'">
-          </div>
-          <div>
-            <label style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:6px;">Horário</label>
-            <input id="ev-hora" type="time"
-              style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-family:var(--font-sans);font-size:13px;color:var(--text);outline:none;transition:border-color 0.15s;color-scheme:dark;"
-              onfocus="this.style.borderColor='rgba(201,168,76,0.4)'" onblur="this.style.borderColor='var(--border2)'">
-          </div>
-          <div>
-            <label style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:6px;">Tipo</label>
-            <select id="ev-tipo"
-              style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-family:var(--font-sans);font-size:13px;color:var(--text);outline:none;-webkit-appearance:none;cursor:pointer;">
-              <option value="assembleia">Assembleia</option>
-              <option value="manutencao">Manutenção</option>
-              <option value="reuniao">Reunião</option>
-              <option value="vencimento">Vencimento</option>
-              <option value="outro">Outro</option>
-            </select>
-          </div>
-          <div style="grid-column:1/-1;">
-            <label style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:6px;">Descrição (opcional)</label>
-            <textarea id="ev-desc" rows="3" placeholder="Detalhes do evento..."
-              style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-family:var(--font-sans);font-size:13px;color:var(--text);outline:none;resize:vertical;transition:border-color 0.15s;"
-              onfocus="this.style.borderColor='rgba(201,168,76,0.4)'" onblur="this.style.borderColor='var(--border2)'"></textarea>
-          </div>
-        </div>
-        <div id="ev-feedback" style="display:none;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;"></div>
-        <button onclick="criarEvento()"
-          style="padding:10px 24px;background:var(--gold,#C9A84C);color:#0A0C0F;border:none;border-radius:8px;font-family:var(--font-sans);font-size:13px;font-weight:600;cursor:pointer;transition:opacity 0.15s;"
-          onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-          Criar Evento
-        </button>
+      <div class="panel-body" id="agenda-eventos-lista">
+        <div style="color:var(--text-dim);font-size:13px;">Carregando...</div>
       </div>
     </div>
   </section>
@@ -2195,7 +2209,7 @@ function irParaSecao(nome, event) {
     dashboard: 'secFinanceiro',
     ocorrencias: 'secOcorrenciasConselho',
     analise: 'sec-analise-conselho',
-    admin: 'sec-admin-conselho'
+    agenda: 'sec-agenda-conselho'
   };
   const id = secMap[nome];
   if (id) {
@@ -2204,8 +2218,8 @@ function irParaSecao(nome, event) {
   }
   document.querySelectorAll('.mobile-nav-item').forEach(b => b.classList.remove('active'));
   if (event && event.currentTarget) event.currentTarget.classList.add('active');
-  // Carregar análises quando navegar para análise
   if (nome === 'analise') carregarAnalisesConselho();
+  if (nome === 'agenda') carregarAgendaConselho();
 }
 
 // ── Análise PDF (conselho) ────────────────────────────────────────
@@ -2440,6 +2454,48 @@ async function criarEvento() {
   document.getElementById('ev-desc').value = '';
 
   setTimeout(() => { fb.style.display = 'none'; }, 3000);
+  carregarAgendaConselho();
+  document.getElementById('agenda-form-wrap').style.display = 'none';
+}
+
+// ── Agenda: listar eventos ────────────────────────────────────────
+async function carregarAgendaConselho() {
+  const el = document.getElementById('agenda-eventos-lista');
+  if (!el || !_condoAtual) return;
+  el.innerHTML = '<div style="color:var(--text-dim);font-size:13px;">Carregando...</div>';
+
+  const hoje = new Date().toISOString();
+  const { data, error } = await db.from('eventos_calendario')
+    .select('titulo, descricao, data_hora, tipo')
+    .eq('condominio_id', _condoAtual)
+    .gte('data_hora', hoje)
+    .order('data_hora', { ascending: true })
+    .limit(20);
+
+  const tipoColor = { assembleia:'#C9A84C', manutencao:'#E05C3A', reuniao:'#5B9BD5', vencimento:'#9CA3AF', outro:'#6B7280' };
+  const tipoLabel = { assembleia:'Assembleia', manutencao:'Manutenção', reuniao:'Reunião', vencimento:'Vencimento', outro:'Outro' };
+
+  if (!data?.length) {
+    el.innerHTML = '<div style="color:var(--text-dim);font-size:13px;">Nenhum evento agendado.</div>';
+    return;
+  }
+  el.innerHTML = data.map(ev => {
+    const dt = new Date(ev.data_hora);
+    const dataStr = dt.toLocaleDateString('pt-BR', { weekday:'short', day:'2-digit', month:'short', year:'numeric' });
+    const horaStr = dt.getHours() ? dt.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' }) : '';
+    const cor = tipoColor[ev.tipo] || '#6B7280';
+    return `<div style="display:flex;gap:14px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.04);align-items:flex-start;">
+      <div style="flex-shrink:0;text-align:center;min-width:40px;">
+        <div style="font-size:20px;font-weight:700;color:${cor};line-height:1;">${dt.getDate()}</div>
+        <div style="font-family:var(--font-mono);font-size:9px;text-transform:uppercase;color:var(--text-dim);">${dt.toLocaleDateString('pt-BR',{month:'short'})}</div>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px;">${ev.titulo}</div>
+        <div style="font-family:var(--font-mono);font-size:9px;color:${cor};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;">${tipoLabel[ev.tipo]||ev.tipo}${horaStr?' · '+horaStr:''}</div>
+        ${ev.descricao ? `<div style="font-size:12px;color:var(--text-dim);">${ev.descricao}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
 }
 </script>
 </body>

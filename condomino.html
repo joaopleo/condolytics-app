@@ -587,49 +587,6 @@
     <div id="dash-analise-resultado" style="display:none;"></div>
   </div>
 
-  <div class="hero">
-    <div>
-      <div class="hero-title">
-        Seu condomínio está sendo<br><em>monitorado com inteligência.</em>
-      </div>
-      <div class="hero-sub">
-        A Condolytics analisa continuamente os dados financeiros e contratuais do seu condomínio.
-      </div>
-    </div>
-    <div class="hero-badge">
-      <div class="hero-badge-val" id="heroInad">—</div>
-      <div class="hero-badge-label">Inadimplência</div>
-    </div>
-  </div>
-
-  <div class="kpi-grid" id="kpiGrid">
-    <div class="loading"><div class="spinner"></div>Carregando...</div>
-  </div>
-
-  <div class="saude-grid" id="saudeGrid"></div>
-
-  <div class="panel">
-    <div class="panel-header">
-      <span class="panel-title">Gastos por Categoria</span>
-    </div>
-    <div style="padding:0 20px 4px">
-      <div class="cat-tabs" id="catTabs"></div>
-    </div>
-    <div class="panel-body" id="categoriasGrid">
-      <div class="loading"><div class="spinner"></div>Carregando...</div>
-    </div>
-  </div>
-
-  <div class="panel">
-    <div class="panel-header">
-      <span class="panel-title">Evolução Financeira — Últimos 6 Meses</span>
-      <span class="panel-tag">Receitas vs Despesas</span>
-    </div>
-    <div class="panel-body">
-      <canvas id="chartFinanceiro" height="160"></canvas>
-    </div>
-  </div>
-
   <div class="panel">
     <div class="panel-header">
       <span class="panel-title">Comunicados e Destaques</span>
@@ -657,15 +614,6 @@
     </div>
   </div>
 
-  <!-- Ocorrências Resolvidas -->
-  <div class="panel" style="margin-top:8px;" id="oc-resolvidas-panel">
-    <div class="panel-header">
-      <span class="panel-title">Ocorrências Resolvidas</span>
-    </div>
-    <div class="panel-body" id="oc-resolvidas-lista">
-      <div class="loading"><div class="spinner"></div>Carregando...</div>
-    </div>
-  </div>
 
 </section>
 
@@ -913,30 +861,38 @@ async function carregarTudo() {
 }
 
 async function carregarOcorrenciasResolvidas() {
-  const el = document.getElementById('ocResolvidasList');
+  if (!condoAtual) return;
   const { data } = await db.from('ocorrencias')
-    .select('titulo, tipo, resolvido_em, observacoes_resolucao')
+    .select('titulo, tipo, status, resolvido_em, updated_at, observacoes_resolucao, observacao_resolucao, categoria')
     .eq('condominio_id', condoAtual)
-    .eq('status', 'resolvido')
-    .order('resolvido_em', { ascending: false })
+    .in('status', ['resolvido','resolvida','Resolvida','Resolvido'])
+    .order('updated_at', { ascending: false })
     .limit(10);
-
-  if (!data?.length) { el.innerHTML = '<div class="empty">Nenhuma ocorrência resolvida.</div>'; return; }
 
   const tipoLabel = { manutencao:'Manutenção', emergencia:'Emergência', seguranca:'Segurança',
     higiene:'Higiene/Limpeza', administrativo:'Administrativo', prestador:'Prestador', outro:'Outro' };
 
-  el.innerHTML = data.map(o => {
-    const dt = o.resolvido_em ? new Date(o.resolvido_em).toLocaleDateString('pt-BR') : '—';
-    return `<div style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
-      <div>
-        <div style="font-size:13px;font-weight:500;color:var(--off-white);margin-bottom:3px;">${o.titulo}</div>
-        <div style="font-size:11px;color:var(--gray);">${tipoLabel[o.tipo]||o.tipo} · Resolvido em ${dt}</div>
-        ${o.observacoes_resolucao ? `<div style="font-size:11px;color:var(--gray-l);margin-top:3px;">${o.observacoes_resolucao}</div>` : ''}
-      </div>
-      <span style="font-size:10px;background:rgba(76,175,130,0.1);color:var(--green);padding:3px 8px;border-radius:8px;flex-shrink:0;">✓</span>
-    </div>`;
-  }).join('');
+  const html = (!data?.length)
+    ? '<div class="empty">Nenhuma ocorrência resolvida.</div>'
+    : data.map(o => {
+        const dt = (o.resolvido_em || o.updated_at)
+          ? new Date(o.resolvido_em || o.updated_at).toLocaleDateString('pt-BR') : '—';
+        const obs = o.observacoes_resolucao || o.observacao_resolucao || '';
+        const cat = o.categoria || tipoLabel[o.tipo] || o.tipo || '';
+        return `<div style="background:var(--surface2);border:1px solid rgba(255,255,255,0.05);border-radius:10px;padding:14px 16px;margin-bottom:8px;border-left:3px solid rgba(76,175,130,0.4);">
+          <div style="font-size:13px;font-weight:600;color:var(--off-white);margin-bottom:4px;">${o.titulo||'Ocorrência'}</div>
+          <div style="font-size:11px;color:var(--gray);display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+            ${cat ? `<span>📁 ${cat}</span>` : ''}
+            <span>✅ Resolvida em ${dt}</span>
+          </div>
+          ${obs ? `<div style="font-size:12px;color:var(--gray-l);line-height:1.5;">${obs}</div>` : ''}
+        </div>`;
+      }).join('');
+
+  ['ocResolvidasList','oc-resolvidas-lista2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  });
 }
 
 async function trocarCondominio(novoId) {
@@ -1963,36 +1919,6 @@ function selecionarAnaliseTab(id, btn, resultado) {
     resEl.style.display = '';
     renderAnaliseResultado(resultado, 'analise-resultado-sec');
   }
-}
-
-// ── Ocorrências Resolvidas ────────────────────────────────────────
-async function carregarOcorrenciasResolvidas() {
-  if (!condoAtual) return;
-  const { data } = await db.from('ocorrencias')
-    .select('*')
-    .eq('condominio_id', condoAtual)
-    .eq('status', 'resolvida')
-    .order('updated_at', { ascending: false })
-    .limit(10);
-
-  ['oc-resolvidas-lista', 'oc-resolvidas-lista2'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    if (!data || data.length === 0) {
-      el.innerHTML = '<div class="empty">Nenhuma ocorrência resolvida ainda.</div>';
-      return;
-    }
-    el.innerHTML = data.map(o => `
-      <div style="background:var(--surface2);border:1px solid rgba(255,255,255,0.05);border-radius:10px;padding:14px 16px;margin-bottom:8px;border-left:3px solid rgba(76,175,130,0.4);">
-        <div style="font-size:13px;font-weight:600;color:var(--off-white);margin-bottom:4px;">${o.titulo||'Ocorrência'}</div>
-        <div style="font-size:11px;color:var(--gray);display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
-          <span>📅 ${o.updated_at ? new Date(o.updated_at).toLocaleDateString('pt-BR') : ''}</span>
-          ${o.categoria ? `<span>📁 ${o.categoria}</span>` : ''}
-        </div>
-        ${o.observacao_resolucao ? `<div style="font-size:12px;color:var(--gray-l);line-height:1.5;">✓ ${o.observacao_resolucao}</div>` : ''}
-      </div>
-    `).join('');
-  });
 }
 
 async function carregarOcorrenciasResolvidas2() {
