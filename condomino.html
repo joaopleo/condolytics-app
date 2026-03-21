@@ -1585,7 +1585,7 @@ async function carregarAnalisesPDF() {
              text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:10px;">
           Análises disponíveis
         </div>
-        <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;flex-direction:column;gap:6px;">
         ${lista.map(a => {
           const r = a.resultado?.resumo || {};
           const score = a.resultado?.auditoria?.score || 0;
@@ -1594,36 +1594,25 @@ async function carregarAnalisesPDF() {
           const fmt = v => v != null ? 'R$ ' + Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2}) : '—';
           const explic = a.resultado?.auditoria?.score_explicacao || '';
           return `<div onclick="verAnalise('${a.id}')"
-            class="panel"
-            style="display:flex;align-items:center;gap:14px;padding:14px 16px;
-                   cursor:pointer;transition:border-color 0.15s;flex-wrap:wrap;"
+            style="display:flex;align-items:center;gap:12px;padding:12px 14px;
+                   background:var(--surface,#111318);border:1px solid rgba(255,255,255,0.06);
+                   border-radius:12px;overflow:hidden;width:100%;box-sizing:border-box;
+                   cursor:pointer;transition:border-color 0.15s;"
             onmouseover="this.style.borderColor='rgba(201,168,76,0.3)'"
             onmouseout="this.style.borderColor='rgba(255,255,255,0.06)'">
             <!-- Score -->
-            <div style="width:48px;height:48px;border-radius:12px;
+            <div style="width:44px;height:44px;border-radius:10px;flex-shrink:0;
                  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);
-                 display:flex;flex-direction:column;align-items:center;justify-content:center;
-                 flex-shrink:0;">
-              <div style="font-size:17px;font-weight:800;color:${sc};line-height:1;">${score}</div>
+                 display:flex;flex-direction:column;align-items:center;justify-content:center;">
+              <div style="font-size:16px;font-weight:800;color:${sc};line-height:1;">${score}</div>
               <div style="font-size:8px;color:${sc};opacity:0.7;font-family:var(--font-mono,monospace);letter-spacing:0.04em;">score</div>
             </div>
             <!-- Info -->
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:14px;font-weight:700;color:var(--text,#E8E6E0);">${a.periodo}</div>
+            <div style="flex:1;min-width:0;overflow:hidden;">
+              <div style="font-size:13px;font-weight:700;color:var(--text,#E8E6E0);">${a.periodo}</div>
               <div style="font-size:11px;color:var(--text-dim,#9A9690);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${explic || a.nome_arquivo || ''}</div>
             </div>
-            <!-- KPIs -->
-            <div style="display:flex;gap:16px;flex-shrink:0;">
-              <div style="text-align:right;">
-                <div style="font-size:9px;font-family:var(--font-mono,monospace);letter-spacing:0.06em;text-transform:uppercase;color:var(--text-faint,#52504C);">${sup>=0?'Superávit':'Déficit'}</div>
-                <div style="font-size:13px;font-weight:600;color:${sup>=0?'#4CAF7D':'#E05C3A'};">${fmt(Math.abs(sup))}</div>
-              </div>
-              <div style="text-align:right;">
-                <div style="font-size:9px;font-family:var(--font-mono,monospace);letter-spacing:0.06em;text-transform:uppercase;color:var(--text-faint,#52504C);">Inadimp.</div>
-                <div style="font-size:13px;font-weight:600;color:var(--text,#E8E6E0);">${r.inadimplencia_percentual != null ? Number(r.inadimplencia_percentual).toFixed(1)+'%' : '—'}</div>
-              </div>
-            </div>
-            <svg viewBox="0 0 16 16" fill="none" width="14" height="14" style="opacity:0.3;flex-shrink:0;">
+            <svg viewBox="0 0 16 16" fill="none" width="13" height="13" style="opacity:0.3;flex-shrink:0;">
               <path d="M6 3l4 5-4 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>`;
@@ -1788,10 +1777,10 @@ function renderAnaliseResultado(d) {
     </div>
 
     <!-- Score + KPIs — mobile: 1 coluna, desktop: lado a lado -->
-    <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:16px;">
+    <div style="display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:16px;">
 
       <!-- Score -->
-      <div class="panel" style="padding:20px;display:flex;align-items:center;gap:20px;">
+      <div class="panel" style="padding:20px;display:flex;align-items:center;gap:20px;margin-bottom:0;">
         <div style="text-align:center;min-width:80px;">
           <div style="font-size:52px;font-weight:800;color:${scoreColor};line-height:1;">${score}</div>
           <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.07em;
@@ -1807,29 +1796,29 @@ function renderAnaliseResultado(d) {
       </div>
 
       <!-- KPIs: 2 colunas em mobile -->
-      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
-        <div class="panel" style="padding:14px;">
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;">
+        <div class="panel" style="padding:14px;margin-bottom:0;">
           <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.07em;text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:5px;">Receitas</div>
           <div style="font-size:16px;font-weight:700;color:#4CAF7D;word-break:break-all;">${fmt(r.receitas_total)}</div>
         </div>
-        <div class="panel" style="padding:14px;">
+        <div class="panel" style="padding:14px;margin-bottom:0;">
           <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.07em;text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:5px;">Despesas</div>
           <div style="font-size:16px;font-weight:700;color:#E05C3A;word-break:break-all;">${fmt(r.despesas_total)}</div>
         </div>
-        <div class="panel" style="padding:14px;">
+        <div class="panel" style="padding:14px;margin-bottom:0;">
           <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.07em;text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:5px;">${supLabel}</div>
           <div style="font-size:16px;font-weight:700;color:${supColor};word-break:break-all;">${fmt(Math.abs(sup))}</div>
         </div>
-        <div class="panel" style="padding:16px;">
-          <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:6px;">Saldo Final</div>
-          <div style="font-size:18px;font-weight:700;color:var(--text,#E8E6E0);">${fmt(r.saldo_final)}</div>
+        <div class="panel" style="padding:14px;margin-bottom:0;">
+          <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:5px;">Saldo Final</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text,#E8E6E0);word-break:break-all;">${fmt(r.saldo_final)}</div>
         </div>
       </div>
     </div>
 
     <!-- Inadimplência + Fundo -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
-      <div class="panel" style="padding:14px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+      <div class="panel" style="padding:14px;margin-bottom:0;">
         <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.07em;text-transform:uppercase;
              color:var(--text-dim,#9A9690);margin-bottom:8px;">Inadimplência</div>
         <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">
@@ -1838,7 +1827,7 @@ function renderAnaliseResultado(d) {
         </div>
         <div style="font-size:11px;color:var(--text-dim,#9A9690);margin-top:3px;">${fmt(r.inadimplencia_valor)}</div>
       </div>
-      <div class="panel" style="padding:14px;">
+      <div class="panel" style="padding:14px;margin-bottom:0;">
         <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.07em;text-transform:uppercase;
              color:var(--text-dim,#9A9690);margin-bottom:8px;">Fundo de Reserva</div>
         <div style="font-size:18px;font-weight:800;color:var(--gold,#C9A84C);word-break:break-all;">${fmt(r.fundo_reserva)}</div>
@@ -1846,13 +1835,13 @@ function renderAnaliseResultado(d) {
     </div>
 
     <!-- Despesas e Receitas — empilhados no mobile -->
-    <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:12px;">
-      <div class="panel" style="padding:20px;">
+    <div style="display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:16px;">
+      <div class="panel" style="padding:20px;margin-bottom:0;">
         <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.08em;
              text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:16px;">Despesas por Categoria</div>
         ${despHTML}
       </div>
-      <div class="panel" style="padding:20px;">
+      <div class="panel" style="padding:20px;margin-bottom:0;">
         <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.08em;
              text-transform:uppercase;color:var(--text-dim,#9A9690);margin-bottom:16px;">Receitas por Categoria</div>
         ${recHTML}
@@ -1860,7 +1849,7 @@ function renderAnaliseResultado(d) {
     </div>
 
     <!-- Auditoria -->
-    <div class="panel" style="padding:20px;margin-bottom:16px;">
+    <div class="panel" style="padding:20px;margin-bottom:0;">
       <div style="font-size:10px;font-family:var(--font-mono,monospace);letter-spacing:0.08em;
            text-transform:uppercase;color:var(--gold,#C9A84C);margin-bottom:16px;">
         ⚖ Auditoria Inteligente
