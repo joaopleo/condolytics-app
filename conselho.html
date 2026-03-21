@@ -2384,27 +2384,27 @@ function renderAnaliseResultadoConselho(d, container) {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px 18px;">
           <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Receitas</div>
-          <div style="font-size:20px;font-weight:600;color:#4CAF7D;">${fmt(r.receitas_total)}</div>
+          <div style="font-size:clamp(14px,4vw,20px);font-weight:600;white-space:nowrap;color:#4CAF7D;">${fmt(r.receitas_total)}</div>
         </div>
         <div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px 18px;">
           <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Despesas</div>
-          <div style="font-size:20px;font-weight:600;color:#E05C3A;">${fmt(r.despesas_total)}</div>
+          <div style="font-size:clamp(14px,4vw,20px);font-weight:600;white-space:nowrap;color:#E05C3A;">${fmt(r.despesas_total)}</div>
         </div>
         <div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px 18px;">
           <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Superávit</div>
-          <div style="font-size:20px;font-weight:600;color:${(r.superavit_deficit||0)>=0?'#4CAF7D':'#E05C3A'};">${fmt(r.superavit_deficit)}</div>
+          <div style="font-size:clamp(14px,4vw,20px);font-weight:600;white-space:nowrap;color:${(r.superavit_deficit||0)>=0?'#4CAF7D':'#E05C3A'};">${fmt(r.superavit_deficit)}</div>
         </div>
         <div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px 18px;">
           <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Saldo Final</div>
-          <div style="font-size:20px;font-weight:600;color:var(--text);">${fmt(r.saldo_final)}</div>
+          <div style="font-size:clamp(14px,4vw,20px);font-weight:600;white-space:nowrap;color:var(--text);">${fmt(r.saldo_final)}</div>
         </div>
         ${r.inadimplencia_percentual != null ? `<div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px 18px;">
           <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Inadimplência</div>
-          <div style="font-size:20px;font-weight:600;color:#C9A84C;">${parseFloat(r.inadimplencia_percentual).toFixed(1)}%</div>
+          <div style="font-size:clamp(14px,4vw,20px);font-weight:600;white-space:nowrap;color:#C9A84C;">${parseFloat(r.inadimplencia_percentual).toFixed(1)}%</div>
         </div>` : ''}
         ${r.fundo_reserva != null ? `<div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px 18px;">
           <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Fundo de Reserva</div>
-          <div style="font-size:20px;font-weight:600;color:var(--text);">${fmt(r.fundo_reserva)}</div>
+          <div style="font-size:clamp(14px,4vw,20px);font-weight:600;white-space:nowrap;color:var(--text);">${fmt(r.fundo_reserva)}</div>
         </div>` : ''}
       </div>
       ${aud.alertas?.length ? `
