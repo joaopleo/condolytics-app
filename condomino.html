@@ -701,7 +701,7 @@
           </svg>
         </div>
         <div>
-          <div style="font-size:16px;font-weight:600;color:var(--off-white);">Análise de Documento</div>
+          <div style="font-size:16px;font-weight:600;color:var(--off-white);">Prestação de Contas</div>
           <div style="font-size:12px;color:var(--gray);">Prestação de contas via IA</div>
         </div>
       </div>
@@ -921,6 +921,7 @@ function fecharMenu() {
 
 // ── Navegação desktop ──
 function mostrarSecao(nome, el) {
+  fecharMenu();
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('sec-'+nome).classList.add('active');
@@ -930,7 +931,6 @@ function mostrarSecao(nome, el) {
   if (nome === 'dashboard') { carregarDashAnalises(); carregarOcorrenciasResolvidas(); }
   if (nome === 'ocorrencias') carregarOcorrenciasResolvidas();
   atualizarTitulo(nome);
-  fecharMenu();
 }
 
 // ── Navegação mobile (bottom nav) ──
@@ -1301,75 +1301,47 @@ const CAL_CORES = {
   assembleia:'#7C5CBF',
   manutencao:'#4CAF82',
   feriado:   '#E05C3A',
+  reuniao:   '#B8872A',
+  vencimento:'#3B7DD8',
+  outro:     '#9A9690',
 };
 
-const CAL_EVENTOS = {
-  '2026-01-01': [{ t:'Confraternização Universal',          cat:'feriado'    }],
-  '2026-01-15': [{ t:'Reunião Conselho Fiscal — Jan',       cat:'conselho'   }],
-  '2026-01-20': [{ t:'Prazo: Boleto Condominial',           cat:'boleto'     }],
-  '2026-01-28': [{ t:'Relatório Mensal — Dez/25',           cat:'conselho'   }],
-  '2026-02-17': [{ t:'Carnaval — Suspensão de Atividades',  cat:'feriado'    }],
-  '2026-02-18': [{ t:'Carnaval — Suspensão de Atividades',  cat:'feriado'    }],
-  '2026-02-20': [{ t:'Prazo: Boleto Condominial',           cat:'boleto'     }],
-  '2026-03-05': [{ t:'Reunião Conselho Fiscal — Mar',       cat:'conselho'   }],
-  '2026-03-20': [{ t:'Prazo: Boleto Condominial',           cat:'boleto'     }],
-  '2026-03-25': [{ t:'Manutenção: Bombas e Cisternas',      cat:'manutencao' }],
-  '2026-04-02': [{ t:'Quinta-feira Santa',                  cat:'feriado'    }],
-  '2026-04-03': [{ t:'Sexta-feira Santa',                   cat:'feriado'    }],
-  '2026-04-16': [{ t:'Reunião Conselho Fiscal — Abr',       cat:'conselho'   }],
-  '2026-04-20': [{ t:'Prazo: Boleto Condominial',           cat:'boleto'     },
-                 { t:'Assembleia Geral — 1ª do Ano',        cat:'assembleia' }],
-  '2026-04-21': [{ t:'Tiradentes',                          cat:'feriado'    }],
-  '2026-05-01': [{ t:'Dia do Trabalho',                     cat:'feriado'    }],
-  '2026-05-15': [{ t:'Manutenção: Caixas d\u2019Água',          cat:'manutencao' }],
-  '2026-05-20': [{ t:'Prazo: Boleto Condominial',           cat:'boleto'     }],
-  '2026-06-04': [{ t:'Corpus Christi',                      cat:'feriado'    }],
-  '2026-06-11': [{ t:'Reunião Conselho Fiscal — Jun',       cat:'conselho'   }],
-  '2026-06-20': [{ t:'Prazo: Boleto Condominial',           cat:'boleto'     }],
-  '2026-06-28': [{ t:'Relatório Semestral — S1',            cat:'conselho'   }],
-  '2026-07-09': [{ t:'Reunião Conselho Fiscal — Jul',       cat:'conselho'   }],
-  '2026-07-20': [{ t:'Prazo: Boleto Condominial',           cat:'boleto'     },
-                 { t:'Assembleia Geral — 2ª do Ano',        cat:'assembleia' }],
-  '2026-07-25': [{ t:'Manutenção: Extintores e SPDA',       cat:'manutencao' }],
-  '2026-08-13': [{ t:'Reunião Conselho Fiscal — Ago',       cat:'conselho'   }],
-  '2026-08-20': [{ t:'Prazo: Boleto Condominial',           cat:'boleto'     }],
-  '2026-09-07': [{ t:'Independência do Brasil',             cat:'feriado'    }],
-  '2026-09-20': [{ t:'Prazo: Boleto Condominial',           cat:'boleto'     },
-                 { t:'Assembleia Geral — 3ª do Ano',        cat:'assembleia' }],
-  '2026-09-25': [{ t:'Manutenção: Para-Raios e Elevadores', cat:'manutencao' }],
-  '2026-10-12': [{ t:'Nossa Sra. Aparecida',                cat:'feriado'    }],
-  '2026-10-15': [{ t:'Reunião Conselho Fiscal — Out',       cat:'conselho'   }],
-  '2026-10-20': [{ t:'Prazo: Boleto Condominial',           cat:'boleto'     }],
-  '2026-10-28': [{ t:'Relatório Trimestral — T3',           cat:'conselho'   }],
-  '2026-11-02': [{ t:'Finados',                             cat:'feriado'    }],
-  '2026-11-15': [{ t:'Proclamação da República',            cat:'feriado'    }],
-  '2026-11-20': [{ t:'Prazo: Boleto Condominial',           cat:'boleto'     },
-                 { t:'Consciência Negra',                   cat:'feriado'    }],
-  '2026-11-20': [{ t:'Assembleia Geral Ordinária — AGO',   cat:'assembleia' },
-                 { t:'Prazo: Boleto Condominial',           cat:'boleto'     }],
-  '2026-11-25': [{ t:'Manutenção: Fachada e Impermeab.',    cat:'manutencao' }],
-  '2026-12-10': [{ t:'Reunião Conselho Fiscal — Dez',       cat:'conselho'   }],
-  '2026-12-20': [{ t:'Prazo: Boleto Condominial',           cat:'boleto'     },
-                 { t:'Assembleia Geral — 4ª do Ano',        cat:'assembleia' }],
-  '2026-12-22': [{ t:'Manutenção: Revisão Geral Fim de Ano',cat:'manutencao' }],
-  '2026-12-25': [{ t:'Natal',                               cat:'feriado'    }],
-  '2026-12-30': [{ t:'Relatório Anual do Conselho Fiscal',  cat:'conselho'   }],
+const TIPO_TO_CAT = {
+  assembleia:'assembleia', manutencao:'manutencao',
+  reuniao:'reuniao', vencimento:'vencimento', outro:'outro'
 };
+
+let _calEventosDB = {};
 
 const MESES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
                     'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const MESES_SHORT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const CAT_LABELS = {
   boleto:'Boleto / Vencimento', conselho:'Reunião do Conselho',
-  assembleia:'Assembleia Geral', manutencao:'Manutenção', feriado:'Feriado'
+  assembleia:'Assembleia Geral', manutencao:'Manutenção', feriado:'Feriado',
+  reuniao:'Reunião', vencimento:'Vencimento', outro:'Outro'
 };
 
-let _calAno = 2026, _calMes = 0;
+let _calAno = new Date().getFullYear(), _calMes = new Date().getMonth();
 
-function calInit() {
+async function calInit() {
   const hoje = new Date();
-  _calAno = hoje.getFullYear() < 2026 ? 2026 : (hoje.getFullYear() > 2026 ? 2026 : hoje.getFullYear());
-  _calMes = _calAno === 2026 ? hoje.getMonth() : 0;
+  _calAno = hoje.getFullYear();
+  _calMes = hoje.getMonth();
+  calRenderizar();
+  calRenderizarProximos();
+  if (!condoAtual) return;
+  const { data: rows } = await db.from('eventos_calendario')
+    .select('titulo,tipo,data_hora,descricao')
+    .eq('condominio_id', condoAtual)
+    .order('data_hora', { ascending: true });
+  _calEventosDB = {};
+  (rows || []).forEach(r => {
+    const chave = r.data_hora.slice(0, 10);
+    const cat   = TIPO_TO_CAT[r.tipo] || 'outro';
+    if (!_calEventosDB[chave]) _calEventosDB[chave] = [];
+    _calEventosDB[chave].push({ t: r.titulo, cat });
+  });
   calRenderizar();
   calRenderizarProximos();
 }
@@ -1395,7 +1367,7 @@ function calRenderizar() {
   }
   for (let d = 1; d <= totalDias; d++) {
     const chave = `${_calAno}-${String(_calMes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const eventos = CAL_EVENTOS[chave] || [];
+    const eventos = _calEventosDB[chave] || [];
     const dow = new Date(_calAno, _calMes, d).getDay();
     const isWeekend = dow === 0 || dow === 6;
     const isHoje = d === hoje.getDate() && _calMes === hoje.getMonth() && _calAno === hoje.getFullYear();
@@ -1415,7 +1387,7 @@ function calRenderizar() {
 }
 
 function calMostrarEventos(chave, dia) {
-  const eventos = CAL_EVENTOS[chave] || [];
+  const eventos = _calEventosDB[chave] || [];
   if (!eventos.length) return;
   const panel = document.getElementById('calEventPanel');
   document.getElementById('calEventPanelTitle').textContent = `${dia} de ${MESES_FULL[_calMes]} de ${_calAno}`;
@@ -1437,7 +1409,7 @@ function calRenderizarProximos() {
   const hoje = new Date();
   hoje.setHours(0,0,0,0);
 
-  const proximos = Object.entries(CAL_EVENTOS)
+  const proximos = Object.entries(_calEventosDB)
     .filter(([chave]) => new Date(chave + 'T00:00:00') >= hoje)
     .sort(([a],[b]) => a.localeCompare(b))
     .slice(0, 8);

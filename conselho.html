@@ -691,11 +691,13 @@
   overflow-y: auto;
 }
 .mobile-drawer.open { left: 0; }
-.mobile-drawer-header {
-  padding: 24px 20px 16px;
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; gap: 12px;
-}
+.mobile-drawer-header { border-bottom: 1px solid var(--border); }
+.drawer-brand { padding: 24px 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.drawer-brand-name { display: block; font-size: 13px; font-weight: 600; letter-spacing: 0.15em; color: var(--gold); margin-bottom: 3px; }
+.drawer-brand-role { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; color: var(--text-dim); text-transform: uppercase; }
+.drawer-condo { padding: 10px 20px 14px; background: rgba(201,168,76,0.04); }
+.drawer-condo-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; color: var(--gold); text-transform: uppercase; margin-bottom: 3px; }
+.drawer-condo-name { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.3; }
 .mobile-nav { padding: 12px; flex: 1; }
 .mobile-nav-item {
   display: flex; align-items: center; gap: 10px;
@@ -709,6 +711,12 @@
 .mobile-nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
 .mobile-nav-section { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-faint); padding: 12px 12px 6px; margin-top: 4px; }
 .mobile-nav-footer { padding: 12px; border-top: 1px solid var(--border); }
+.drawer-user-info { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; background: var(--surface2); margin-bottom: 8px; }
+.drawer-user-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,var(--gold),#E8D08A); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #0A0C0F; flex-shrink: 0; }
+.drawer-user-name { font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.drawer-user-role { font-size: 10px; color: var(--text-dim); }
+.drawer-btn-logout { width: 100%; padding: 8px; background: none; border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; font-size: 11px; color: var(--text-faint); cursor: pointer; transition: all 0.15s; font-family: var(--font-sans); }
+.drawer-btn-logout:hover { border-color: var(--red); color: var(--red); }
 
 @media (max-width: 767px) {
   .btn-hamburger { display: flex; }
@@ -724,18 +732,13 @@
 <!-- Mobile drawer -->
 <div class="mobile-drawer" id="mobileDrawer">
   <div class="mobile-drawer-header">
-    <svg width="28" height="28" viewBox="0 0 44 44" fill="none">
-      <polygon points="22,2 39,11.5 39,32.5 22,42 5,32.5 5,11.5" fill="#0A0C0F" stroke="#C9A84C" stroke-width="2"/>
-      <rect x="9" y="26" width="4" height="9" rx="0.5" fill="#C9A84C"/>
-      <rect x="14" y="20" width="4" height="15" rx="0.5" fill="#C9A84C"/>
-      <rect x="19" y="13" width="4" height="22" rx="0.5" fill="#C9A84C"/>
-      <rect x="24" y="20" width="4" height="15" rx="0.5" fill="#C9A84C"/>
-      <rect x="29" y="26" width="4" height="9" rx="0.5" fill="#C9A84C"/>
-      <line x1="8" y1="35.5" x2="36" y2="35.5" stroke="#C9A84C" stroke-width="1.2"/>
-    </svg>
-    <div>
-      <div style="font-size:13px;font-weight:700;color:var(--text);">Condo<span style="color:var(--gold);font-weight:300">lytics</span></div>
-      <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);">Conselho</div>
+    <div class="drawer-brand">
+      <span class="drawer-brand-name">CONDOLYTICS</span>
+      <span class="drawer-brand-role">Portal do Conselho</span>
+    </div>
+    <div class="drawer-condo">
+      <div class="drawer-condo-label">Condomínio</div>
+      <div class="drawer-condo-name" id="drawerCondoNome">Carregando...</div>
     </div>
   </div>
   <nav class="mobile-nav">
@@ -750,7 +753,7 @@
     </button>
     <button class="mobile-nav-item" onclick="window.location.href='analise-documento.html'">
       <svg viewBox="0 0 16 16" fill="none"><rect x="3" y="1" width="10" height="14" rx="1.5" stroke="#C9A84C" stroke-width="1.3"/><path d="M6 5h4M6 8h4M6 11h2" stroke="#C9A84C" stroke-width="1.3" stroke-linecap="round"/></svg>
-      <span style="color:#C9A84C;font-weight:600;">Análise de Documento</span>
+      <span style="color:#C9A84C;font-weight:600;">Prestação de Contas</span>
     </button>
     <button class="mobile-nav-item" onclick="window.location.href='agenda.html'">
       <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 1v4M11 1v4M2 7h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="5.5" cy="10.5" r="0.8" fill="currentColor"/><circle cx="8" cy="10.5" r="0.8" fill="currentColor"/><circle cx="10.5" cy="10.5" r="0.8" fill="currentColor"/></svg>
@@ -758,7 +761,14 @@
     </button>
   </nav>
   <div class="mobile-nav-footer">
-    <button onclick="logout()" style="width:100%;padding:8px;background:none;border:1px solid rgba(255,255,255,0.06);border-radius:6px;font-size:11px;color:var(--text-faint);cursor:pointer;">Sair da conta</button>
+    <div class="drawer-user-info">
+      <div class="drawer-user-avatar" id="drawerAvatar">?</div>
+      <div>
+        <div class="drawer-user-name" id="drawerUserName">Carregando...</div>
+        <div class="drawer-user-role">Conselho</div>
+      </div>
+    </div>
+    <button class="drawer-btn-logout" onclick="logout()">Sair da conta</button>
   </div>
 </div>
 
@@ -1271,7 +1281,7 @@
           </svg>
         </div>
         <div>
-          <div style="font-size:18px;font-weight:600;color:var(--text);letter-spacing:-0.01em;">Análise de Documento</div>
+          <div style="font-size:18px;font-weight:600;color:var(--text);letter-spacing:-0.01em;">Prestação de Contas</div>
           <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-top:2px;">Prestação de contas via IA</div>
         </div>
       </div>
@@ -1497,6 +1507,10 @@ window.addEventListener('load', async () => {
   });
   const av = document.getElementById('userAvatar');
   if (av) av.textContent = (_usuario.nome_completo||'C')[0].toUpperCase();
+  const drawerAv = document.getElementById('drawerAvatar');
+  const drawerNm = document.getElementById('drawerUserName');
+  if (drawerAv) drawerAv.textContent = (_usuario.nome_completo||'C')[0].toUpperCase();
+  if (drawerNm) drawerNm.textContent = nomeExibido;
   const perfEl = document.getElementById('upopPerfil');
   if (perfEl) perfEl.textContent = ({conselho:'Conselho Fiscal',sindico:'Síndico',admin:'Administrador'})[_usuario.perfil] || 'Conselho Fiscal';
 
@@ -1547,6 +1561,8 @@ async function inicializar() {
   const elPer  = document.getElementById('headerCondoPeriodo');
   if (elNome) elNome.textContent = nomeCondominio;
   if (elPer)  elPer.innerHTML   = `Conselho Fiscal &nbsp;·&nbsp; Gestão 2026/2027 &nbsp;·&nbsp; ${nomeCondominio}`;
+  const elDrawer = document.getElementById('drawerCondoNome');
+  if (elDrawer) elDrawer.textContent = nomeCondominio;
 
   construirTabs();
   renderizarTudo();
