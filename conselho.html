@@ -660,9 +660,110 @@
       /* Tags e badges */
       .tag { font-size: 9px; padding: 2px 6px; }
     }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── HAMBURGER MOBILE ── */
+.btn-hamburger {
+  display: none;
+  background: none; border: none;
+  color: var(--text-dim); cursor: pointer; padding: 8px;
+  position: fixed; top: 14px; left: 16px; z-index: 200;
+}
+.btn-hamburger svg { width: 22px; height: 22px; }
+
+.mobile-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.55); z-index: 150;
+}
+.mobile-overlay.show { display: block; }
+
+.mobile-drawer {
+  position: fixed; top: 0; left: -280px; bottom: 0;
+  width: 260px; background: var(--surface);
+  border-right: 1px solid var(--border);
+  z-index: 160; transition: left 0.3s ease;
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+}
+.mobile-drawer.open { left: 0; }
+.mobile-drawer-header {
+  padding: 24px 20px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+}
+.mobile-nav { padding: 12px; flex: 1; }
+.mobile-nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 8px;
+  font-size: 13px; color: var(--text-dim);
+  cursor: pointer; border: none; background: none;
+  width: 100%; text-align: left; transition: all 0.15s;
+}
+.mobile-nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+.mobile-nav-item.active { background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(201,168,76,0.2); }
+.mobile-nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+.mobile-nav-section { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-faint); padding: 12px 12px 6px; margin-top: 4px; }
+.mobile-nav-footer { padding: 12px; border-top: 1px solid var(--border); }
+
+@media (max-width: 767px) {
+  .btn-hamburger { display: flex; }
+  header { padding-left: 52px; }
+}
 </style>
 </head>
 <body>
+
+<!-- Mobile overlay -->
+<div class="mobile-overlay" id="mobileOverlay" onclick="fecharDrawer()"></div>
+
+<!-- Mobile drawer -->
+<div class="mobile-drawer" id="mobileDrawer">
+  <div class="mobile-drawer-header">
+    <svg width="28" height="28" viewBox="0 0 44 44" fill="none">
+      <polygon points="22,2 39,11.5 39,32.5 22,42 5,32.5 5,11.5" fill="#0A0C0F" stroke="#C9A84C" stroke-width="2"/>
+      <rect x="9" y="26" width="4" height="9" rx="0.5" fill="#C9A84C"/>
+      <rect x="14" y="20" width="4" height="15" rx="0.5" fill="#C9A84C"/>
+      <rect x="19" y="13" width="4" height="22" rx="0.5" fill="#C9A84C"/>
+      <rect x="24" y="20" width="4" height="15" rx="0.5" fill="#C9A84C"/>
+      <rect x="29" y="26" width="4" height="9" rx="0.5" fill="#C9A84C"/>
+      <line x1="8" y1="35.5" x2="36" y2="35.5" stroke="#C9A84C" stroke-width="1.2"/>
+    </svg>
+    <div>
+      <div style="font-size:13px;font-weight:700;color:var(--text);">Condo<span style="color:var(--gold);font-weight:300">lytics</span></div>
+      <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);">Conselho</div>
+    </div>
+  </div>
+  <nav class="mobile-nav">
+    <div class="mobile-nav-section">Menu</div>
+    <button class="mobile-nav-item active" onclick="irParaSecao('dashboard', event)">
+      <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="1" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/></svg>
+      Visão Geral
+    </button>
+    <button class="mobile-nav-item" onclick="irParaSecao('ocorrencias', event)">
+      <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Ocorrências
+    </button>
+    <button class="mobile-nav-item" onclick="irParaSecao('analise', event)">
+      <svg viewBox="0 0 16 16" fill="none"><rect x="3" y="1" width="10" height="14" rx="1.5" stroke="#C9A84C" stroke-width="1.3"/><path d="M6 5h4M6 8h4M6 11h2" stroke="#C9A84C" stroke-width="1.3" stroke-linecap="round"/></svg>
+      <span style="color:#C9A84C;font-weight:600;">Análise PDF</span>
+    </button>
+    <button class="mobile-nav-item" onclick="irParaSecao('admin', event)">
+      <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 1v4M11 1v4M2 7h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Admin
+    </button>
+  </nav>
+  <div class="mobile-nav-footer">
+    <button onclick="logout()" style="width:100%;padding:8px;background:none;border:1px solid rgba(255,255,255,0.06);border-radius:6px;font-size:11px;color:var(--text-faint);cursor:pointer;">Sair da conta</button>
+  </div>
+</div>
+
+<!-- Hamburger button -->
+<button class="btn-hamburger" onclick="abrirDrawer()">
+  <svg viewBox="0 0 22 22" fill="none">
+    <path d="M3 6h16M3 11h16M3 16h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+  </svg>
+</button>
 
 <!-- ═══ HEADER ═══ -->
 <header>
@@ -1150,6 +1251,134 @@
     </div>
   </section>
 
+  <!-- ── ANÁLISE PDF ── -->
+  <section id="sec-analise-conselho" style="margin-top:40px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:36px;height:36px;background:var(--gold-dim);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="18" height="18" viewBox="0 0 44 44" fill="none">
+            <polygon points="22,2 39,11.5 39,32.5 22,42 5,32.5 5,11.5" fill="#0A0C0F" stroke="#C9A84C" stroke-width="2.5"/>
+            <rect x="9" y="26" width="4" height="9" rx="0.5" fill="#C9A84C"/>
+            <rect x="14" y="20" width="4" height="15" rx="0.5" fill="#C9A84C"/>
+            <rect x="19" y="13" width="4" height="22" rx="0.5" fill="#C9A84C"/>
+            <rect x="24" y="20" width="4" height="15" rx="0.5" fill="#C9A84C"/>
+            <rect x="29" y="26" width="4" height="9" rx="0.5" fill="#C9A84C"/>
+            <line x1="8" y1="35.5" x2="36" y2="35.5" stroke="#C9A84C" stroke-width="1.2"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-size:18px;font-weight:600;color:var(--text);letter-spacing:-0.01em;">Análise de Documento</div>
+          <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-top:2px;">Prestação de contas via IA</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload compacto -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:200px;">
+          <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;">Analise sua prestação de contas aqui</div>
+          <div style="font-size:12px;color:var(--text-dim);">Faça upload do PDF mensal. Nossa IA extrai todos os dados e gera um relatório completo.</div>
+        </div>
+        <div style="flex-shrink:0;">
+          <input type="file" id="analise-input-conselho" accept=".pdf" style="display:none" onchange="analisarPDFConselho(this.files[0])">
+          <button onclick="document.getElementById('analise-input-conselho').click()"
+            style="display:flex;align-items:center;gap:8px;padding:10px 20px;background:var(--gold);color:#0A0C0F;border:none;border-radius:8px;font-family:var(--font-sans);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M8 2v9M5 4l3-3 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M2 13h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            Enviar PDF
+          </button>
+        </div>
+      </div>
+      <!-- Loading state -->
+      <div id="analise-loading-conselho" style="display:none;align-items:center;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="width:16px;height:16px;border:2px solid rgba(201,168,76,0.2);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0;"></div>
+        <span style="font-size:12px;color:var(--text-dim);">Analisando documento com IA...</span>
+      </div>
+      <div id="analise-erro-conselho" style="display:none;margin-top:12px;padding:10px 14px;background:rgba(224,92,58,0.1);border:1px solid rgba(224,92,58,0.3);border-radius:8px;font-size:12px;color:#E05C3A;"></div>
+    </div>
+
+    <!-- Lista de análises disponíveis -->
+    <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;">Análises Disponíveis</div>
+    <div id="analise-tabs-conselho" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">
+      <div style="color:var(--text-dim);font-size:13px;">Nenhuma análise ainda.</div>
+    </div>
+    <div id="analise-resultado-conselho"></div>
+  </section>
+
+  <!-- ── ADMIN ── -->
+  <section id="sec-admin-conselho" style="margin-top:40px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+      <div style="width:36px;height:36px;background:rgba(91,155,213,0.12);border:1px solid rgba(91,155,213,0.2);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+          <rect x="2" y="3" width="12" height="11" rx="1.5" stroke="#5B9BD5" stroke-width="1.3"/>
+          <path d="M5 1v4M11 1v4M2 7h12" stroke="#5B9BD5" stroke-width="1.3" stroke-linecap="round"/>
+          <circle cx="5.5" cy="10.5" r="0.8" fill="#5B9BD5"/>
+          <circle cx="8" cy="10.5" r="0.8" fill="#5B9BD5"/>
+          <circle cx="10.5" cy="10.5" r="0.8" fill="#5B9BD5"/>
+        </svg>
+      </div>
+      <div>
+        <div style="font-size:18px;font-weight:600;color:var(--text);letter-spacing:-0.01em;">Administração</div>
+        <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--blue,#5B9BD5);margin-top:2px;">Ferramentas do conselho</div>
+      </div>
+    </div>
+
+    <!-- Criar evento no calendário -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title"><span class="panel-title-dot" style="background:#5B9BD5;"></span>Criar Evento no Calendário</span>
+      </div>
+      <div class="panel-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div style="grid-column:1/-1;">
+            <label style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:6px;">Título do evento</label>
+            <input id="ev-titulo" type="text" placeholder="Ex: Assembleia Ordinária"
+              style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-family:var(--font-sans);font-size:13px;color:var(--text);outline:none;transition:border-color 0.15s;"
+              onfocus="this.style.borderColor='rgba(201,168,76,0.4)'" onblur="this.style.borderColor='var(--border2)'">
+          </div>
+          <div>
+            <label style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:6px;">Data</label>
+            <input id="ev-data" type="date"
+              style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-family:var(--font-sans);font-size:13px;color:var(--text);outline:none;transition:border-color 0.15s;color-scheme:dark;"
+              onfocus="this.style.borderColor='rgba(201,168,76,0.4)'" onblur="this.style.borderColor='var(--border2)'">
+          </div>
+          <div>
+            <label style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:6px;">Horário</label>
+            <input id="ev-hora" type="time"
+              style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-family:var(--font-sans);font-size:13px;color:var(--text);outline:none;transition:border-color 0.15s;color-scheme:dark;"
+              onfocus="this.style.borderColor='rgba(201,168,76,0.4)'" onblur="this.style.borderColor='var(--border2)'">
+          </div>
+          <div>
+            <label style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:6px;">Tipo</label>
+            <select id="ev-tipo"
+              style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-family:var(--font-sans);font-size:13px;color:var(--text);outline:none;-webkit-appearance:none;cursor:pointer;">
+              <option value="assembleia">Assembleia</option>
+              <option value="manutencao">Manutenção</option>
+              <option value="reuniao">Reunião</option>
+              <option value="vencimento">Vencimento</option>
+              <option value="outro">Outro</option>
+            </select>
+          </div>
+          <div style="grid-column:1/-1;">
+            <label style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:6px;">Descrição (opcional)</label>
+            <textarea id="ev-desc" rows="3" placeholder="Detalhes do evento..."
+              style="width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-family:var(--font-sans);font-size:13px;color:var(--text);outline:none;resize:vertical;transition:border-color 0.15s;"
+              onfocus="this.style.borderColor='rgba(201,168,76,0.4)'" onblur="this.style.borderColor='var(--border2)'"></textarea>
+          </div>
+        </div>
+        <div id="ev-feedback" style="display:none;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;"></div>
+        <button onclick="criarEvento()"
+          style="padding:10px 24px;background:var(--gold,#C9A84C);color:#0A0C0F;border:none;border-radius:8px;font-family:var(--font-sans);font-size:13px;font-weight:600;cursor:pointer;transition:opacity 0.15s;"
+          onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+          Criar Evento
+        </button>
+      </div>
+    </div>
+  </section>
+
 </div><!-- /shell -->
 
 
@@ -1441,7 +1670,7 @@ async function carregarDados(condoId) {
       .select('periodo,receita_realizada,despesa_realizada,inadimplencia_pct,fundo_reserva,saldo_conta')
       .eq('condominio_id', condoId)
       .order('periodo', { ascending: false })
-      .limit(6),
+      .limit(5),
     db.from('lancamentos_categoria')
       .select('periodo,tipo,categoria,valor')
       .eq('condominio_id', condoId)
@@ -1949,6 +2178,268 @@ async function aprovarOcorrencia(id, aprovar) {
   }).eq('id', id);
   if (error) { alert('Erro: ' + error.message); return; }
   await carregarAprovacoes();
+}
+
+// ── Mobile Drawer ──────────────────────────────────────────────
+function abrirDrawer() {
+  document.getElementById('mobileDrawer').classList.add('open');
+  document.getElementById('mobileOverlay').classList.add('show');
+}
+function fecharDrawer() {
+  document.getElementById('mobileDrawer').classList.remove('open');
+  document.getElementById('mobileOverlay').classList.remove('show');
+}
+function irParaSecao(nome, event) {
+  fecharDrawer();
+  const secMap = {
+    dashboard: 'secFinanceiro',
+    ocorrencias: 'secOcorrenciasConselho',
+    analise: 'sec-analise-conselho',
+    admin: 'sec-admin-conselho'
+  };
+  const id = secMap[nome];
+  if (id) {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  }
+  document.querySelectorAll('.mobile-nav-item').forEach(b => b.classList.remove('active'));
+  if (event && event.currentTarget) event.currentTarget.classList.add('active');
+  // Carregar análises quando navegar para análise
+  if (nome === 'analise') carregarAnalisesConselho();
+}
+
+// ── Análise PDF (conselho) ────────────────────────────────────────
+async function analisarPDFConselho(file) {
+  if (!file) return;
+  const condId = _condoAtual;
+  if (!condId) { alert('Condomínio não identificado.'); return; }
+
+  const loading = document.getElementById('analise-loading-conselho');
+  const erroEl  = document.getElementById('analise-erro-conselho');
+  loading.style.display = 'flex';
+  erroEl.style.display = 'none';
+
+  try {
+    // Verificar duplicata
+    const { data: exist } = await db.from('analises_pdf')
+      .select('id,periodo')
+      .eq('condominio_id', condId)
+      .eq('nome_arquivo', file.name)
+      .single();
+    if (exist) {
+      loading.style.display = 'none';
+      erroEl.style.display = 'block';
+      erroEl.textContent = `Este PDF já foi analisado (${exist.periodo}). Os dados já estão disponíveis abaixo.`;
+      carregarAnalisesConselho();
+      return;
+    }
+
+    // Chamar Edge Function
+    const { data: { session } } = await db.auth.getSession();
+    const fd = new FormData();
+    fd.append('pdf', file);
+    fd.append('condominio_id', condId);
+    fd.append('user_id', session?.user?.id || '');
+
+    const resp = await fetch('https://rmxkdcnbhzqxijpqxcdi.supabase.co/functions/v1/analisar-pdf', {
+      method: 'POST', body: fd
+    });
+    const json = await resp.json();
+    if (!resp.ok) throw new Error(json.error || 'Erro ao processar PDF');
+
+    carregarAnalisesConselho();
+  } catch (e) {
+    erroEl.style.display = 'block';
+    erroEl.textContent = 'Falha ao processar o PDF: ' + e.message;
+  } finally {
+    loading.style.display = 'none';
+  }
+}
+
+async function carregarAnalisesConselho() {
+  const condId = _condoAtual;
+  if (!condId) return;
+
+  const { data } = await db.from('analises_pdf')
+    .select('id,periodo,periodo_key,resultado')
+    .eq('condominio_id', condId)
+    .order('periodo_key', { ascending: false })
+    .limit(5);
+
+  const tabsEl = document.getElementById('analise-tabs-conselho');
+  if (!tabsEl) return;
+
+  if (!data || data.length === 0) {
+    tabsEl.innerHTML = '<div style="color:var(--text-dim);font-size:13px;">Nenhuma análise ainda.</div>';
+    return;
+  }
+
+  tabsEl.innerHTML = data.map((a, i) => {
+    const label = formatPeriodTabC(a.periodo);
+    return `<button onclick="selecionarAnaliseConselho('${a.id}',this)"
+      style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;
+      padding:6px 14px;border-radius:6px;background:var(--surface);border:1px solid var(--border2);
+      color:var(--text-dim);cursor:pointer;transition:all 0.18s;"
+      data-resultado='${JSON.stringify(a.resultado).replace(/'/g,"&#39;")}'>
+      ${label}
+    </button>`;
+  }).join('');
+
+  // Selecionar primeiro
+  const primeiro = tabsEl.querySelector('button');
+  if (primeiro) selecionarAnaliseConselho(data[0].id, primeiro, data[0].resultado);
+}
+
+function selecionarAnaliseConselho(id, btn, resultado) {
+  document.getElementById('analise-tabs-conselho').querySelectorAll('button').forEach(b => {
+    b.style.background = 'var(--surface)';
+    b.style.borderColor = 'var(--border2)';
+    b.style.color = 'var(--text-dim)';
+  });
+  btn.style.background = 'var(--gold-dim)';
+  btn.style.borderColor = 'rgba(201,168,76,0.4)';
+  btn.style.color = 'var(--gold)';
+
+  const resEl = document.getElementById('analise-resultado-conselho');
+  const dados = resultado || JSON.parse(btn.dataset.resultado || '{}');
+  renderAnaliseResultadoConselho(dados, resEl);
+}
+
+function formatPeriodTabC(periodo) {
+  if (!periodo) return periodo;
+  const meses = {janeiro:'Jan',fevereiro:'Fev','março':'Mar',abril:'Abr',maio:'Mai',junho:'Jun',
+                 julho:'Jul',agosto:'Ago',setembro:'Set',outubro:'Out',novembro:'Nov',dezembro:'Dez'};
+  const lower = periodo.toLowerCase();
+  for (const [nome, abrev] of Object.entries(meses)) {
+    if (lower.startsWith(nome)) {
+      const ano = periodo.split('/')[1]?.slice(-2) || '';
+      return abrev + '/' + ano;
+    }
+  }
+  const parts = periodo.split('/');
+  if (parts.length === 2 && parts[1].length === 4) return parts[0].slice(0,3) + '/' + parts[1].slice(-2);
+  return periodo;
+}
+
+function renderAnaliseResultadoConselho(d, container) {
+  if (!d || !container) return;
+  const r = d.resumo || {};
+  const aud = d.auditoria || {};
+  const score = aud.score || 0;
+  const scoreColor = score >= 80 ? '#4CAF7D' : score >= 60 ? '#C9A84C' : '#E05C3A';
+  const scoreLabel = score >= 80 ? 'ÓTIMO' : score >= 60 ? 'ATENÇÃO' : 'CRÍTICO';
+  const fmt = v => v != null ? 'R$ ' + parseFloat(v).toLocaleString('pt-BR', {minimumFractionDigits:2}) : '—';
+
+  container.innerHTML = `
+    <div style="display:grid;gap:12px;">
+      <!-- Score -->
+      <div style="background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:20px 22px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+        <div style="flex-shrink:0;text-align:center;">
+          <div style="font-size:48px;font-weight:700;color:${scoreColor};line-height:1;">${score}</div>
+          <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:${scoreColor};margin-top:2px;">${scoreLabel}</div>
+          <div style="font-family:var(--font-mono);font-size:8px;color:var(--text-dim);margin-top:1px;">SCORE</div>
+        </div>
+        <div style="flex:1;min-width:200px;">
+          <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;">Score de Saúde Financeira</div>
+          <div style="font-size:13px;color:var(--text);line-height:1.5;">${aud.score_explicacao || ''}</div>
+        </div>
+      </div>
+      <!-- KPIs -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px 18px;">
+          <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Receitas</div>
+          <div style="font-size:20px;font-weight:600;color:#4CAF7D;">${fmt(r.receitas)}</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px 18px;">
+          <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Despesas</div>
+          <div style="font-size:20px;font-weight:600;color:#E05C3A;">${fmt(r.despesas)}</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px 18px;">
+          <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Superávit</div>
+          <div style="font-size:20px;font-weight:600;color:${(r.superavit||0)>=0?'#4CAF7D':'#E05C3A'};">${fmt(r.superavit)}</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px 18px;">
+          <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Saldo Final</div>
+          <div style="font-size:20px;font-weight:600;color:var(--text);">${fmt(r.saldo)}</div>
+        </div>
+        ${r.inadimplencia != null ? `<div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px 18px;">
+          <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Inadimplência</div>
+          <div style="font-size:20px;font-weight:600;color:#C9A84C;">${parseFloat(r.inadimplencia).toFixed(1)}%</div>
+        </div>` : ''}
+        ${r.fundo_reserva != null ? `<div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px 18px;">
+          <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Fundo de Reserva</div>
+          <div style="font-size:20px;font-weight:600;color:var(--text);">${fmt(r.fundo_reserva)}</div>
+        </div>` : ''}
+      </div>
+      ${aud.alertas?.length ? `
+      <div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px 18px;">
+        <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;">⚠ Alertas</div>
+        ${aud.alertas.map(a=>`<div style="font-size:12px;color:#E05C3A;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);">• ${a}</div>`).join('')}
+      </div>` : ''}
+      ${aud.pontos_positivos?.length ? `
+      <div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px 18px;">
+        <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;">✓ Pontos Positivos</div>
+        ${aud.pontos_positivos.map(p=>`<div style="font-size:12px;color:#4CAF7D;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);">• ${p}</div>`).join('')}
+      </div>` : ''}
+    </div>
+  `;
+}
+
+// ── Admin: criar evento ────────────────────────────────────────────
+async function criarEvento() {
+  const titulo = document.getElementById('ev-titulo').value.trim();
+  const data   = document.getElementById('ev-data').value;
+  const hora   = document.getElementById('ev-hora').value;
+  const tipo   = document.getElementById('ev-tipo').value;
+  const desc   = document.getElementById('ev-desc').value.trim();
+  const fb     = document.getElementById('ev-feedback');
+
+  if (!titulo || !data) {
+    fb.style.display = 'block';
+    fb.style.background = 'rgba(224,92,58,0.1)';
+    fb.style.border = '1px solid rgba(224,92,58,0.3)';
+    fb.style.color = '#E05C3A';
+    fb.textContent = 'Preencha pelo menos o título e a data.';
+    return;
+  }
+
+  const condId = _condoAtual;
+  const { data: sessao } = await db.auth.getSession();
+  const userId = sessao?.session?.user?.id;
+
+  const dataHora = hora ? `${data}T${hora}:00` : `${data}T00:00:00`;
+
+  const { error } = await db.from('eventos_calendario').insert({
+    condominio_id: condId,
+    titulo,
+    descricao: desc || null,
+    data_hora: dataHora,
+    tipo,
+    criado_por: userId || null
+  });
+
+  if (error) {
+    fb.style.display = 'block';
+    fb.style.background = 'rgba(224,92,58,0.1)';
+    fb.style.border = '1px solid rgba(224,92,58,0.3)';
+    fb.style.color = '#E05C3A';
+    fb.textContent = 'Erro ao criar evento: ' + error.message;
+    return;
+  }
+
+  fb.style.display = 'block';
+  fb.style.background = 'rgba(76,175,125,0.1)';
+  fb.style.border = '1px solid rgba(76,175,125,0.3)';
+  fb.style.color = '#4CAF7D';
+  fb.textContent = '✓ Evento criado com sucesso!';
+
+  // Limpar campos
+  document.getElementById('ev-titulo').value = '';
+  document.getElementById('ev-data').value = '';
+  document.getElementById('ev-hora').value = '';
+  document.getElementById('ev-desc').value = '';
+
+  setTimeout(() => { fb.style.display = 'none'; }, 3000);
 }
 </script>
 </body>

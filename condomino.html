@@ -516,12 +516,12 @@
       </svg>
       Calendário
     </button>
-    <button class="nav-item" onclick="mostrarSecao('analise',this)" style="border-top:1px solid rgba(201,168,76,0.15);margin-top:4px;padding-top:12px;">
+    <button class="nav-item" onclick="mostrarSecao('ocorrencias',this)">
       <svg viewBox="0 0 16 16" fill="none">
-        <circle cx="8" cy="8" r="6.5" stroke="#C9A84C" stroke-width="1.3"/>
-        <path d="M5 8.5l2 2 4-4" stroke="#C9A84C" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M3 8l3 3 7-7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.3"/>
       </svg>
-      <span style="color:#C9A84C;font-weight:600;">Análise PDF</span>
+      Ocorrências
     </button>
   </nav>
   <div class="sidebar-footer">
@@ -577,6 +577,15 @@
 
     <!-- DASHBOARD -->
     <section class="section active" id="sec-dashboard">
+
+  <!-- Análises disponíveis - seletor por período -->
+  <div id="dash-analise-wrap" style="margin-bottom:20px;">
+    <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray);margin-bottom:10px;">Prestação de Contas</div>
+    <div id="dash-period-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">
+      <!-- tabs gerados via JS -->
+    </div>
+    <div id="dash-analise-resultado" style="display:none;"></div>
+  </div>
 
   <div class="hero">
     <div>
@@ -644,6 +653,16 @@
       <span class="panel-title">Ocorrências Resolvidas</span>
     </div>
     <div class="panel-body" id="ocResolvidasList">
+      <div class="loading"><div class="spinner"></div>Carregando...</div>
+    </div>
+  </div>
+
+  <!-- Ocorrências Resolvidas -->
+  <div class="panel" style="margin-top:8px;" id="oc-resolvidas-panel">
+    <div class="panel-header">
+      <span class="panel-title">Ocorrências Resolvidas</span>
+    </div>
+    <div class="panel-body" id="oc-resolvidas-lista">
       <div class="loading"><div class="spinner"></div>Carregando...</div>
     </div>
   </div>
@@ -720,108 +739,43 @@
 
     <!-- ANÁLISE PDF -->
     <section class="section" id="sec-analise">
-
-      <!-- HEADER da seção -->
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;
-           margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.06);">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <svg viewBox="0 0 44 44" width="28" height="28" fill="none">
-            <polygon points="22,2 39,11.5 39,32.5 22,42 5,32.5 5,11.5" fill="#0A0C0F" stroke="#C9A84C" stroke-width="2"/>
-            <rect x="9"  y="26" width="4" height="9"  rx="0.5" fill="#C9A84C"/>
+      <!-- Cabeçalho -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.05);">
+        <div style="width:40px;height:40px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="20" height="20" viewBox="0 0 44 44" fill="none">
+            <polygon points="22,2 39,11.5 39,32.5 22,42 5,32.5 5,11.5" fill="#0A0C0F" stroke="#C9A84C" stroke-width="2.5"/>
+            <rect x="9" y="26" width="4" height="9" rx="0.5" fill="#C9A84C"/>
             <rect x="14" y="20" width="4" height="15" rx="0.5" fill="#C9A84C"/>
             <rect x="19" y="13" width="4" height="22" rx="0.5" fill="#C9A84C"/>
             <rect x="24" y="20" width="4" height="15" rx="0.5" fill="#C9A84C"/>
-            <rect x="29" y="26" width="4" height="9"  rx="0.5" fill="#C9A84C"/>
+            <rect x="29" y="26" width="4" height="9" rx="0.5" fill="#C9A84C"/>
+            <line x1="8" y1="35.5" x2="36" y2="35.5" stroke="#C9A84C" stroke-width="1.2"/>
           </svg>
-          <div>
-            <div style="font-size:16px;font-weight:700;color:var(--text,#E8E6E0);">Análise de Documento</div>
-            <div style="font-size:11px;color:var(--text-dim,#9A9690);">Prestação de contas via IA</div>
-          </div>
         </div>
-        <!-- Botão Nova Análise sempre visível no topo -->
-        <button onclick="document.getElementById('analise-upload-area').style.display='block';
-                         document.getElementById('analise-resultado').style.display='none';
-                         document.getElementById('analise-erro').style.display='none';"
-          style="display:flex;align-items:center;gap:7px;font-family:var(--font-mono,monospace);
-                 font-size:10px;letter-spacing:0.08em;text-transform:uppercase;
-                 padding:8px 14px;border-radius:8px;border:1px solid rgba(201,168,76,0.3);
-                 background:rgba(201,168,76,0.08);color:var(--gold,#C9A84C);cursor:pointer;
-                 white-space:nowrap;transition:all 0.15s;"
-          onmouseover="this.style.background='rgba(201,168,76,0.14)'"
-          onmouseout="this.style.background='rgba(201,168,76,0.08)'">
-          <svg viewBox="0 0 16 16" fill="none" width="12" height="12">
-            <path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          </svg>
-          Nova Análise
-        </button>
-      </div>
-
-      <!-- LISTA DE ANÁLISES ANTERIORES (topo) -->
-      <div id="analise-lista-topo"></div>
-
-      <!-- UPLOAD AREA -->
-      <div id="analise-upload-area">
-        <div class="panel" style="text-align:center;padding:32px 20px;">
-          <div style="width:52px;height:52px;border-radius:50%;background:rgba(201,168,76,0.12);
-               display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
-            <svg viewBox="0 0 24 24" fill="none" width="26" height="26">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#C9A84C" stroke-width="1.5" stroke-linecap="round"/>
-              <polyline points="14,2 14,8 20,8" stroke="#C9A84C" stroke-width="1.5" stroke-linecap="round"/>
-              <line x1="12" y1="18" x2="12" y2="12" stroke="#C9A84C" stroke-width="1.5" stroke-linecap="round"/>
-              <polyline points="9,15 12,12 15,15" stroke="#C9A84C" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <div style="font-size:18px;font-weight:700;color:var(--text,#E8E6E0);margin-bottom:8px;">
-            Analise sua prestação de contas aqui
-          </div>
-          <div style="font-size:13px;color:var(--text-dim,#9A9690);max-width:380px;margin:0 auto 24px;line-height:1.6;">
-            Nossa IA lê o PDF, extrai todos os dados financeiros, audita as contas e gera um relatório completo em segundos.
-          </div>
-          <div id="analise-dropzone"
-            style="border:2px dashed rgba(201,168,76,0.3);border-radius:12px;padding:28px 20px;
-                   cursor:pointer;transition:all 0.2s;max-width:420px;margin:0 auto 16px;"
-            onclick="document.getElementById('analise-file-input').click()"
-            ondragover="event.preventDefault();this.style.borderColor='#C9A84C';this.style.background='rgba(201,168,76,0.06)'"
-            ondragleave="this.style.borderColor='rgba(201,168,76,0.3)';this.style.background=''"
-            ondrop="event.preventDefault();this.style.borderColor='rgba(201,168,76,0.3)';this.style.background='';analisarPDF(event.dataTransfer.files[0])">
-            <svg viewBox="0 0 24 24" fill="none" width="32" height="32" style="margin:0 auto 10px;display:block;opacity:0.45;">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-              <polyline points="17,8 12,3 7,8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-              <line x1="12" y1="3" x2="12" y2="15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
-            <div style="font-size:13px;color:var(--text-dim,#9A9690);">
-              Arraste o PDF aqui ou <span style="color:#C9A84C;font-weight:600;">clique para selecionar</span>
-            </div>
-            <div style="font-size:11px;color:var(--text-faint,#52504C);margin-top:5px;">Apenas arquivos .pdf</div>
-          </div>
-          <input type="file" id="analise-file-input" accept=".pdf" style="display:none"
-            onchange="if(this.files[0]) analisarPDF(this.files[0])">
-          <div id="analise-erro" style="display:none;color:#E05C3A;font-size:13px;margin-top:10px;"></div>
+        <div>
+          <div style="font-size:16px;font-weight:600;color:var(--off-white);">Análise de Documento</div>
+          <div style="font-size:12px;color:var(--gray);">Prestação de contas via IA</div>
         </div>
       </div>
 
-      <!-- LOADING -->
-      <div id="analise-loading" style="display:none;">
-        <div class="panel" style="text-align:center;padding:56px 24px;">
-          <svg viewBox="0 0 64 64" width="56" height="56" style="margin:0 auto 20px;display:block;animation:spin 1.2s linear infinite;">
-            <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(201,168,76,0.15)" stroke-width="4"/>
-            <path d="M32 4 A28 28 0 0 1 60 32" fill="none" stroke="#C9A84C" stroke-width="4" stroke-linecap="round"/>
-          </svg>
-          <div style="font-size:15px;font-weight:600;color:var(--text,#E8E6E0);margin-bottom:6px;">
-            Analisando sua prestação de contas...
-          </div>
-          <div style="font-size:12px;color:var(--text-dim,#9A9690);" id="analise-loading-msg">
-            Lendo o documento e extraindo dados financeiros
-          </div>
+      <!-- Período selector -->
+      <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray);margin-bottom:10px;">Análises Disponíveis</div>
+      <div id="analise-period-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">
+        <div style="color:var(--gray);font-size:13px;">Nenhuma análise disponível ainda.</div>
+      </div>
+      <div id="analise-resultado-sec" style="display:none;"></div>
+    </section>
+
+    <!-- OCORRÊNCIAS RESOLVIDAS (seção própria) -->
+    <section class="section" id="sec-ocorrencias">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Ocorrências Resolvidas</span>
+        </div>
+        <div class="panel-body" id="oc-resolvidas-lista2">
+          <div class="loading"><div class="spinner"></div>Carregando...</div>
         </div>
       </div>
-
-      <!-- RESULTADO -->
-      <div id="analise-resultado" style="display:none;"></div>
-
-      <!-- LISTA DE ANÁLISES ANTERIORES (rodapé) -->
-      <div id="analise-lista-rodape"></div>
-
     </section>
 
     <!-- CALENDÁRIO -->
@@ -953,7 +907,8 @@ async function carregarTudo() {
     carregarFinanceiro(),
     carregarDocumentos(),
     carregarRelatorios(),
-    carregarOcorrenciasResolvidas()
+    carregarOcorrenciasResolvidas(),
+    carregarDashAnalises()
   ]);
 }
 
@@ -1015,7 +970,9 @@ function mostrarSecao(nome, el) {
   document.getElementById('sec-'+nome).classList.add('active');
   el.classList.add('active');
   if (nome === 'calendario') calInit();
-  if (nome === 'analise') carregarAnalisesPDF();
+  if (nome === 'analise') carregarAnaliseTabs();
+  if (nome === 'dashboard') { carregarDashAnalises(); carregarOcorrenciasResolvidas(); }
+  if (nome === 'ocorrencias') carregarOcorrenciasResolvidas();
   atualizarTitulo(nome);
   fecharMenu();
 }
@@ -1706,7 +1663,8 @@ async function analisarPDF(file) {
   }
 }
 
-function renderAnaliseResultado(d) {
+function renderAnaliseResultado(d, containerId) {
+  containerId = containerId || 'analise-resultado';
   const fmt = v => v != null ? 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:2}) : '—';
   const pct = v => v != null ? Number(v).toFixed(1) + '%' : '—';
   const r = d.resumo || {};
@@ -1762,7 +1720,9 @@ function renderAnaliseResultado(d) {
       </div>
     </div>`).join('');
 
-  document.getElementById('analise-resultado').innerHTML = `
+  const _containerEl = document.getElementById(containerId);
+  if (!_containerEl) { console.warn('renderAnaliseResultado: container not found:', containerId); return; }
+  _containerEl.innerHTML = `
   <div style="max-width:800px;">
 
     <!-- Header -->
@@ -1871,6 +1831,172 @@ function renderAnaliseResultado(d) {
     </div>
 
   </div>`;
+}
+
+// ── Análises no dashboard (tabs de período, max 5) ──────────────
+async function carregarDashAnalises() {
+  if (!condoAtual) return;
+  const { data } = await db.from('analises_pdf')
+    .select('id,periodo,periodo_key,resultado')
+    .eq('condominio_id', condoAtual)
+    .order('periodo_key', { ascending: false })
+    .limit(5);
+
+  const tabsEl = document.getElementById('dash-period-tabs');
+  const resEl  = document.getElementById('dash-analise-resultado');
+  if (!tabsEl || !resEl) return;
+
+  if (!data || data.length === 0) {
+    document.getElementById('dash-analise-wrap').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('dash-analise-wrap').style.display = '';
+
+  tabsEl.innerHTML = data.map((a, i) => {
+    const label = formatPeriodTab(a.periodo);
+    return `<button onclick="selecionarDashAnalise('${a.id}', this)"
+      style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;
+      padding:6px 14px;border-radius:6px;background:var(--surface);border:1px solid rgba(255,255,255,0.06);
+      color:var(--gray-l);cursor:pointer;transition:all 0.18s;"
+      data-resultado='${JSON.stringify(a.resultado).replace(/'/g,"&#39;")}'>
+      ${label}
+    </button>`;
+  }).join('');
+
+  // Selecionar o primeiro automaticamente
+  const primeiroBtn = tabsEl.querySelector('button');
+  if (primeiroBtn) selecionarDashAnalise(data[0].id, primeiroBtn, data[0].resultado);
+}
+
+function selecionarDashAnalise(id, btn, resultado) {
+  const tabsEl = document.getElementById('dash-period-tabs');
+  tabsEl.querySelectorAll('button').forEach(b => {
+    b.style.background = 'var(--surface)';
+    b.style.borderColor = 'rgba(255,255,255,0.06)';
+    b.style.color = 'var(--gray-l)';
+  });
+  btn.style.background = 'rgba(184,135,42,0.12)';
+  btn.style.borderColor = 'rgba(184,135,42,0.35)';
+  btn.style.color = 'var(--amber-l)';
+
+  const resEl = document.getElementById('dash-analise-resultado');
+  if (!resultado) {
+    db.from('analises_pdf').select('resultado').eq('id', id).single()
+      .then(({data}) => {
+        if (data) { resEl.style.display = ''; renderAnaliseResultado(data.resultado, 'dash-analise-resultado'); }
+      });
+  } else {
+    resEl.style.display = '';
+    renderAnaliseResultado(resultado, 'dash-analise-resultado');
+  }
+}
+
+function formatPeriodTab(periodo) {
+  if (!periodo) return periodo;
+  const meses = {janeiro:'Jan',fevereiro:'Fev','março':'Mar',abril:'Abr',maio:'Mai',junho:'Jun',
+                 julho:'Jul',agosto:'Ago',setembro:'Set',outubro:'Out',novembro:'Nov',dezembro:'Dez'};
+  const lower = periodo.toLowerCase();
+  for (const [nome, abrev] of Object.entries(meses)) {
+    if (lower.startsWith(nome)) {
+      const ano = periodo.split('/')[1]?.slice(-2) || '';
+      return abrev + '/' + ano;
+    }
+  }
+  const parts = periodo.split('/');
+  if (parts.length === 2 && parts[1].length === 4) {
+    return parts[0].slice(0,3) + '/' + parts[1].slice(-2);
+  }
+  return periodo;
+}
+
+// ── Tabs de período na seção Análise ────────────────────────────
+async function carregarAnaliseTabs() {
+  if (!condoAtual) return;
+  const { data } = await db.from('analises_pdf')
+    .select('id,periodo,periodo_key,resultado')
+    .eq('condominio_id', condoAtual)
+    .order('periodo_key', { ascending: false })
+    .limit(5);
+
+  const tabsEl = document.getElementById('analise-period-tabs');
+  const resEl  = document.getElementById('analise-resultado-sec');
+  if (!tabsEl) return;
+
+  if (!data || data.length === 0) {
+    tabsEl.innerHTML = '<div style="color:var(--gray);font-size:13px;">Nenhuma análise disponível ainda.</div>';
+    return;
+  }
+
+  tabsEl.innerHTML = data.map((a, i) => {
+    const label = formatPeriodTab(a.periodo);
+    return `<button onclick="selecionarAnaliseTab('${a.id}', this)"
+      style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;
+      padding:6px 14px;border-radius:6px;background:var(--surface);border:1px solid rgba(255,255,255,0.06);
+      color:var(--gray-l);cursor:pointer;transition:all 0.18s;"
+      data-resultado='${JSON.stringify(a.resultado).replace(/'/g,"&#39;")}'>
+      ${label}
+    </button>`;
+  }).join('');
+
+  const primeiroBtn = tabsEl.querySelector('button');
+  if (primeiroBtn) selecionarAnaliseTab(data[0].id, primeiroBtn, data[0].resultado);
+}
+
+function selecionarAnaliseTab(id, btn, resultado) {
+  document.getElementById('analise-period-tabs').querySelectorAll('button').forEach(b => {
+    b.style.background = 'var(--surface)';
+    b.style.borderColor = 'rgba(255,255,255,0.06)';
+    b.style.color = 'var(--gray-l)';
+  });
+  btn.style.background = 'rgba(184,135,42,0.12)';
+  btn.style.borderColor = 'rgba(184,135,42,0.35)';
+  btn.style.color = 'var(--amber-l)';
+
+  const resEl = document.getElementById('analise-resultado-sec');
+  if (!resultado) {
+    db.from('analises_pdf').select('resultado').eq('id', id).single()
+      .then(({data}) => {
+        if (data) { resEl.style.display = ''; renderAnaliseResultado(data.resultado, 'analise-resultado-sec'); }
+      });
+  } else {
+    resEl.style.display = '';
+    renderAnaliseResultado(resultado, 'analise-resultado-sec');
+  }
+}
+
+// ── Ocorrências Resolvidas ────────────────────────────────────────
+async function carregarOcorrenciasResolvidas() {
+  if (!condoAtual) return;
+  const { data } = await db.from('ocorrencias')
+    .select('*')
+    .eq('condominio_id', condoAtual)
+    .eq('status', 'resolvida')
+    .order('updated_at', { ascending: false })
+    .limit(10);
+
+  ['oc-resolvidas-lista', 'oc-resolvidas-lista2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (!data || data.length === 0) {
+      el.innerHTML = '<div class="empty">Nenhuma ocorrência resolvida ainda.</div>';
+      return;
+    }
+    el.innerHTML = data.map(o => `
+      <div style="background:var(--surface2);border:1px solid rgba(255,255,255,0.05);border-radius:10px;padding:14px 16px;margin-bottom:8px;border-left:3px solid rgba(76,175,130,0.4);">
+        <div style="font-size:13px;font-weight:600;color:var(--off-white);margin-bottom:4px;">${o.titulo||'Ocorrência'}</div>
+        <div style="font-size:11px;color:var(--gray);display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+          <span>📅 ${o.updated_at ? new Date(o.updated_at).toLocaleDateString('pt-BR') : ''}</span>
+          ${o.categoria ? `<span>📁 ${o.categoria}</span>` : ''}
+        </div>
+        ${o.observacao_resolucao ? `<div style="font-size:12px;color:var(--gray-l);line-height:1.5;">✓ ${o.observacao_resolucao}</div>` : ''}
+      </div>
+    `).join('');
+  });
+}
+
+async function carregarOcorrenciasResolvidas2() {
+  return carregarOcorrenciasResolvidas();
 }
 </script>
 </body>
