@@ -2384,23 +2384,23 @@ function renderAnaliseResultadoConselho(d, container) {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
         <div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px 18px;">
           <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Receitas</div>
-          <div style="font-size:20px;font-weight:600;color:#4CAF7D;">${fmt(r.receitas)}</div>
+          <div style="font-size:20px;font-weight:600;color:#4CAF7D;">${fmt(r.receitas_total)}</div>
         </div>
         <div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px 18px;">
           <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Despesas</div>
-          <div style="font-size:20px;font-weight:600;color:#E05C3A;">${fmt(r.despesas)}</div>
+          <div style="font-size:20px;font-weight:600;color:#E05C3A;">${fmt(r.despesas_total)}</div>
         </div>
         <div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px 18px;">
           <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Superávit</div>
-          <div style="font-size:20px;font-weight:600;color:${(r.superavit||0)>=0?'#4CAF7D':'#E05C3A'};">${fmt(r.superavit)}</div>
+          <div style="font-size:20px;font-weight:600;color:${(r.superavit_deficit||0)>=0?'#4CAF7D':'#E05C3A'};">${fmt(r.superavit_deficit)}</div>
         </div>
         <div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px 18px;">
           <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Saldo Final</div>
-          <div style="font-size:20px;font-weight:600;color:var(--text);">${fmt(r.saldo)}</div>
+          <div style="font-size:20px;font-weight:600;color:var(--text);">${fmt(r.saldo_final)}</div>
         </div>
-        ${r.inadimplencia != null ? `<div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px 18px;">
+        ${r.inadimplencia_percentual != null ? `<div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px 18px;">
           <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Inadimplência</div>
-          <div style="font-size:20px;font-weight:600;color:#C9A84C;">${parseFloat(r.inadimplencia).toFixed(1)}%</div>
+          <div style="font-size:20px;font-weight:600;color:#C9A84C;">${parseFloat(r.inadimplencia_percentual).toFixed(1)}%</div>
         </div>` : ''}
         ${r.fundo_reserva != null ? `<div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px 18px;">
           <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Fundo de Reserva</div>
@@ -2410,7 +2410,7 @@ function renderAnaliseResultadoConselho(d, container) {
       ${aud.alertas?.length ? `
       <div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px 18px;">
         <div style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;">⚠ Alertas</div>
-        ${aud.alertas.map(a=>`<div style="font-size:12px;color:#E05C3A;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);">• ${a}</div>`).join('')}
+        ${aud.alertas.map(a=>`<div style="font-size:12px;color:#E05C3A;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);"><strong style="display:block;margin-bottom:2px;">${typeof a==='object'?a.titulo:a}</strong>${typeof a==='object'&&a.descricao?`<span style="color:rgba(224,92,58,0.7);font-size:11px;">${a.descricao}</span>`:''}</div>`).join('')}
       </div>` : ''}
       ${aud.pontos_positivos?.length ? `
       <div style="background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px 18px;">

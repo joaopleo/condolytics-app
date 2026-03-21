@@ -335,14 +335,14 @@ function renderResultado(d) {
       </div>
     </div>
     <div class="kpi-grid">
-      <div class="kpi-card"><div class="kpi-label">Receitas</div><div class="kpi-val" style="color:#4CAF7D;">${fmt(r.receitas)}</div></div>
-      <div class="kpi-card"><div class="kpi-label">Despesas</div><div class="kpi-val" style="color:#E05C3A;">${fmt(r.despesas)}</div></div>
-      <div class="kpi-card"><div class="kpi-label">Superávit</div><div class="kpi-val" style="color:${(r.superavit||0)>=0?'#4CAF7D':'#E05C3A'};">${fmt(r.superavit)}</div></div>
-      <div class="kpi-card"><div class="kpi-label">Saldo Final</div><div class="kpi-val">${fmt(r.saldo)}</div></div>
-      ${r.inadimplencia!=null?`<div class="kpi-card"><div class="kpi-label">Inadimplência</div><div class="kpi-val" style="color:#C9A84C;">${parseFloat(r.inadimplencia).toFixed(1)}%</div></div>`:''}
+      <div class="kpi-card"><div class="kpi-label">Receitas</div><div class="kpi-val" style="color:#4CAF7D;">${fmt(r.receitas_total)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Despesas</div><div class="kpi-val" style="color:#E05C3A;">${fmt(r.despesas_total)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Superávit</div><div class="kpi-val" style="color:${(r.superavit_deficit||0)>=0?'#4CAF7D':'#E05C3A'};">${fmt(r.superavit_deficit)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Saldo Final</div><div class="kpi-val">${fmt(r.saldo_final)}</div></div>
+      ${r.inadimplencia_percentual!=null?`<div class="kpi-card"><div class="kpi-label">Inadimplência</div><div class="kpi-val" style="color:#C9A84C;">${parseFloat(r.inadimplencia_percentual).toFixed(1)}%</div></div>`:''}
       ${r.fundo_reserva!=null?`<div class="kpi-card"><div class="kpi-label">Fundo de Reserva</div><div class="kpi-val">${fmt(r.fundo_reserva)}</div></div>`:''}
     </div>
-    ${aud.alertas?.length?`<div class="lista-box"><div class="lista-titulo">⚠ Alertas</div>${aud.alertas.map(a=>`<div class="lista-item" style="color:#E05C3A;">• ${a}</div>`).join('')}</div>`:''}
+    ${aud.alertas?.length?`<div class="lista-box"><div class="lista-titulo">⚠ Alertas</div>${aud.alertas.map(a=>`<div class="lista-item" style="color:#E05C3A;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);"><strong style="display:block;margin-bottom:2px;">${typeof a==='object'?a.titulo:a}</strong>${typeof a==='object'&&a.descricao?`<span style="color:var(--text-dim);font-size:11px;">${a.descricao}</span>`:''}</div>`).join('')}</div>`:''}
     ${aud.pontos_positivos?.length?`<div class="lista-box"><div class="lista-titulo">✓ Pontos Positivos</div>${aud.pontos_positivos.map(p=>`<div class="lista-item" style="color:#4CAF7D;">• ${p}</div>`).join('')}</div>`:''}
     ${aud.resumo_auditoria?`<div class="lista-box"><div class="lista-titulo">Resumo da Auditoria</div><div style="font-size:13px;color:var(--text);line-height:1.6;">${aud.resumo_auditoria}</div></div>`:''}
   `;
