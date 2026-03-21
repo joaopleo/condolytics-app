@@ -2223,13 +2223,22 @@ function irParaSecao(nome, event) {
     const el = document.getElementById(id);
     if (el) {
       el.style.display = '';
-      el.scrollIntoView({ behavior: 'smooth' });
+      // Pequeno delay para o display:'' ser aplicado antes do scroll
+      setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
     }
   }
   document.querySelectorAll('.mobile-nav-item').forEach(b => b.classList.remove('active'));
   if (event && event.currentTarget) event.currentTarget.classList.add('active');
-  if (nome === 'analise') carregarAnalisesConselho();
-  if (nome === 'agenda') carregarAgendaConselho();
+
+  if (nome === 'analise') {
+    carregarAnalisesConselho();
+  }
+  if (nome === 'agenda') {
+    // Abre o formulário automaticamente ao entrar na Agenda
+    const form = document.getElementById('agenda-form-wrap');
+    if (form) form.style.display = 'block';
+    carregarAgendaConselho();
+  }
 }
 
 // ── Análise PDF (conselho) ────────────────────────────────────────
