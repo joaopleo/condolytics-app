@@ -2220,20 +2220,29 @@ function irParaSecao(nome, event) {
 
   // Mostra só o que foi pedido
   if (nome === 'dashboard' || nome === 'ocorrencias') {
-    if (dashboard) dashboard.style.display = '';
-    // Rola até a seção correta dentro do dashboard
+    if (dashboard) dashboard.style.display = 'block';
     const alvo = nome === 'ocorrencias'
       ? document.getElementById('secOcorrenciasConselho')
       : document.getElementById('secFinanceiro');
     if (alvo) setTimeout(() => alvo.scrollIntoView({ behavior:'smooth', block:'start' }), 80);
   } else if (nome === 'analise') {
-    if (analise) { analise.style.display = ''; window.scrollTo({ top: 0, behavior:'smooth' }); }
-    carregarAnalisesConselho();
+    if (analise) analise.style.display = 'block';
+    window.scrollTo({ top: 0 });
+    const tentarCarregar = () => {
+      if (_condoAtual) carregarAnalisesConselho();
+      else setTimeout(tentarCarregar, 200);
+    };
+    tentarCarregar();
   } else if (nome === 'agenda') {
-    if (agenda) { agenda.style.display = ''; window.scrollTo({ top: 0, behavior:'smooth' }); }
+    if (agenda) agenda.style.display = 'block';
+    window.scrollTo({ top: 0 });
     const form = document.getElementById('agenda-form-wrap');
     if (form) form.style.display = 'block';
-    carregarAgendaConselho();
+    const tentarCarregarAgenda = () => {
+      if (_condoAtual) carregarAgendaConselho();
+      else setTimeout(tentarCarregarAgenda, 200);
+    };
+    tentarCarregarAgenda();
   }
 
   document.querySelectorAll('.mobile-nav-item').forEach(b => b.classList.remove('active'));
