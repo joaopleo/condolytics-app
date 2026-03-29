@@ -809,6 +809,17 @@
   transition: all 0.15s; font-family: var(--font-sans);
 }
 .dsk-btn-logout:hover { border-color: var(--red); color: var(--red); }
+.dsk-footer { position: relative; }
+#dskUserPopover {
+  display: none; position: absolute;
+  bottom: calc(100% + 8px); left: 10px; right: 10px;
+  background: #13161C; border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 12px; box-shadow: 0 -12px 40px rgba(0,0,0,0.5);
+  z-index: 200; overflow: hidden;
+}
+#dskUserPopover.pop-open { display: block; }
+.dsk-user { cursor: pointer; border-radius: 8px; padding: 4px; margin: -4px; transition: background 0.15s; }
+.dsk-user:hover { background: rgba(255,255,255,0.04); }
 
 @media (max-width: 767px) { #desk-sidebar { display: none; } }
 
@@ -914,14 +925,33 @@
     </button>
   </div>
   <div class="dsk-footer">
-    <div class="dsk-user">
+    <!-- Popover do usuário -->
+    <div id="dskUserPopover">
+      <div class="upop-header">
+        <div class="upop-name" id="dskUpopName">—</div>
+        <span class="upop-perfil" id="dskUpopPerfil">Conselho Fiscal</span>
+      </div>
+      <button id="dskBtnTrocarUsuario" class="upop-switch" onclick="trocarUsuario()" style="display:none;">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M2 8a6 6 0 1010.93 3M14 8a6 6 0 00-10.93-3" stroke-linecap="round"/>
+          <path d="M11 5l3-3-3-3M5 14l-3 3 3 3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Trocar usuário
+      </button>
+      <button class="upop-logout" onclick="logout()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M10 11l3-3-3-3M13 8H6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Sair da conta
+      </button>
+    </div>
+    <div class="dsk-user" onclick="toggleDskUserPopover(event)">
       <div class="dsk-avatar" id="dskAvatar">C</div>
       <div style="min-width:0">
         <div class="dsk-user-name" id="dskUserName">Carregando...</div>
         <div class="dsk-user-role">Conselho Fiscal</div>
       </div>
     </div>
-    <button class="dsk-btn-logout" onclick="logout()">Sair da conta</button>
   </div>
 </nav>
 
@@ -1612,7 +1642,7 @@ window.addEventListener('load', async () => {
   if (!_usuario) return;
 
   const nomeExibido = pul(_usuario.nome_completo) || 'Conselheiro';
-  ['userName','respNome','upopName'].forEach(id => {
+  ['userName','respNome','upopName','dskUpopName'].forEach(id => {
     const el = document.getElementById(id); if (el) el.textContent = nomeExibido;
   });
   const av = document.getElementById('userAvatar');
@@ -1627,8 +1657,18 @@ window.addEventListener('load', async () => {
   const dskNm = document.getElementById('dskUserName');
   if (dskAv) dskAv.textContent = inicial;
   if (dskNm) dskNm.textContent = nomeExibido;
+  const perfilLabel = ({conselho:'Conselho Fiscal',sindico:'Síndico',admin:'Administrador'})[_usuario.perfil] || 'Conselho Fiscal';
   const perfEl = document.getElementById('upopPerfil');
-  if (perfEl) perfEl.textContent = ({conselho:'Conselho Fiscal',sindico:'Síndico',admin:'Administrador'})[_usuario.perfil] || 'Conselho Fiscal';
+  if (perfEl) perfEl.textContent = perfilLabel;
+  const dskPerfEl = document.getElementById('dskUpopPerfil');
+  if (dskPerfEl) dskPerfEl.textContent = perfilLabel;
+  // Mostra botão trocar usuário se admin
+  if (_usuario.perfil === 'admin') {
+    const b1 = document.getElementById('btnTrocarUsuario');
+    const b2 = document.getElementById('dskBtnTrocarUsuario');
+    if (b1) b1.style.display = 'flex';
+    if (b2) b2.style.display = 'flex';
+  }
 
   await inicializar();
 
@@ -2130,7 +2170,14 @@ document.addEventListener('click', e => {
   const pill = document.querySelector('.user-pill');
   const pop  = document.getElementById('userPopover');
   if (pop && pill && !pill.contains(e.target)) pop.classList.remove('pop-open');
+  const dskFooter = document.querySelector('.dsk-footer');
+  const dskPop = document.getElementById('dskUserPopover');
+  if (dskPop && dskFooter && !dskFooter.contains(e.target)) dskPop.classList.remove('pop-open');
 });
+function toggleDskUserPopover(e) {
+  e.stopPropagation();
+  document.getElementById('dskUserPopover').classList.toggle('pop-open');
+}
 
 /* ── NOTIFICAÇÕES ── */
 const notifBtn = document.getElementById('notifBtn');
