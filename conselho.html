@@ -1691,12 +1691,9 @@ window.addEventListener('load', async () => {
   if (dskPerfEl) dskPerfEl.textContent = perfilLabel;
   const drawerPerfEl = document.getElementById('drawerUpopPerfil');
   if (drawerPerfEl) drawerPerfEl.textContent = perfilLabel;
-  // Mostra botão trocar usuário se admin
-  if (_usuario.perfil === 'admin') {
-    ['btnTrocarUsuario','dskBtnTrocarUsuario','drawerBtnTrocarUsuario'].forEach(id => {
-      const b = document.getElementById(id); if (b) b.style.display = 'flex';
-    });
-  }
+  ['btnTrocarUsuario','dskBtnTrocarUsuario','drawerBtnTrocarUsuario'].forEach(id => {
+    const b = document.getElementById(id); if (b) b.style.display = 'flex';
+  });
 
   await inicializar();
 
