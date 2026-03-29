@@ -574,9 +574,11 @@
                                    padding: 12px 14px !important; }
 
       /* Expense table: scroll horizontal */
-      .expense-table-outer { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-      .expense-table { min-width: 480px; }
-      .expense-table th, .expense-table td { padding: 10px 10px; }
+      .expense-table-outer { overflow-x: visible; }
+      .expense-table { min-width: unset; width: 100%; }
+      .expense-table th, .expense-table td { padding: 10px 8px; }
+      .expense-table th:first-child, .expense-table td:first-child { padding-left: 14px; }
+      .expense-table th:last-child, .expense-table td:last-child { padding-right: 14px; }
 
       /* Alertas+Pareceres: 1 col */
       div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; gap: 12px !important; }
@@ -633,9 +635,11 @@
       .chart-container { height: 190px; }
 
       /* Tabela: scroll + fontes menores */
-      .expense-table { min-width: 420px; }
-      .expense-table th { font-size: 8px; padding: 10px 8px 8px; }
-      .expense-table td { font-size: 11px; padding: 9px 8px; }
+      .expense-table { min-width: unset; width: 100%; }
+      .expense-table th { font-size: 8px; padding: 10px 6px 8px; }
+      .expense-table td { font-size: 11px; padding: 9px 6px; }
+      .expense-table th:first-child, .expense-table td:first-child { padding-left: 12px; }
+      .expense-table th:last-child, .expense-table td:last-child { padding-right: 12px; }
       .cat-name { font-size: 12px; gap: 6px; }
       .var-chip { font-size: 9px; padding: 1px 5px; }
 
@@ -1242,7 +1246,7 @@
         <table class="expense-table">
           <thead>
             <tr>
-              <th style="padding-left:22px">Categoria</th>
+              <th>Categoria</th>
               <th>Valor</th>
               <th>% das Despesas</th>
             </tr>
@@ -2109,7 +2113,7 @@ function renderTabelaCategorias(despesas) {
     const isAmalpes  = r.categoria === 'taxa_amalpes';
     return `
     <tr${isAmalpes ? ' class="apop-trigger" onclick="abrirPopAmalpes()"' : ''}>
-      <td style="padding-left:22px;width:38%;${bStyle}">
+      <td style="width:50%;${bStyle}">
         <span class="cat-name"><span class="cat-dot" style="background:${color}"></span>${label}${isAmalpes ? '<span class="apop-hint">↗ ver composição</span>' : ''}</span>
       </td>
       <td style="text-align:right;font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--text);${bStyle}">
