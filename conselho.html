@@ -722,9 +722,204 @@
   .btn-hamburger { display: flex; }
   header { padding-left: 52px; }
 }
+
+/* ══ DESKTOP SIDEBAR ══ */
+#desk-sidebar {
+  position: fixed; left: 0; top: 0; bottom: 0; width: 220px;
+  z-index: 99; background: #0D1014;
+  border-right: 1px solid rgba(201,168,76,0.1);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.dsk-brand {
+  padding: 22px 18px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  display: flex; align-items: center; gap: 10px;
+}
+.dsk-brand-logo {
+  width: 32px; height: 32px; flex-shrink: 0;
+}
+.dsk-brand-name {
+  font-family: var(--font-mono); font-size: 13px;
+  font-weight: 700; letter-spacing: 0.04em; color: var(--text);
+  line-height: 1.2;
+}
+.dsk-brand-name span { color: var(--gold); font-weight: 300; }
+.dsk-brand-role {
+  font-size: 9px; color: var(--text-faint);
+  letter-spacing: 0.06em; margin-top: 2px;
+}
+.dsk-condo {
+  padding: 12px 18px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.dsk-condo-label {
+  font-family: var(--font-mono); font-size: 8px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-faint); margin-bottom: 4px;
+}
+.dsk-condo-name {
+  font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.4;
+}
+.dsk-nav { flex: 1; padding: 6px 10px; overflow-y: auto; }
+.dsk-nav::-webkit-scrollbar { width: 2px; }
+.dsk-nav::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.15); border-radius: 2px; }
+.dsk-nav-section {
+  font-family: var(--font-mono); font-size: 8px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-faint); padding: 10px 8px 5px;
+}
+.dsk-nav-item {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 9px 10px; border-radius: 8px;
+  border: 1px solid transparent; background: none;
+  color: var(--text-dim); font-size: 13px;
+  font-family: var(--font-sans); cursor: pointer;
+  text-align: left; transition: all 0.15s; margin-bottom: 2px;
+}
+.dsk-nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+.dsk-nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+.dsk-nav-item.active {
+  background: var(--gold-dim); color: var(--gold);
+  border-color: rgba(201,168,76,0.2);
+}
+.dsk-footer {
+  padding: 12px 14px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+.dsk-user { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; min-width: 0; }
+.dsk-avatar {
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--gold), #E8D08A);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #0A0C0F;
+}
+.dsk-user-name {
+  font-size: 11px; font-weight: 500; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dsk-user-role { font-size: 9px; color: var(--text-faint); }
+.dsk-btn-logout {
+  width: 100%; padding: 7px; background: none;
+  border: 1px solid rgba(255,255,255,0.06); border-radius: 6px;
+  font-size: 11px; color: var(--text-faint); cursor: pointer;
+  transition: all 0.15s; font-family: var(--font-sans);
+}
+.dsk-btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+@media (max-width: 767px) { #desk-sidebar { display: none; } }
+
+@media (min-width: 768px) {
+  header { margin-left: 220px; }
+  .shell  { margin-left: 220px; }
+  .logo-block { display: none; }
+  header { grid-template-columns: 1fr auto; }
+}
+
+/* ══ AMALPES POPOVER ══ */
+#amalpes-pop-overlay {
+  display:none; position:fixed; inset:0; z-index:900;
+  background:rgba(0,0,0,0.5);
+}
+#amalpes-pop-overlay.show { display:block; }
+#amalpes-pop {
+  position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:min(460px,92vw); max-height:80vh; overflow-y:auto;
+  background:#111318; border:1px solid rgba(201,168,76,0.25);
+  border-radius:14px; z-index:901; box-shadow:0 24px 60px rgba(0,0,0,0.6);
+}
+#amalpes-pop::-webkit-scrollbar{width:3px}
+#amalpes-pop::-webkit-scrollbar-thumb{background:rgba(201,168,76,0.2);border-radius:2px}
+.apop-header {
+  padding:18px 22px 14px; border-bottom:1px solid rgba(255,255,255,0.06);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.apop-title { font-size:14px; font-weight:600; color:#E8E6E0; }
+.apop-sub { font-family:'IBM Plex Mono',monospace; font-size:10px; color:#C9A84C; margin-top:2px; letter-spacing:0.08em; }
+.apop-close {
+  background:none; border:none; cursor:pointer; color:#52504C;
+  padding:4px; border-radius:4px; line-height:1; font-size:18px;
+  transition:color 0.15s;
+}
+.apop-close:hover { color:#E8E6E0; }
+.apop-body { padding:16px 22px 20px; }
+.apop-row {
+  display:flex; align-items:center; gap:10px;
+  padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.04);
+}
+.apop-row:last-child { border-bottom:none; }
+.apop-cat { flex:1; font-size:13px; color:#9A9690; }
+.apop-bar-wrap { width:80px; height:4px; background:rgba(255,255,255,0.06); border-radius:2px; flex-shrink:0; }
+.apop-bar { height:100%; border-radius:2px; background:#C9A84C; }
+.apop-val { font-family:'IBM Plex Mono',monospace; font-size:11px; color:#E8E6E0; min-width:76px; text-align:right; flex-shrink:0; }
+.apop-pct { font-family:'IBM Plex Mono',monospace; font-size:10px; color:#52504C; min-width:36px; text-align:right; flex-shrink:0; }
+.apop-empty { text-align:center; padding:24px; color:#52504C; font-size:13px; }
+.apop-loading { text-align:center; padding:24px; color:#9A9690; font-size:13px; }
+.expense-table tbody tr.apop-trigger { cursor:pointer; }
+.expense-table tbody tr.apop-trigger:hover { background:rgba(201,168,76,0.06) !important; }
+.apop-hint {
+  font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:0.08em;
+  color:#C9A84C; margin-left:8px; opacity:0.7;
+}
 </style>
 </head>
 <body>
+
+<!-- ═══ DESKTOP SIDEBAR ═══ -->
+<nav id="desk-sidebar">
+  <div class="dsk-brand">
+    <svg class="dsk-brand-logo" viewBox="0 0 44 44" fill="none">
+      <polygon points="22,2 39,11.5 39,32.5 22,42 5,32.5 5,11.5" fill="#0A0C0F" stroke="#C9A84C" stroke-width="2"/>
+      <rect x="9"  y="26" width="4" height="9"  rx="0.5" fill="#C9A84C"/>
+      <rect x="14" y="20" width="4" height="15" rx="0.5" fill="#C9A84C"/>
+      <rect x="19" y="13" width="4" height="22" rx="0.5" fill="#C9A84C"/>
+      <rect x="24" y="20" width="4" height="15" rx="0.5" fill="#C9A84C"/>
+      <rect x="29" y="26" width="4" height="9"  rx="0.5" fill="#C9A84C"/>
+      <line x1="8" y1="35.5" x2="36" y2="35.5" stroke="#C9A84C" stroke-width="1.2"/>
+    </svg>
+    <div>
+      <div class="dsk-brand-name">Condo<span>lytics</span></div>
+      <div class="dsk-brand-role">Portal do Conselho</div>
+    </div>
+  </div>
+  <div class="dsk-condo">
+    <div class="dsk-condo-label">Condomínio</div>
+    <div class="dsk-condo-name" id="dskCondoNome">Carregando...</div>
+  </div>
+  <div class="dsk-nav">
+    <div class="dsk-nav-section">Menu</div>
+    <button class="dsk-nav-item active" onclick="irParaSecao('dashboard', event)">
+      <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="1" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/></svg>
+      Visão Geral
+    </button>
+    <button class="dsk-nav-item" onclick="irParaSecao('ocorrencias', event)">
+      <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Ocorrências
+    </button>
+    <button class="dsk-nav-item" onclick="window.location.href='analise-documento.html'" style="color:#C9A84C">
+      <svg viewBox="0 0 16 16" fill="none"><rect x="3" y="1" width="10" height="14" rx="1.5" stroke="#C9A84C" stroke-width="1.3"/><path d="M6 5h4M6 8h4M6 11h2" stroke="#C9A84C" stroke-width="1.3" stroke-linecap="round"/></svg>
+      <span style="font-weight:600;">Prestação de Contas</span>
+    </button>
+    <button class="dsk-nav-item" onclick="window.location.href='agenda.html'">
+      <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 1v4M11 1v4M2 7h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="5.5" cy="10.5" r="0.8" fill="currentColor"/><circle cx="8" cy="10.5" r="0.8" fill="currentColor"/><circle cx="10.5" cy="10.5" r="0.8" fill="currentColor"/></svg>
+      Agenda
+    </button>
+    <div class="dsk-nav-section">Complexo</div>
+    <button class="dsk-nav-item" onclick="window.location.href='complexo.html'">
+      <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="7" width="5" height="8" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="6" y="4" width="5" height="11" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="11" y="1" width="4" height="14" rx="1" stroke="currentColor" stroke-width="1.3"/></svg>
+      Les Alpes
+    </button>
+  </div>
+  <div class="dsk-footer">
+    <div class="dsk-user">
+      <div class="dsk-avatar" id="dskAvatar">C</div>
+      <div style="min-width:0">
+        <div class="dsk-user-name" id="dskUserName">Carregando...</div>
+        <div class="dsk-user-role">Conselho Fiscal</div>
+      </div>
+    </div>
+    <button class="dsk-btn-logout" onclick="logout()">Sair da conta</button>
+  </div>
+</nav>
 
 <!-- Mobile overlay -->
 <div class="mobile-overlay" id="mobileOverlay" onclick="fecharDrawer()"></div>
@@ -758,6 +953,15 @@
     <button class="mobile-nav-item" onclick="window.location.href='agenda.html'">
       <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 1v4M11 1v4M2 7h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="5.5" cy="10.5" r="0.8" fill="currentColor"/><circle cx="8" cy="10.5" r="0.8" fill="currentColor"/><circle cx="10.5" cy="10.5" r="0.8" fill="currentColor"/></svg>
       Agenda do Condomínio
+    </button>
+    <div class="mobile-nav-section">Complexo</div>
+    <button class="mobile-nav-item" onclick="window.location.href='complexo.html'">
+      <svg viewBox="0 0 16 16" fill="none">
+        <rect x="1" y="7" width="5" height="8" rx="1" stroke="currentColor" stroke-width="1.3"/>
+        <rect x="6" y="4" width="5" height="11" rx="1" stroke="currentColor" stroke-width="1.3"/>
+        <rect x="11" y="1" width="4" height="14" rx="1" stroke="currentColor" stroke-width="1.3"/>
+      </svg>
+      Les Alpes
     </button>
   </nav>
   <div class="mobile-nav-footer">
@@ -1463,7 +1667,7 @@ const CAT_LABEL = {
   pessoal:'Pessoal', rh:'RH / Encargos', terceirizados:'Terceirizados',
   encargos:'Encargos Sociais', administracao:'Administração',
   consumo:'Consumo (Energ/Água)', manutencoes:'Manutenção Predial',
-  reembolsaveis:'Reembolsáveis', impostos:'Taxa Assoc. AMALPES',
+  reembolsaveis:'Reembolsáveis', taxa_amalpes:'Taxa Assoc. AMALPES', impostos:'Impostos',
   investimentos:'Investimentos', investimentos_imobilizado:'Invest. Imobilizado',
   outros:'Outros'
 };
@@ -1472,7 +1676,7 @@ const CAT_COLOR_DESP = {
   pessoal:'#E05C3A', rh:'#E05C3A', terceirizados:'#C9A84C',
   encargos:'#9B7FD4', administracao:'#4CAF7D', consumo:'#E05C3A',
   manutencoes:'#5B9BD5', financeiras:'#52504C', reembolsaveis:'#7A7870',
-  impostos:'#C9A84C', investimentos:'#4CAF7D',
+  taxa_amalpes:'#C9A84C', impostos:'#9B7FD4', investimentos:'#4CAF7D',
   investimentos_imobilizado:'#3A8F65', outros:'#7A7870'
 };
 
@@ -1507,10 +1711,16 @@ window.addEventListener('load', async () => {
   });
   const av = document.getElementById('userAvatar');
   if (av) av.textContent = (_usuario.nome_completo||'C')[0].toUpperCase();
+  const inicial = (_usuario.nome_completo||'C')[0].toUpperCase();
   const drawerAv = document.getElementById('drawerAvatar');
   const drawerNm = document.getElementById('drawerUserName');
-  if (drawerAv) drawerAv.textContent = (_usuario.nome_completo||'C')[0].toUpperCase();
+  if (drawerAv) drawerAv.textContent = inicial;
   if (drawerNm) drawerNm.textContent = nomeExibido;
+  // Desktop sidebar
+  const dskAv = document.getElementById('dskAvatar');
+  const dskNm = document.getElementById('dskUserName');
+  if (dskAv) dskAv.textContent = inicial;
+  if (dskNm) dskNm.textContent = nomeExibido;
   const perfEl = document.getElementById('upopPerfil');
   if (perfEl) perfEl.textContent = ({conselho:'Conselho Fiscal',sindico:'Síndico',admin:'Administrador'})[_usuario.perfil] || 'Conselho Fiscal';
 
@@ -1563,6 +1773,8 @@ async function inicializar() {
   if (elPer)  elPer.innerHTML   = `Conselho Fiscal &nbsp;·&nbsp; Gestão 2026/2027 &nbsp;·&nbsp; ${nomeCondominio}`;
   const elDrawer = document.getElementById('drawerCondoNome');
   if (elDrawer) elDrawer.textContent = nomeCondominio;
+  const elDskCondo = document.getElementById('dskCondoNome');
+  if (elDskCondo) elDskCondo.textContent = nomeCondominio;
 
   construirTabs();
   renderizarTudo();
@@ -1725,6 +1937,7 @@ async function carregarDados(condoId) {
   }
 
   _dadosDB[condoId] = { periodos6, indicadores6, lancPorPeriodo };
+
 }
 
 /* ── SWITCH CONDOMÍNIO ── */
@@ -1892,10 +2105,11 @@ function renderTabelaCategorias(despesas) {
     const pct     = Math.round((r.valor / maxVal) * 100);
     const chipCls = pct >= 90 ? 'var-up' : pct < 60 ? 'var-down' : 'var-neu';
     const bStyle  = i === sorted.length - 1 ? 'border-bottom:none' : '';
+    const isAmalpes = r.categoria === 'taxa_amalpes';
     return `
-    <tr>
+    <tr${isAmalpes ? ' class="apop-trigger" onclick="abrirPopAmalpes()"' : ''}>
       <td style="padding-left:22px;width:38%;${bStyle}">
-        <span class="cat-name"><span class="cat-dot" style="background:${color}"></span>${label}</span>
+        <span class="cat-name"><span class="cat-dot" style="background:${color}"></span>${label}${isAmalpes ? '<span class="apop-hint">↗ ver composição</span>' : ''}</span>
       </td>
       <td style="text-align:right;font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--text);${bStyle}">
         R$ ${brl(r.valor)}
@@ -1910,6 +2124,7 @@ function renderTabelaCategorias(despesas) {
       </td>
     </tr>`;
   }).join('');
+
 }
 
 /* ── COUNTER ANIMATION ── */
@@ -2052,6 +2267,114 @@ function mostrarSecao(nome, el) {
     if (!isActive) carregarAprovacoes();
   }
 }
+
+/* ══ AMALPES POPOVER ══ */
+
+async function abrirPopAmalpes() {
+  const overlay = document.getElementById('amalpes-pop-overlay');
+  const pop     = document.getElementById('amalpes-pop');
+  if (!overlay || !pop) return;
+
+  // Mostra o popover com estado de loading
+  const body = pop.querySelector('#apop-body');
+  const sub  = pop.querySelector('#apop-sub');
+  body.innerHTML = '<div class="apop-loading">Carregando…</div>';
+  overlay.classList.add('show');
+  document.body.style.overflow = 'hidden';
+
+  try {
+    // 1. Descobre o período atual
+    const dados   = _dadosDB[_condoAtual];
+    const periodo = dados?.periodos6[_periodoIdx]; // "2026-02-01"
+    if (!periodo) { body.innerHTML = '<div class="apop-empty">Período não disponível.</div>'; return; }
+
+    const periodoKey = periodo.slice(0, 7); // "2026-02"
+    const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    const [y, m] = periodoKey.split('-');
+    const periodoLabel = `${meses[parseInt(m)-1]}/${y}`;
+    if (sub) sub.textContent = periodoLabel;
+
+    // 2. Busca o ID da AMALPES via amalpes_condominios
+    const { data: vinculo } = await db
+      .from('amalpes_condominios')
+      .select('amalpes_id')
+      .eq('condominio_id', _condoAtual)
+      .eq('status', 'ativo')
+      .maybeSingle();
+
+    if (!vinculo?.amalpes_id) {
+      body.innerHTML = '<div class="apop-empty">Este condomínio não possui filiação ativa à AMALPES.</div>';
+      return;
+    }
+
+    // 3. Busca a análise da AMALPES para o período
+    const { data: analise } = await db
+      .from('analises_pdf')
+      .select('resultado')
+      .eq('condominio_id', vinculo.amalpes_id)
+      .eq('periodo_key', periodoKey)
+      .maybeSingle();
+
+    const res    = analise?.resultado;
+    const resumo = res?.resumo || {};
+
+    if (!res) {
+      body.innerHTML = '<div class="apop-empty">Prestação de contas da AMALPES não disponível para ' + periodoLabel + '.<br><br>Faça o upload no Portal do Síndico.</div>';
+      return;
+    }
+
+    // 4. Renderiza despesas
+    const brlF = v => v == null ? '—' : Number(v).toLocaleString('pt-BR', { minimumFractionDigits:0, maximumFractionDigits:0 });
+    const despesas = (res.despesas || []).filter(d => d.valor > 0).sort((a,b) => b.valor - a.valor);
+    const totalDesp = resumo.despesas_total || despesas.reduce((s,d) => s + d.valor, 0) || 1;
+    const maxVal = despesas[0]?.valor || 1;
+
+    // Resumo rápido no topo
+    const superavit = (resumo.receitas_total || 0) - (resumo.despesas_total || 0);
+    const kpiHtml = `
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;">
+        <div style="background:#1A1D24;border-radius:8px;padding:10px 12px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:#52504C;margin-bottom:5px;">Receita</div>
+          <div style="font-size:13px;font-weight:600;color:#C9A84C;">R$&nbsp;${brlF(resumo.receitas_total)}</div>
+        </div>
+        <div style="background:#1A1D24;border-radius:8px;padding:10px 12px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:#52504C;margin-bottom:5px;">Despesa</div>
+          <div style="font-size:13px;font-weight:600;color:#E8E6E0;">R$&nbsp;${brlF(resumo.despesas_total)}</div>
+        </div>
+        <div style="background:#1A1D24;border-radius:8px;padding:10px 12px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:#52504C;margin-bottom:5px;">${superavit >= 0 ? 'Superávit' : 'Déficit'}</div>
+          <div style="font-size:13px;font-weight:600;color:${superavit >= 0 ? '#4CAF7D' : '#E05C3A'};">R$&nbsp;${brlF(Math.abs(superavit))}</div>
+        </div>
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#52504C;margin-bottom:10px;">Composição das Despesas</div>
+    `;
+
+    const rowsHtml = despesas.map(d => {
+      const pct  = ((d.valor / totalDesp) * 100).toFixed(1);
+      const barW = Math.round((d.valor / maxVal) * 100);
+      return `
+      <div class="apop-row">
+        <span class="apop-cat">${d.categoria}</span>
+        <div class="apop-bar-wrap"><div class="apop-bar" style="width:${barW}%"></div></div>
+        <span class="apop-val">R$&nbsp;${brlF(d.valor)}</span>
+        <span class="apop-pct">${pct}%</span>
+      </div>`;
+    }).join('');
+
+    body.innerHTML = kpiHtml + rowsHtml;
+
+  } catch (err) {
+    body.innerHTML = '<div class="apop-empty">Erro ao carregar dados da AMALPES.</div>';
+    console.error('abrirPopAmalpes:', err);
+  }
+}
+
+function fecharPopAmalpes() {
+  document.getElementById('amalpes-pop-overlay')?.classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharPopAmalpes(); });
 
 // ── Aprovações ──
 async function carregarAprovacoes() {
@@ -2256,7 +2579,8 @@ function irParaSecao(nome, event) {
   }
   // 'dashboard' → modo normal, tudo visível
 
-  document.querySelectorAll('.mobile-nav-item').forEach(b => b.classList.remove('active'));
+  // Sincroniza estado ativo em mobile drawer e desktop sidebar
+  document.querySelectorAll('.mobile-nav-item, .dsk-nav-item').forEach(b => b.classList.remove('active'));
   if (event && event.currentTarget) event.currentTarget.classList.add('active');
 }
 
@@ -2536,5 +2860,21 @@ async function carregarAgendaConselho() {
   }).join('');
 }
 </script>
+
+<!-- ══ AMALPES POPOVER ══ -->
+<div id="amalpes-pop-overlay" onclick="fecharPopAmalpes()">
+  <div id="amalpes-pop" onclick="event.stopPropagation()">
+    <div class="apop-header">
+      <div>
+        <div class="apop-title">AMALPES · Composição</div>
+        <div class="apop-sub" id="apop-sub">—</div>
+      </div>
+      <button class="apop-close" onclick="fecharPopAmalpes()" title="Fechar">✕</button>
+    </div>
+    <div class="apop-body" id="apop-body">
+      <div class="apop-loading">Carregando…</div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
