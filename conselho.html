@@ -1245,7 +1245,6 @@
               <th style="padding-left:22px">Categoria</th>
               <th>Valor</th>
               <th>% das Despesas</th>
-              <th style="padding-right:22px;width:200px">Execução</th>
             </tr>
           </thead>
           <tbody id="expenseBody">
@@ -2094,7 +2093,7 @@ function renderTabelaCategorias(despesas) {
   const tbody = document.getElementById('expenseBody');
   if (!tbody) return;
   if (!despesas?.length) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-faint);padding:24px">Sem dados para este período</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-faint);padding:24px">Sem dados para este período</td></tr>';
     return;
   }
   const sorted   = [...despesas].sort((a,b) => b.valor - a.valor);
@@ -2118,11 +2117,6 @@ function renderTabelaCategorias(despesas) {
       </td>
       <td style="text-align:right;${bStyle}">
         <span class="var-chip ${chipCls}">${pctTotal.toFixed(1).replace('.',',')}%</span>
-      </td>
-      <td style="padding-right:22px;width:220px;${bStyle}">
-        <div class="budget-mini-bg" style="height:4px;margin-top:0">
-          <div class="budget-mini-fill" style="width:${barW}%;background:${color};height:4px"></div>
-        </div>
       </td>
     </tr>`;
   }).join('');
