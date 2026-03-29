@@ -1880,7 +1880,14 @@ function renderizarTudo() {
   const lanc    = dados.lancPorPeriodo[periodo] || { receita:[], despesa:[] };
 
   renderKPIs(ind, periodo);
-  renderScore(calcularScore(ind, lanc.despesa));
+  renderScore(calcularScore({
+    inadimplenciaPct:  ind.inadimplencia_pct,
+    receitaRealizada:  ind.receita_realizada,
+    despesaRealizada:  ind.despesa_realizada,
+    fundoReserva:      ind.fundo_reserva,
+    saldoConta:        ind.saldo_conta,
+    despesas:          lanc.despesa,
+  }));
   renderGraficoLinha(dados);
   renderTabelaCategorias(lanc.despesa);
 
@@ -1989,47 +1996,7 @@ function renderGraficoLinha(dados) {
   });
 }
 
-/* ── SCORE DE SAÚDE FINANCEIRA ── */
-function calcularScore(ind, despesas) {
-  const META_FUNDO = 380000;
-
-  // 1. Inadimplência (0–30)
-  const inadPct = ind.inadimplencia_pct ?? 0;
-  const ptInad = inadPct === 0 ? 30 : inadPct <= 3 ? 26 : inadPct <= 6 ? 22 : inadPct <= 10 ? 20 : inadPct <= 15 ? 12 : 0;
-
-  // 2. Equilíbrio orçamentário (0–25)
-  const rec  = ind.receita_realizada ?? 0;
-  const desp = ind.despesa_realizada ?? 0;
-  const superavitPct = rec > 0 ? (rec - desp) / rec * 100 : 0;
-  const ptEquil = superavitPct >= 5 ? 25 : superavitPct >= 0 ? 18 : superavitPct >= -5 ? 10 : 0;
-
-  // 3. Fundo de Reserva (0–20)
-  const fundoPct = ((ind.fundo_reserva ?? 0) / META_FUNDO) * 100;
-  const ptFundo = fundoPct >= 100 ? 20 : fundoPct >= 80 ? 16 : fundoPct >= 60 ? 16 : fundoPct >= 40 ? 10 : 0;
-
-  // 4. Concentração de despesas — excluindo AMALPES (0–15)
-  const despSem = (despesas || []).filter(d => d.categoria !== 'taxa_amalpes');
-  const totSem  = despSem.reduce((s, d) => s + (d.valor || 0), 0);
-  const maxDesp = despSem.length ? Math.max(...despSem.map(d => d.valor || 0)) : 0;
-  const concPct = totSem > 0 ? (maxDesp / totSem) * 100 : 0;
-  const ptConc  = concPct <= 35 ? 15 : concPct <= 55 ? 12 : concPct <= 70 ? 8 : 0;
-
-  // 5. Liquidez (0–10)
-  const saldo = ind.saldo_conta ?? 0;
-  const ratio = desp > 0 ? saldo / desp : 0;
-  const ptLiq = ratio >= 3 ? 10 : ratio >= 2 ? 7 : ratio >= 1 ? 4 : 0;
-
-  return {
-    total: ptInad + ptEquil + ptFundo + ptConc + ptLiq,
-    breakdown: [
-      { label: 'Inadimplência', pts: ptInad, max: 30 },
-      { label: 'Equilíbrio',    pts: ptEquil, max: 25 },
-      { label: 'Fundo Reserva', pts: ptFundo, max: 20 },
-      { label: 'Concentração',  pts: ptConc,  max: 15 },
-      { label: 'Liquidez',      pts: ptLiq,   max: 10 },
-    ]
-  };
-}
+/* calcularScore() está em js/supabase.js */
 
 function renderScore({ total, breakdown }) {
   const cor   = total >= 80 ? '#4CAF7D' : total >= 60 ? '#C9A84C' : '#E05C3A';
