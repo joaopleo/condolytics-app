@@ -323,6 +323,7 @@
 <script>
 let _condoAtual = null;
 let _usuario    = null;
+let _metaFundo  = 380000;
 
 function abrirDrawer()  { document.getElementById('mobileDrawer').classList.add('open');    document.getElementById('mobileOverlay').classList.add('show'); }
 function fecharDrawer() { document.getElementById('mobileDrawer').classList.remove('open'); document.getElementById('mobileOverlay').classList.remove('show'); }
@@ -420,11 +421,25 @@ async function carregarAnalises() {
     return;
   }
 
-  const { data } = await db.from('analises_pdf')
-    .select('id,periodo,periodo_key,resultado')
-    .eq('condominio_id', _condoAtual)
-    .order('periodo_key', { ascending: false })
-    .limit(5);
+  const [{ data }, indRes] = await Promise.all([
+    db.from('analises_pdf')
+      .select('id,periodo,periodo_key,resultado')
+      .eq('condominio_id', _condoAtual)
+      .order('periodo_key', { ascending: false })
+      .limit(5),
+    db.from('indicadores_financeiros')
+      .select('despesa_realizada')
+      .eq('condominio_id', _condoAtual)
+      .order('periodo', { ascending: false })
+      .limit(6)
+  ]);
+
+  /* Meta do fundo: média móvel dos últimos 6 meses × 3 */
+  const indRows = indRes.data || [];
+  if (indRows.length) {
+    const media = indRows.reduce((s, i) => s + parseFloat(i.despesa_realizada || 0), 0) / indRows.length;
+    _metaFundo = media * 3;
+  }
 
   if (!data?.length) {
     tabsEl.innerHTML = '<div style="color:var(--text-dim);font-size:13px;">Nenhuma análise ainda.</div>';
@@ -482,6 +497,7 @@ function renderResultado(d) {
     fundoReserva:     r.fundo_reserva,
     saldoConta:       r.saldo_final,
     despesas:         despesasNorm,
+    metaFundo:        _metaFundo,
   });
 
   const scoreColor = score >= 80 ? '#4CAF7D' : score >= 60 ? '#C9A84C' : '#E05C3A';

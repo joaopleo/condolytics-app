@@ -105,7 +105,7 @@ const SCORE_META_FUNDO = 380000;
  *   saldoConta        – saldo em conta corrente
  *   despesas          – array de { categoria, valor }
  */
-function calcularScore({ inadimplenciaPct, receitaRealizada, despesaRealizada, fundoReserva, saldoConta, despesas }) {
+function calcularScore({ inadimplenciaPct, receitaRealizada, despesaRealizada, fundoReserva, saldoConta, despesas, metaFundo }) {
   // 1. Inadimplência (0–30)
   const i = inadimplenciaPct ?? 0;
   const ptInad = i === 0 ? 30 : i <= 3 ? 26 : i <= 6 ? 22 : i <= 10 ? 20 : i <= 15 ? 12 : 0;
@@ -117,7 +117,8 @@ function calcularScore({ inadimplenciaPct, receitaRealizada, despesaRealizada, f
   const ptEquil = superavitPct >= 5 ? 25 : superavitPct >= 0 ? 18 : superavitPct >= -5 ? 10 : 0;
 
   // 3. Fundo de Reserva (0–20)
-  const fundoPct = ((fundoReserva ?? 0) / SCORE_META_FUNDO) * 100;
+  const _metaFundo = metaFundo || SCORE_META_FUNDO;
+  const fundoPct = ((fundoReserva ?? 0) / _metaFundo) * 100;
   const ptFundo = fundoPct >= 100 ? 20 : fundoPct >= 80 ? 16 : fundoPct >= 60 ? 16 : fundoPct >= 40 ? 10 : 0;
 
   // 4. Concentração de despesas — excluindo AMALPES (0–15)

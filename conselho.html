@@ -1835,7 +1835,12 @@ async function carregarDados(condoId) {
     lancPorPeriodo[l.periodo][l.tipo].push({ categoria: l.categoria, valor: l.valor });
   }
 
-  _dadosDB[condoId] = { periodos6, indicadores6, lancPorPeriodo };
+  /* Meta do fundo: média móvel das últimas 6 despesas × 3 */
+  const metaFundo = indicadores6.length
+    ? (indicadores6.reduce((s, i) => s + parseFloat(i.despesa_realizada || 0), 0) / indicadores6.length) * 3
+    : 380000;
+
+  _dadosDB[condoId] = { periodos6, indicadores6, lancPorPeriodo, metaFundo };
 
 }
 
@@ -1879,7 +1884,8 @@ function renderizarTudo() {
   const ind     = dados.indicadores6[_periodoIdx];
   const lanc    = dados.lancPorPeriodo[periodo] || { receita:[], despesa:[] };
 
-  renderKPIs(ind, periodo);
+  const metaFundo = dados.metaFundo;
+  renderKPIs(ind, periodo, metaFundo);
   renderScore(calcularScore({
     inadimplenciaPct:  ind.inadimplencia_pct,
     receitaRealizada:  ind.receita_realizada,
@@ -1887,6 +1893,7 @@ function renderizarTudo() {
     fundoReserva:      ind.fundo_reserva,
     saldoConta:        ind.saldo_conta,
     despesas:          lanc.despesa,
+    metaFundo,
   }));
   renderGraficoLinha(dados);
   renderTabelaCategorias(lanc.despesa);
@@ -1896,7 +1903,7 @@ function renderizarTudo() {
 }
 
 /* ── KPIs ── */
-function renderKPIs(ind, periodo) {
+function renderKPIs(ind, periodo, metaFundo) {
   if (!ind) return;
 
   const inadEl = document.querySelector('.kpi-card:nth-child(1) .counter');
@@ -1909,7 +1916,7 @@ function renderKPIs(ind, periodo) {
 
   const resEl = document.querySelector('.kpi-card:nth-child(3) .counter');
   if (resEl) { resEl.dataset.target = ind.fundo_reserva ?? 0; animateCounter(resEl); }
-  const meta = 300000; /* TODO: buscar meta do banco (campo a criar em condominios) */
+  const meta = metaFundo || 380000;
   const pct  = Math.min(((ind.fundo_reserva ?? 0) / meta) * 100, 100);
   const pb   = document.getElementById('reserveProg');
   if (pb) { pb.style.transition='none'; pb.style.width='0'; pb.offsetHeight; pb.style.transition='width 1.2s cubic-bezier(.4,0,.2,1)'; pb.style.width=pct.toFixed(1)+'%'; }
