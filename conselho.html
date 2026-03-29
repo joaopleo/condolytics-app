@@ -1135,30 +1135,15 @@
       </div>
     </div>
 
-    <!-- KPI 4: Execução Orçamentária -->
+    <!-- KPI 4: Score de Saúde Financeira -->
     <div class="kpi-card reveal" style="transition-delay:0.2s">
-      <div class="kpi-label">Execução Orçamentária</div>
-      <div class="radial-wrap">
-        <svg class="radial-svg" width="64" height="64" viewBox="0 0 56 56">
-          <circle cx="28" cy="28" r="22" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="4"/>
-          <circle id="arcCircle" cx="28" cy="28" r="22" fill="none"
-            stroke="url(#arcGrad)" stroke-width="4" stroke-linecap="round"
-            stroke-dasharray="138.2" stroke-dashoffset="26.3"
-            transform="rotate(-90 28 28)"/>
-          <defs>
-            <linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#C9A84C"/>
-              <stop offset="100%" stop-color="#E0C070"/>
-            </linearGradient>
-          </defs>
-          <text x="28" y="32" text-anchor="middle"
-            font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif"
-            font-size="12" font-weight="700" fill="#E8E6E0">81%</text>
-        </svg>
-        <div class="radial-info">
-          <div style="color:var(--text);font-size:13px;font-weight:600;margin-bottom:4px" id="arcInfoMain">81% executado<br>em Jan/2026</div>
-          <div style="font-size:9px;color:var(--text-faint)" id="arcInfoSub">R$ 121.512 / R$ 122.800</div>
+      <div class="kpi-label">Saúde Financeira</div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="flex-shrink:0;text-align:center">
+          <div id="scoreValor" style="font-size:42px;font-weight:700;line-height:1;color:var(--gold)">—</div>
+          <div id="scoreLabel" style="font-family:var(--font-mono);font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-top:3px">—</div>
         </div>
+        <div id="scoreBreakdown" style="flex:1;display:flex;flex-direction:column;gap:5px"></div>
       </div>
     </div>
 
@@ -1895,7 +1880,8 @@ function renderizarTudo() {
   const lanc    = dados.lancPorPeriodo[periodo] || { receita:[], despesa:[] };
 
   renderKPIs(ind, periodo);
-  renderGraficoLinha(dados);   // linha com todos os 6 meses
+  renderScore(calcularScore(ind, lanc.despesa));
+  renderGraficoLinha(dados);
   renderTabelaCategorias(lanc.despesa);
 
   const tagEl = document.getElementById('monthTag');
@@ -2001,6 +1987,77 @@ function renderGraficoLinha(dados) {
       }
     }
   });
+}
+
+/* ── SCORE DE SAÚDE FINANCEIRA ── */
+function calcularScore(ind, despesas) {
+  const META_FUNDO = 380000;
+
+  // 1. Inadimplência (0–30)
+  const inadPct = ind.inadimplencia_pct ?? 0;
+  const ptInad = inadPct === 0 ? 30 : inadPct <= 3 ? 26 : inadPct <= 6 ? 22 : inadPct <= 10 ? 20 : inadPct <= 15 ? 12 : 0;
+
+  // 2. Equilíbrio orçamentário (0–25)
+  const rec  = ind.receita_realizada ?? 0;
+  const desp = ind.despesa_realizada ?? 0;
+  const superavitPct = rec > 0 ? (rec - desp) / rec * 100 : 0;
+  const ptEquil = superavitPct >= 5 ? 25 : superavitPct >= 0 ? 18 : superavitPct >= -5 ? 10 : 0;
+
+  // 3. Fundo de Reserva (0–20)
+  const fundoPct = ((ind.fundo_reserva ?? 0) / META_FUNDO) * 100;
+  const ptFundo = fundoPct >= 100 ? 20 : fundoPct >= 80 ? 16 : fundoPct >= 60 ? 16 : fundoPct >= 40 ? 10 : 0;
+
+  // 4. Concentração de despesas — excluindo AMALPES (0–15)
+  const despSem = (despesas || []).filter(d => d.categoria !== 'taxa_amalpes');
+  const totSem  = despSem.reduce((s, d) => s + (d.valor || 0), 0);
+  const maxDesp = despSem.length ? Math.max(...despSem.map(d => d.valor || 0)) : 0;
+  const concPct = totSem > 0 ? (maxDesp / totSem) * 100 : 0;
+  const ptConc  = concPct <= 35 ? 15 : concPct <= 50 ? 10 : concPct <= 65 ? 5 : 0;
+
+  // 5. Liquidez (0–10)
+  const saldo = ind.saldo_conta ?? 0;
+  const ratio = desp > 0 ? saldo / desp : 0;
+  const ptLiq = ratio >= 3 ? 10 : ratio >= 2 ? 7 : ratio >= 1 ? 4 : 0;
+
+  return {
+    total: ptInad + ptEquil + ptFundo + ptConc + ptLiq,
+    breakdown: [
+      { label: 'Inadimplência', pts: ptInad, max: 30 },
+      { label: 'Equilíbrio',    pts: ptEquil, max: 25 },
+      { label: 'Fundo Reserva', pts: ptFundo, max: 20 },
+      { label: 'Concentração',  pts: ptConc,  max: 15 },
+      { label: 'Liquidez',      pts: ptLiq,   max: 10 },
+    ]
+  };
+}
+
+function renderScore({ total, breakdown }) {
+  const cor   = total >= 80 ? '#4CAF7D' : total >= 60 ? '#C9A84C' : '#E05C3A';
+  const label = total >= 80 ? 'ÓTIMO'   : total >= 60 ? 'ATENÇÃO' : 'CRÍTICO';
+
+  const valEl = document.getElementById('scoreValor');
+  const lbEl  = document.getElementById('scoreLabel');
+  const bdEl  = document.getElementById('scoreBreakdown');
+  if (!valEl) return;
+
+  valEl.textContent  = total;
+  valEl.style.color  = cor;
+  lbEl.textContent   = label;
+  lbEl.style.color   = cor;
+
+  bdEl.innerHTML = breakdown.map(({ label: l, pts, max }) => {
+    const w = Math.round((pts / max) * 100);
+    return `
+      <div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:2px">
+          <span style="font-size:9px;color:var(--text-faint);font-family:var(--font-mono);letter-spacing:0.06em;text-transform:uppercase">${l}</span>
+          <span style="font-size:9px;color:var(--text-dim);font-family:var(--font-mono)">${pts}/${max}</span>
+        </div>
+        <div style="height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden">
+          <div style="height:100%;width:${w}%;background:${cor};border-radius:2px;transition:width 0.8s ease"></div>
+        </div>
+      </div>`;
+  }).join('');
 }
 
 /* ── TABELA DE CATEGORIAS (mês selecionado) ── */
