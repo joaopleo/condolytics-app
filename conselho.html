@@ -714,8 +714,17 @@
 .mobile-nav-item.active { background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(201,168,76,0.2); }
 .mobile-nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
 .mobile-nav-section { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-faint); padding: 12px 12px 6px; margin-top: 4px; }
-.mobile-nav-footer { padding: 12px; border-top: 1px solid var(--border); }
-.drawer-user-info { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; background: var(--surface2); margin-bottom: 8px; }
+.mobile-nav-footer { padding: 12px; border-top: 1px solid var(--border); position: relative; }
+.drawer-user-info { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; background: var(--surface2); margin-bottom: 8px; cursor: pointer; transition: background 0.15s; }
+.drawer-user-info:hover { background: var(--surface3); }
+#drawerUserPopover {
+  display: none; position: absolute;
+  bottom: calc(100% + 4px); left: 12px; right: 12px;
+  background: #13161C; border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 12px; box-shadow: 0 -12px 40px rgba(0,0,0,0.5);
+  z-index: 200; overflow: hidden;
+}
+#drawerUserPopover.pop-open { display: block; }
 .drawer-user-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,var(--gold),#E8D08A); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #0A0C0F; flex-shrink: 0; }
 .drawer-user-name { font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .drawer-user-role { font-size: 10px; color: var(--text-dim); }
@@ -999,14 +1008,32 @@
     </button>
   </nav>
   <div class="mobile-nav-footer">
-    <div class="drawer-user-info">
+    <div id="drawerUserPopover">
+      <div class="upop-header">
+        <div class="upop-name" id="drawerUpopName">—</div>
+        <span class="upop-perfil" id="drawerUpopPerfil">Conselho Fiscal</span>
+      </div>
+      <button id="drawerBtnTrocarUsuario" class="upop-switch" onclick="trocarUsuario()" style="display:none;">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M2 8a6 6 0 1010.93 3M14 8a6 6 0 00-10.93-3" stroke-linecap="round"/>
+          <path d="M11 5l3-3-3-3M5 14l-3 3 3 3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Trocar usuário
+      </button>
+      <button class="upop-logout" onclick="logout()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M10 11l3-3-3-3M13 8H6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Sair da conta
+      </button>
+    </div>
+    <div class="drawer-user-info" onclick="toggleDrawerUserPopover(event)">
       <div class="drawer-user-avatar" id="drawerAvatar">?</div>
       <div>
         <div class="drawer-user-name" id="drawerUserName">Carregando...</div>
         <div class="drawer-user-role">Conselho</div>
       </div>
     </div>
-    <button class="drawer-btn-logout" onclick="logout()">Sair da conta</button>
   </div>
 </div>
 
@@ -1642,7 +1669,7 @@ window.addEventListener('load', async () => {
   if (!_usuario) return;
 
   const nomeExibido = pul(_usuario.nome_completo) || 'Conselheiro';
-  ['userName','respNome','upopName','dskUpopName'].forEach(id => {
+  ['userName','respNome','upopName','dskUpopName','drawerUpopName'].forEach(id => {
     const el = document.getElementById(id); if (el) el.textContent = nomeExibido;
   });
   const av = document.getElementById('userAvatar');
@@ -1662,12 +1689,13 @@ window.addEventListener('load', async () => {
   if (perfEl) perfEl.textContent = perfilLabel;
   const dskPerfEl = document.getElementById('dskUpopPerfil');
   if (dskPerfEl) dskPerfEl.textContent = perfilLabel;
+  const drawerPerfEl = document.getElementById('drawerUpopPerfil');
+  if (drawerPerfEl) drawerPerfEl.textContent = perfilLabel;
   // Mostra botão trocar usuário se admin
   if (_usuario.perfil === 'admin') {
-    const b1 = document.getElementById('btnTrocarUsuario');
-    const b2 = document.getElementById('dskBtnTrocarUsuario');
-    if (b1) b1.style.display = 'flex';
-    if (b2) b2.style.display = 'flex';
+    ['btnTrocarUsuario','dskBtnTrocarUsuario','drawerBtnTrocarUsuario'].forEach(id => {
+      const b = document.getElementById(id); if (b) b.style.display = 'flex';
+    });
   }
 
   await inicializar();
@@ -2177,6 +2205,10 @@ document.addEventListener('click', e => {
 function toggleDskUserPopover(e) {
   e.stopPropagation();
   document.getElementById('dskUserPopover').classList.toggle('pop-open');
+}
+function toggleDrawerUserPopover(e) {
+  e.stopPropagation();
+  document.getElementById('drawerUserPopover').classList.toggle('pop-open');
 }
 
 /* ── NOTIFICAÇÕES ── */
