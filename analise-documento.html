@@ -87,9 +87,117 @@
     .lista-box{background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px 18px;}
     .lista-titulo{font-family:var(--font-mono);font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;}
     .lista-item{font-size:12px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+
+    /* ══ DESKTOP SIDEBAR ══ */
+    #desk-sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;z-index:99;background:#0D1014;border-right:1px solid rgba(201,168,76,0.1);display:flex;flex-direction:column;overflow:hidden;}
+    .dsk-brand{padding:22px 18px 16px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;gap:10px;}
+    .dsk-brand-logo{width:32px;height:32px;flex-shrink:0;}
+    .dsk-brand-name{font-family:var(--font-mono);font-size:13px;font-weight:700;letter-spacing:0.04em;color:var(--text);line-height:1.2;}
+    .dsk-brand-name span{color:var(--gold);font-weight:300;}
+    .dsk-brand-role{font-size:9px;color:var(--text-faint);letter-spacing:0.06em;margin-top:2px;}
+    .dsk-condo{padding:12px 18px 10px;border-bottom:1px solid rgba(255,255,255,0.04);}
+    .dsk-condo-label{font-family:var(--font-mono);font-size:8px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-faint);margin-bottom:4px;}
+    .dsk-condo-name{font-size:12px;font-weight:500;color:var(--text);line-height:1.4;}
+    .dsk-nav{flex:1;padding:6px 10px;overflow-y:auto;}
+    .dsk-nav::-webkit-scrollbar{width:2px;}
+    .dsk-nav::-webkit-scrollbar-thumb{background:rgba(201,168,76,0.15);border-radius:2px;}
+    .dsk-nav-section{font-family:var(--font-mono);font-size:8px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-faint);padding:10px 8px 5px;}
+    .dsk-nav-item{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border-radius:8px;border:1px solid transparent;background:none;color:var(--text-dim);font-size:13px;font-family:var(--font-sans);cursor:pointer;text-align:left;transition:all 0.15s;margin-bottom:2px;}
+    .dsk-nav-item svg{width:16px;height:16px;flex-shrink:0;}
+    .dsk-nav-item:hover{background:rgba(255,255,255,0.04);color:var(--text);}
+    .dsk-nav-item.active{background:var(--gold-dim);color:var(--gold);border-color:rgba(201,168,76,0.2);}
+    .dsk-footer{padding:12px 14px;border-top:1px solid rgba(255,255,255,0.05);position:relative;}
+    .dsk-user{display:flex;align-items:center;gap:9px;min-width:0;cursor:pointer;border-radius:8px;padding:4px;margin:-4px;transition:background 0.15s;}
+    .dsk-user:hover{background:rgba(255,255,255,0.04);}
+    .dsk-avatar{width:30px;height:30px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--gold),#E8D08A);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#0A0C0F;}
+    .dsk-user-name{font-size:11px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .dsk-user-role{font-size:9px;color:var(--text-faint);}
+    #dskUserPopover{display:none;position:absolute;bottom:calc(100% + 8px);left:10px;right:10px;background:#13161C;border:1px solid rgba(201,168,76,0.2);border-radius:12px;box-shadow:0 -12px 40px rgba(0,0,0,0.5);z-index:200;overflow:hidden;}
+    #dskUserPopover.pop-open{display:block;}
+    .upop-header{padding:14px 16px 12px;border-bottom:1px solid rgba(255,255,255,0.05);}
+    .upop-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px;}
+    .upop-perfil{display:inline-block;font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);background:var(--gold-dim);border:1px solid rgba(201,168,76,0.2);border-radius:20px;padding:2px 8px;}
+    .upop-switch{display:flex;align-items:center;gap:8px;width:100%;padding:11px 16px;background:none;border:none;font-size:13px;color:var(--text-dim);cursor:pointer;transition:all 0.15s;font-family:var(--font-sans);}
+    .upop-switch:hover{background:rgba(201,168,76,0.06);color:var(--gold);}
+    .upop-switch svg{width:14px;height:14px;flex-shrink:0;}
+    .upop-logout{display:flex;align-items:center;gap:8px;width:100%;padding:11px 16px;background:none;border:none;border-top:1px solid rgba(255,255,255,0.05);font-size:13px;color:var(--text-dim);cursor:pointer;transition:all 0.15s;font-family:var(--font-sans);}
+    .upop-logout:hover{background:rgba(224,92,58,0.08);color:var(--red);}
+    .upop-logout svg{width:14px;height:14px;flex-shrink:0;}
+    @media(max-width:767px){#desk-sidebar{display:none;}}
+    @media(min-width:768px){
+      header{margin-left:220px;}
+      .page{margin-left:220px;}
+      header .btn-hamburger{display:none;}
+      header .logo-link{display:none;}
+    }
   </style>
 </head>
 <body>
+
+<!-- ═══ DESKTOP SIDEBAR ═══ -->
+<nav id="desk-sidebar">
+  <div class="dsk-brand">
+    <svg class="dsk-brand-logo" viewBox="0 0 44 44" fill="none">
+      <polygon points="22,2 39,11.5 39,32.5 22,42 5,32.5 5,11.5" fill="#0A0C0F" stroke="#C9A84C" stroke-width="2"/>
+      <rect x="9"  y="26" width="4" height="9"  rx="0.5" fill="#C9A84C"/>
+      <rect x="14" y="20" width="4" height="15" rx="0.5" fill="#C9A84C"/>
+      <rect x="19" y="13" width="4" height="22" rx="0.5" fill="#C9A84C"/>
+      <rect x="24" y="20" width="4" height="15" rx="0.5" fill="#C9A84C"/>
+      <rect x="29" y="26" width="4" height="9"  rx="0.5" fill="#C9A84C"/>
+      <line x1="8" y1="35.5" x2="36" y2="35.5" stroke="#C9A84C" stroke-width="1.2"/>
+    </svg>
+    <div>
+      <div class="dsk-brand-name">Condo<span>lytics</span></div>
+      <div class="dsk-brand-role">Portal do Conselho</div>
+    </div>
+  </div>
+  <div class="dsk-condo">
+    <div class="dsk-condo-label">Condomínio</div>
+    <div class="dsk-condo-name" id="dskCondoNome">Carregando...</div>
+  </div>
+  <div class="dsk-nav">
+    <div class="dsk-nav-section">Menu</div>
+    <button class="dsk-nav-item" onclick="window.location.href='conselho.html'">
+      <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="1" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="1" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="9" y="9" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/></svg>
+      Visão Geral
+    </button>
+    <button class="dsk-nav-item" onclick="window.location.href='conselho.html#ocorrencias'">
+      <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      Ocorrências
+    </button>
+    <button class="dsk-nav-item active" style="color:#C9A84C">
+      <svg viewBox="0 0 16 16" fill="none"><rect x="3" y="1" width="10" height="14" rx="1.5" stroke="#C9A84C" stroke-width="1.3"/><path d="M6 5h4M6 8h4M6 11h2" stroke="#C9A84C" stroke-width="1.3" stroke-linecap="round"/></svg>
+      <span style="font-weight:600;">Prestação de Contas</span>
+    </button>
+    <button class="dsk-nav-item" onclick="window.location.href='agenda.html'">
+      <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 1v4M11 1v4M2 7h12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="5.5" cy="10.5" r="0.8" fill="currentColor"/><circle cx="8" cy="10.5" r="0.8" fill="currentColor"/><circle cx="10.5" cy="10.5" r="0.8" fill="currentColor"/></svg>
+      Agenda
+    </button>
+  </div>
+  <div class="dsk-footer">
+    <div id="dskUserPopover">
+      <div class="upop-header">
+        <div class="upop-name" id="dskUpopName">—</div>
+        <span class="upop-perfil" id="dskUpopPerfil">Conselho Fiscal</span>
+      </div>
+      <button class="upop-switch" onclick="trocarUsuario()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8a6 6 0 1010.93 3M14 8a6 6 0 00-10.93-3" stroke-linecap="round"/><path d="M11 5l3-3-3-3M5 14l-3 3 3 3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Trocar usuário
+      </button>
+      <button class="upop-logout" onclick="logout()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M10 11l3-3-3-3M13 8H6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Sair da conta
+      </button>
+    </div>
+    <div class="dsk-user" onclick="toggleDskUserPopover(event)">
+      <div class="dsk-avatar" id="dskAvatar">C</div>
+      <div style="min-width:0">
+        <div class="dsk-user-name" id="dskUserName">Carregando...</div>
+        <div class="dsk-user-role">Conselho Fiscal</div>
+      </div>
+    </div>
+  </div>
+</nav>
 
 <!-- Mobile overlay -->
 <div class="mobile-overlay" id="mobileOverlay" onclick="fecharDrawer()"></div>
@@ -218,15 +326,32 @@ let _usuario    = null;
 
 function abrirDrawer()  { document.getElementById('mobileDrawer').classList.add('open');    document.getElementById('mobileOverlay').classList.add('show'); }
 function fecharDrawer() { document.getElementById('mobileDrawer').classList.remove('open'); document.getElementById('mobileOverlay').classList.remove('show'); }
+function toggleDskUserPopover(e) { e.stopPropagation(); document.getElementById('dskUserPopover').classList.toggle('pop-open'); }
+document.addEventListener('click', e => {
+  const footer = document.querySelector('.dsk-footer');
+  const pop = document.getElementById('dskUserPopover');
+  if (pop && footer && !footer.contains(e.target)) pop.classList.remove('pop-open');
+});
 
 window.addEventListener('load', async () => {
   _usuario = await protegerPagina(['conselho', 'admin']);
   if (!_usuario) return;
   const _nome = _usuario.nome_completo || 'Usuário';
+  const inicial = _nome[0].toUpperCase();
   const elAv = document.getElementById('drawerAvatar');
   const elNm = document.getElementById('drawerUserName');
-  if (elAv) elAv.textContent = _nome[0].toUpperCase();
+  if (elAv) elAv.textContent = inicial;
   if (elNm) elNm.textContent = _nome;
+  // Desktop sidebar
+  const dskAv = document.getElementById('dskAvatar');
+  const dskNm = document.getElementById('dskUserName');
+  const dskUpN = document.getElementById('dskUpopName');
+  const dskUpP = document.getElementById('dskUpopPerfil');
+  if (dskAv) dskAv.textContent = inicial;
+  if (dskNm) dskNm.textContent = _nome;
+  if (dskUpN) dskUpN.textContent = _nome;
+  const perfilLabel = ({conselho:'Conselho Fiscal',sindico:'Síndico',admin:'Administrador'})[_usuario.perfil] || 'Conselho Fiscal';
+  if (dskUpP) dskUpP.textContent = perfilLabel;
 
   // Mesma lógica do conselho.html
   const savedId = localStorage.getItem('condolytics_condo_id');
@@ -244,6 +369,8 @@ window.addEventListener('load', async () => {
     const { data: condoObj } = await db.from('condominios').select('nome').eq('id', _condoAtual).single();
     const el = document.getElementById('drawerCondoNome');
     if (el && condoObj?.nome) el.textContent = condoObj.nome;
+    const dskEl = document.getElementById('dskCondoNome');
+    if (dskEl && condoObj?.nome) dskEl.textContent = condoObj.nome;
   }
 
   await carregarAnalises();
