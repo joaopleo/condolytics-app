@@ -2069,7 +2069,8 @@ function renderScoreEvolucao(dados) {
     }).total;
   });
 
-  const pointColors = scores.map((_, i) => i === _periodoIdx ? '#C9A84C' : 'rgba(201,168,76,0.4)');
+  const scoreColor  = s => s >= 80 ? '#4CAF7D' : s >= 60 ? '#C9A84C' : '#E05C3A';
+  const pointColors = scores.map(s => scoreColor(s));
   const pointSizes  = scores.map((_, i) => i === _periodoIdx ? 6 : 3);
 
   if (_scoreEvoChart) _scoreEvoChart.destroy();
@@ -2109,10 +2110,9 @@ function renderScoreEvolucao(dados) {
           ticks: { color: '#9A9690', font: { family: 'IBM Plex Mono', size: 9 } }
         },
         y: {
-          min: 0, max: 100,
+          min: 50, max: 100,
           grid: { color: 'rgba(255,255,255,0.04)' },
-          ticks: { color: '#9A9690', font: { family: 'IBM Plex Mono', size: 9 }, stepSize: 25,
-            callback: v => v === 0 ? '' : v }
+          ticks: { color: '#9A9690', font: { family: 'IBM Plex Mono', size: 9 }, stepSize: 25 }
         }
       }
     }
