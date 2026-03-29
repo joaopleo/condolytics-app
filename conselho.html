@@ -1244,7 +1244,7 @@
             <tr>
               <th style="padding-left:22px">Categoria</th>
               <th>Valor</th>
-              <th>vs. Orçamento</th>
+              <th>% das Despesas</th>
               <th style="padding-right:22px;width:200px">Execução</th>
             </tr>
           </thead>
@@ -2097,15 +2097,17 @@ function renderTabelaCategorias(despesas) {
     tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-faint);padding:24px">Sem dados para este período</td></tr>';
     return;
   }
-  const sorted = [...despesas].sort((a,b) => b.valor - a.valor);
-  const maxVal = sorted[0].valor;
+  const sorted   = [...despesas].sort((a,b) => b.valor - a.valor);
+  const maxVal   = sorted[0].valor;
+  const totalDesp = sorted.reduce((s, r) => s + r.valor, 0);
   tbody.innerHTML = sorted.map((r, i) => {
-    const label   = CAT_LABEL[r.categoria] || r.categoria;
-    const color   = CAT_COLOR_DESP[r.categoria] || '#52504C';
-    const pct     = Math.round((r.valor / maxVal) * 100);
-    const chipCls = pct >= 90 ? 'var-up' : pct < 60 ? 'var-down' : 'var-neu';
-    const bStyle  = i === sorted.length - 1 ? 'border-bottom:none' : '';
-    const isAmalpes = r.categoria === 'taxa_amalpes';
+    const label      = CAT_LABEL[r.categoria] || r.categoria;
+    const color      = CAT_COLOR_DESP[r.categoria] || '#52504C';
+    const pctTotal   = totalDesp ? (r.valor / totalDesp * 100) : 0;
+    const barW       = maxVal ? Math.round((r.valor / maxVal) * 100) : 0;
+    const chipCls    = pctTotal >= 20 ? 'var-up' : pctTotal >= 5 ? 'var-neu' : 'var-down';
+    const bStyle     = i === sorted.length - 1 ? 'border-bottom:none' : '';
+    const isAmalpes  = r.categoria === 'taxa_amalpes';
     return `
     <tr${isAmalpes ? ' class="apop-trigger" onclick="abrirPopAmalpes()"' : ''}>
       <td style="padding-left:22px;width:38%;${bStyle}">
@@ -2115,11 +2117,11 @@ function renderTabelaCategorias(despesas) {
         R$ ${brl(r.valor)}
       </td>
       <td style="text-align:right;${bStyle}">
-        <span class="var-chip ${chipCls}">${pct}%</span>
+        <span class="var-chip ${chipCls}">${pctTotal.toFixed(1).replace('.',',')}%</span>
       </td>
       <td style="padding-right:22px;width:220px;${bStyle}">
         <div class="budget-mini-bg" style="height:4px;margin-top:0">
-          <div class="budget-mini-fill" style="width:${pct}%;background:${color};height:4px"></div>
+          <div class="budget-mini-fill" style="width:${barW}%;background:${color};height:4px"></div>
         </div>
       </td>
     </tr>`;
