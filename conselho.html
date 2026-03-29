@@ -2114,7 +2114,7 @@ function renderTabelaCategorias(despesas) {
     return `
     <tr${isAmalpes ? ' class="apop-trigger" onclick="abrirPopAmalpes()"' : ''}>
       <td style="width:50%;${bStyle}">
-        <span class="cat-name"><span class="cat-dot" style="background:${color}"></span>${label}${isAmalpes ? '<span class="apop-hint">↗ ver composição</span>' : ''}</span>
+        <span class="cat-name"><span class="cat-dot" style="background:${color}"></span>${label}${isAmalpes ? '<span class="apop-hint"><svg viewBox="0 0 14 14" fill="none" width="13" height="13" style="vertical-align:-2px"><circle cx="6" cy="6" r="4.2" stroke="currentColor" stroke-width="1.4"/><path d="M9.5 9.5l2.2 2.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>' : ''}</span>
       </td>
       <td style="text-align:right;font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--text);${bStyle}">
         R$ ${brl(r.valor)}
